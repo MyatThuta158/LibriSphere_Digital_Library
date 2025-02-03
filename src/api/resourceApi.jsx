@@ -13,7 +13,8 @@ export const detailResource = (id) =>
   apiClient.get(`/resources/${id}`).then((res) => res.data);
 
 // This is resource file get for digital file
-export const getFile = (filename) =>
-  apiClient
-    .get(`/${filename}`, { responseType: "blob" })
-    .then((res) => res.data);
+export const search = (query) =>
+  apiClient.get(`/resource/search?name=${query}`).then((res) => res.data);
+
+export const detail = (id) =>
+  apiClient.get(`/resource/${id}`).then((res) => res.data);

@@ -204,14 +204,39 @@ function SideBarMenu() {
             </a>
           </li> */}
 
-          <hr className="sidebar-divider d-none d-md-block" />
+          <hr className="sidebar-divider" />
 
-          <div className="text-center d-none d-md-inline">
-            <button
-              className="rounded-circle border-0"
-              id="sidebarToggle"
-            ></button>
-          </div>
+          <div className="sidebar-heading">MembershipPlan</div>
+
+          <li className="nav-item">
+            <a
+              className="nav-link collapsed"
+              href="#"
+              onClick={() => navigate("/Admin/AddMemberships")}
+              data-toggle="collapse"
+              data-target="#collapsePages"
+              aria-expanded="true"
+              aria-controls="collapsePages"
+            >
+              <i className="fas fa-fw fa-folder"></i>
+              <span>Add Membership</span>
+            </a>
+          </li>
+
+          {/* <li className="nav-item">
+            <a
+              className="nav-link collapsed"
+              href="#"
+              onClick={() => navigate("/Admin/ViewAdmins")}
+              data-toggle="collapse"
+              data-target="#collapsePages"
+              aria-expanded="true"
+              aria-controls="collapsePages"
+            >
+              <i className="fas fa-fw fa-folder"></i>
+              <span>View Admins</span>
+            </a>
+          </li> */}
 
           {/* <div className="sidebar-card d-none d-lg-flex">
             <img

@@ -2,34 +2,42 @@ import React, { useState } from "react";
 import { createGenre } from "../../../api/genresAPI";
 
 function AddGenre() {
-  //-------This is the initial state of the Genre data----//
   const initial = {
-    name: "",
+    genre_name: "",
   };
-  //------This is for message----//
-  const [message, setMessage] = useState("");
 
-  //------This store the Genre data---//
+  const [message, setMessage] = useState("");
   const [Genre, setGenre] = useState(initial);
 
   const handleInputChange = (e) => {
-    const { name } = e.target;
-
-    setGenre({ ...Genre, [name]: e.target.value });
+    const { name, value } = e.target; // Fixed here
+    setGenre({ ...Genre, [name]: value });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!Genre.genre_name.trim()) {
+      setMessage("Genre name cannot be empty.");
+      return;
+    }
+
     try {
       let result = await createGenre(Genre);
-      setMessage(result.message);
+      console.log(result.message);
 
-      //const updateGenres=await getGenres();
-      setGenre(initial);
+      if (result.status == 200) {
+        setMessage(result.message);
+        setGenre(initial);
+      } else {
+        setMessage("Failed to add genre.");
+      }
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      setMessage("An error occurred while adding the genre.");
     }
   };
+
   return (
     <div>
       <h1 className="text-center">Add Genres</h1>
@@ -38,8 +46,8 @@ function AddGenre() {
         <form className="form-group w-50" onSubmit={handleSubmit}>
           <input
             type="text"
-            name="name"
-            value={Genre.name}
+            name="genre_name"
+            value={Genre.genre_name}
             className="form-control w-100"
             onChange={handleInputChange}
           />
@@ -47,8 +55,8 @@ function AddGenre() {
             Add Genre
           </button>
         </form>
-        {/* This is for message box */}
 
+        {/* Modal for displaying messages */}
         {message && (
           <div
             className="modal fade show"
@@ -60,26 +68,24 @@ function AddGenre() {
             <div className="modal-dialog">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1
-                    className="modal-title fs-5"
-                    id="staticBackdropLabel"
-                  ></h1>
+                  <h1 className="modal-title fs-5" id="messageModalLabel">
+                    Notification
+                  </h1>
                   <button
                     type="button"
                     className="btn-close"
                     data-bs-dismiss="modal"
                     aria-label="Close"
+                    onClick={() => setMessage("")}
                   ></button>
                 </div>
-                <div className="modal-body">...</div>
+                <div className="modal-body">{message}</div>
                 <div className="modal-footer">
                   <button
                     type="button"
                     className="btn btn-secondary"
                     data-bs-dismiss="modal"
-                    onClick={() => {
-                      setMessage(null);
-                    }}
+                    onClick={() => setMessage("")}
                   >
                     Close
                   </button>

@@ -12,6 +12,8 @@ import ViewResources from "../Pages/AdminPanel/Resources/ViewResources";
 import RegisterAdmin from "../Pages/AdminPanel/Admins/RegisterAdmin";
 import ViewAdmins from "../Pages/AdminPanel/Admins/ViewAdmins";
 import ResourceDetail from "../Pages/AdminPanel/Resources/ResourceDetail";
+import AddMembershipPlan from "../Pages/AdminPanel/MembershipPlan/AddMembershipPlan";
+import AddPayment_Type from "../Pages/AdminPanel/Payment_Types/AddPayment_Types";
 
 function AdminRoute() {
   return (
@@ -35,6 +37,12 @@ function AdminRoute() {
         {/* This is for admins routes */}
         <Route path="/Admin/RegisterAdmin" element={<RegisterAdmin />} />
         <Route path="/Admin/ViewAdmins" element={<ViewAdmins />} />
+
+        {/* This is for membership routes */}
+        <Route path="/Admin/AddMemberships" element={<AddMembershipPlan />} />
+
+        {/* This is for payment types */}
+        <Route path="/Admin/AddPaymentTypes" element={<AddPayment_Type />} />
       </Route>
     </Routes>
   );

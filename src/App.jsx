@@ -4,8 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Pages/Login";
 import AdminMenu from "./Pages/AdminPanel/SideBarMenu";
 import AdminRoute from "./Route/AdminRoute";
-
-
+import MemberRoute from "./Route/MemberRoute";
+ 
 function App() {
   return (
     <>
@@ -15,7 +15,8 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/Admin" element={<AdminMenu />} />
             <Route path="/*" element={<AdminRoute />} />
-            
+            <Route path="/customer/*" element={<MemberRoute />} />
+            {/* <Route path="/customer/home" element={<Home />} /> */}
           </Routes>
         </BrowserRouter>
       </AuthProvider>

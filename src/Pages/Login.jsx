@@ -16,7 +16,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/login",
+        "http://127.0.0.1:8000/admin/login",
         { email, password },
         {
           withCredentials: true,
@@ -25,12 +25,12 @@ function Login() {
       );
 
       // This get data from response
-      const { message, user, cookies } = response.data;
+      const { message, user, token } = response.data;
 
       //----Set the value to auth user---//
-      auth.loginUser(user, cookies);
+      auth.loginUser(user, token);
 
-      console.log({ message, user, cookies });
+      //console.log(token);
 
       Navigate("/Admin/ViewAuthors", true);
     } catch (error) {

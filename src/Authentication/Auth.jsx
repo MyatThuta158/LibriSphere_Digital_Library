@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setuser] = useState(userData || null);
 
   //------This get cookies data from local storage----//
-  const cookiesData = JSON.parse(localStorage.getItem("cookies"));
+  const cookiesData = JSON.parse(localStorage.getItem("token"));
   const [token, setToken] = useState(cookiesData || null);
 
   //------This insert the user data with use effect into local storeage---//
