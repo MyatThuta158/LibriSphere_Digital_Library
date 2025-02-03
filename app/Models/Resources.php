@@ -22,4 +22,9 @@ class Resources extends Model
     public function Genre(){
         return $this->belongsToMany(Genre::class)->withTimestamps();
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Reviews::class, 'resource_id');
+    }
 }

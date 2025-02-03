@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ResourcesController extends Controller
 {
@@ -25,6 +26,15 @@ class ResourcesController extends Controller
     {
 
         ob_clean(); 
+
+        $user = Auth::user();
+        // dd($user->hasRole('manager'));
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
+             return response()->json(['error' => 'Only managers can register new admins.'], 403);
+         }
+
         //----This is validate the resource store---//
         $validate = $request->validate([
             'code' => 'required',
@@ -119,6 +129,32 @@ class ResourcesController extends Controller
         }catch(\Exception $e){
             return response()->json(['message'=>'Error in data fetching!']);
         }
+
+
+        // try {
+        //     $resource = Resources::find($id); // Fetch the resource from the database.
+    
+        //     if ($resource) {
+        //         // Encode the resource data as a Base64 JSON string.
+        //         $resourceJson = json_encode($resource); // Convert resource to JSON.
+        //         $base64Encoded = base64_encode($resourceJson); // Encode JSON to Base64.
+    
+        //         // Return the Base64 encoded string in the response.
+        //         return response()->json([
+        //             'message' => 'Resource found.',
+        //             'data' => $base64Encoded,
+        //         ]);
+        //     } else {
+        //         return response()->json([
+        //             'message' => 'No data found.',
+        //         ]);
+        //     }
+        // } catch (\Exception $e) {
+        //     return response()->json([
+        //         'message' => 'Error in data fetching!',
+        //         'error' => $e->getMessage(),
+        //     ]);
+        // }
     }
 
     /**
@@ -126,7 +162,13 @@ class ResourcesController extends Controller
      */
     public function update(Request $request, Resources $resources)
     {
-        //
+        $user = Auth::user();
+        // dd($user->hasRole('manager'));
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
+             return response()->json(['error' => 'Only managers can register new admins.'], 403);
+         }
     }
 
     /**
@@ -134,6 +176,35 @@ class ResourcesController extends Controller
      */
     public function destroy(Resources $resources)
     {
-        //
+        $user = Auth::user();
+        // dd($user->hasRole('manager'));
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
+             return response()->json(['error' => 'Only managers can register new admins.'], 403);
+         }
     }
+
+
+    public function search(Request $request)
+        {
+
+           // dd("Hello World");
+            // Validate the request input
+            $request->validate([
+                'name' => 'nullable|string',
+            ]);
+
+        
+            // Get the search keyword from the request
+            $name = $request->input('name');
+           // dd($name);
+            // Query resources by name (case-insensitive)
+            $resources = Resources::when($name, function ($query, $name) {
+                return $query->where('name', 'LIKE', "%{$name}%");
+            })->paginate(8); // You can adjust the pagination as needed
+
+            return response()->json(['data' => $resources], 200);
+        }
+
 }

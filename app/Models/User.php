@@ -24,9 +24,13 @@ class User extends Authenticatable
         'email',
         'password',
         'phone_number',
-        'age',
-        'role'
+        'gender',
+        'DateOfBirth',
+        'role',
+        'ProfilePic',
     ];
+    protected $guard_name = 'api';
+    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -50,4 +54,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'users_id');
+    }
+
+     // Relationship: A User has many Reviews
+     public function reviews()
+     {
+         return $this->hasMany(Reviews::class, 'user_id');
+     }
 }

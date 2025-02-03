@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Genre;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GenreController extends Controller
 {
@@ -12,6 +14,14 @@ class GenreController extends Controller
      */
     public function index()
     {
+        ///-----This get all data----//
+        $user=Auth::user();
+
+        //-----This check if the user can have role and permission to make the below action---///
+        if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
+            return response()->json(['message'=>"Unauthorize"],403);
+        }
+
         $allData=Genre::all();
         return response()->json(['status'=>200,'data'=>$allData]);
     }
@@ -21,38 +31,47 @@ class GenreController extends Controller
      */
     public function store(Request $request)
     {
-        try{
-
-            //----This validate for incoming value to not empty---//
+        Log::info('Received data:', $request->all());
+        $user = Auth::user();
+        Log::info('User:', ['user' => $user]);
+    
+        // if (!$user || !$user->hasRole(['manager','librarian']) || !$user->can('manage genre')) {
+        //     return response()->json(['message' => "Unauthorized"], 403);
+        //     Log::info('Authorize', "Authorize");
+        // }else{
+        //     Log::info('UnAuthorize', "UnAuthorize");
+        // }
+    
+        try {
+            // Change validation to use 'name' column but keep 'genre_name' as input field
             $validatedData = $request->validate([
-               'name' => 'required|unique:genres',
-           ],['name.required'=>'Name is required','name.unique'=>'Name already exists']);
-   
-         
-               $result=Genre::create([
-                     'name'=>$validatedData['name'],
-               ]);
-   
-               if($result){
-                   return response()->json([
-                       'status'=>200,
-                       'message'=>'Data inserted successfully'
-               ]);
-               }
-   
-               //----This return if the data does not enter into database----//
-               return response()->json([
-                   'status'=>500,
-                   'message'=>'Data not inserted'
-               ]);
-           } catch (\Exception $e) {
-               return response()->json([
-                   'status'=>500,
-                   'message'=>'Validation error'
-               ]);
-           }
-    }
+                'genre_name' => 'required|string', // 
+            ], [
+                'genre_name.required' => 'Name is required'
+                
+            ]);
 
+            //dd($validatedData);
+    
+            Log::info('validate data:', $validatedData);
+            $result = Genre::create([
+                'name' => $validatedData['genre_name'], // 
+            ]);
+
+            // dd($result);
+            
+            return response()->json([
+                'status' => 200,
+                'message' => 'Data inserted successfully'
+            ]);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
     /**
      * Display the specified resource.
      */
@@ -73,6 +92,14 @@ class GenreController extends Controller
      */
     public function update(Request $request, $id)
     {
+        ///-----This get all data----//
+        $user=Auth::user();
+
+       // dd($user);
+         //-----This check if the user can have role and permission to make the below action---///
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
+            return response()->json(['message'=>"Unauthorize"],403);
+        }
         try{
             //----This validate for incoming value to not empty---//
             $validatedData = $request->validate([
@@ -108,6 +135,13 @@ class GenreController extends Controller
      */
     public function destroy($id)
     {
+        ///-----This get all data----//
+        $user=Auth::user();
+
+        //-----This check if the user can have role and permission to make the below action---///
+        if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
+            return response()->json(['message'=>"Unauthorize"],403);
+        }
          //---This is for delete processes----//
          try{
             $result=Genre::where('id',$id)->delete();

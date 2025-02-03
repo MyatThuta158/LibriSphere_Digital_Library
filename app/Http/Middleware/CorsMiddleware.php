@@ -17,7 +17,7 @@ class CorsMiddleware
     {
         $response = $next($request);
     
-        $allowedOrigin = ['*']; // Update for production
+        $allowedOrigin = [env('FONTEND_URL','http://localhost:5173')]; // Update for production
         $response->headers->set('Access-Control-Allow-Origin', $allowedOrigin);
         $response->headers->set('Access-Control-Allow-Methods', '*');
         $response->headers->set('Access-Control-Allow-Headers', '*');

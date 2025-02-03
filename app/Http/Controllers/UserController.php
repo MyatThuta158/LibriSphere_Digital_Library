@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Mockery\Expectation;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -23,42 +26,81 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validate=$request->validate([
-            'name'=>'string|required',
-            'email'=>'required|email|string',
-            'password'=>'required|string',
-            'phone_number'=>'required|string',
-            'age'=>'required|string',
-            'role'=>'required|string|in:manager,member,owner,librarian,community_member',
-        ]);
+        ob_clean();
+        //----This validates the request input---//
+        try {
+            $validate = $request->validate([
+                'name' => 'string|required',
+                'email' => 'required|email|string|unique:users,email|max:255', // Ensure email is unique
+                'password' => 'required|string|min:8',
+                'phone_number' => 'required|string',
+                'DateOfBirth' => 'required|string',
+                'gender' => 'required|string|in:male,female',
+                'role' => 'required|string|in:member,community_member',
+                'ProfilePic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image file
+            ]);
+        } catch (ValidationException $e) {
+            // Log the validation errors
+            Log::error('Validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->all() // Optional: Log the input data for debugging purposes
+            ]);
+        
+            // Return the response with validation errors
+            return response()->json([
+                'status' => 'validation_failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+    
+        try {
+            // Handle file upload
+            $photoPath = null;
+            if ($request->hasFile('ProfilePic')) {
+                $photo = $request->file('ProfilePic');
+                $photoPath = $photo->store('users', 'public'); // Store image in 'users' folder
+            }
+    
 
-        //dd($validate['phone_number']);
-        //-----This is the process to add data into database---//
-        try{
-
-            $result=User::create([
-                'name'=>$validate['name'],
-                'email'=>$validate['email'],
-                'password'=>Hash::make($validate['password']),
-                'phone_number'=>$validate['phone_number'],
-                'age'=>$validate['age'],
-                'role'=>$validate['role']
+          //  dd($validate);
+            // Insert data into the database
+            $result = User::create([
+                'name' => $validate['name'],
+                'email' => $validate['email'],
+                'password' => Hash::make($validate['password']),
+                'gender'=>$validate['gender'],
+                'phone_number' => $validate['phone_number'],
+                'DateOfBirth' => $validate['DateOfBirth'],
+                'role' => $validate['role'],
+                'ProfilePic' => $photoPath, // Store the image path
             ]);
 
-            
-
-            //-----Check the result is save in database or not---//
+          
+    
+            //-----Check if the result is saved in the database or not---//
             if (!$result) {
-                return response()->json(['message'=>'User register Unsuccessfully!']);
+                return response()->json(['message' => 'User registration failed!','status'=>500], 500);
             }
-
-            return response()->json(['message'=>'User register successfully!']);
-        }catch(\Exception $e){
-            //------Retruning the error to font end----//
-            return response()->json(['error'=>$e]);
+    
+            // You can also assign the role to the user if needed:
+            $role = Role::where('name', $validate['role'])->first();
+    
+            if ($role) {
+                $result->assignRole($role); // Assign role to the user
+            } else {
+                return response()->json([
+                    'message' => 'The specified role does not exist!',
+                    'status' => 400,
+                ], 400);
+            }
+    
+            return response()->json(['message' => 'User registered successfully!', 'status' => 200,'id'=>$result->id], 200);
+        } catch (\Exception $e) {
+            Log::error('Error occurred while registering user: ' . $e->getMessage()); // Log the error
+            return response()->json(['error' => 'Something went wrong. Please try again later!'], 500);
         }
-
     }
+    
 
     // Login for user//
     public function login(Request $request)

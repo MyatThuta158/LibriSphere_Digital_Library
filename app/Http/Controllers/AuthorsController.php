@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Authors;
 use Dotenv\Exception\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class AuthorsController extends Controller
@@ -13,6 +14,9 @@ class AuthorsController extends Controller
      */
     public function index()
     {
+
+    
+         
         $allData=Authors::all();
         return response()->json(['status'=>200,'data'=>$allData]);
     }
@@ -23,7 +27,14 @@ class AuthorsController extends Controller
     public function store(Request $request)
     {
 
-        // dd($request->all());
+        // $user = Auth::user();
+        // // dd($user->hasRole('manager'));
+  
+        //  // Check if the authenticated user is a 'manager'
+        //  if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage authors')) {
+        //      return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        //  }
+
        try{
 
          //----This validate for incoming value to not empty---//
@@ -75,6 +86,13 @@ class AuthorsController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $user = Auth::user();
+        // dd($user->hasRole('manager'));
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage authors')) {
+             return response()->json(['error' => 'Only managers can register new admins.'], 403);
+         }
         try{
             //----This validate for incoming value to not empty---//
             $validatedData = $request->validate([
@@ -110,6 +128,14 @@ class AuthorsController extends Controller
      */
     public function destroy($id)
     {
+          $user = Auth::user();
+        // dd($user->hasRole('manager'));
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage authors')) {
+             return response()->json(['error' => 'Only managers can register new admins.'], 403);
+         }
+         
         //---This is for delete processes----//
         try{
             $result=Authors::where('id',$id)->delete();

@@ -7,14 +7,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
+
+  
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
+
+        //----This check if the user is authenticate---//
+        $user = Auth::user();
+  
+         // Check if the authenticated user is a 'manager'
+         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
+             return response()->json(['error' => 'Only librarian and manager can view libraian lists!'], 403);
+         }
+         
         //----Get admins with pagination---//
         $data=Admin::paginate(5);
         return response()->json(['data' => $data],200); //-----Return the data to fontend--//
@@ -26,17 +40,36 @@ class AdminController extends Controller
     public function store(Request $request)
     {
         ob_clean();
+       // dd("Hello");
+    //    $user = Auth::user();
+    //   // dd($user->hasRole('manager'));
+
+    //    // Check if the authenticated user is a 'manager'
+    //    if (!$user || !$user->hasRole('manager')||!$user->can('manage users')) {
+    //        return response()->json(['error' => 'Only managers can register new admins.'], 403);
+    //    }
+       
 
         //----This validate the request input---//
-        $validate = $request->validate([
-            'Name' => 'string|required',
-            'Email' => 'required|email|string|unique:admins,Email|max:255',
-            'Password' => 'required|string|min:8',
-            'Role' => 'required|string|in:manager,librarian',
-            'phone_number' => 'required|string',
-            'Gender' => 'required|string|in:male,female,other',
-            'PicImg' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        try {
+            $validate = $request->validate([
+                'Name' => 'string|required',
+                'Email' => 'required|email|string|unique:admins,Email|max:255',
+                'Password' => 'required|string|min:8',
+                'Role' => 'required|string|in:manager,librarian',
+                'phone_number' => 'required|string',
+                'Gender' => 'required|string|in:male,female,other',
+                'PicImg' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'validation_failed',
+                'errors' => $e->errors()
+            ], 422); 
+        }
+
+      
     
         try {
             // Handle file upload
@@ -56,10 +89,23 @@ class AdminController extends Controller
                 'ProfilePicture' => $photoPath,
                 'Role' => $validate['Role'],
             ]);
-
             
     
             if ($result) {
+
+                $role=Role::where('name',$validate['Role'])->first();
+
+                if ($role) {
+                    $result->assignRole($role);
+                }
+                else {
+                    // If role does not exist, throw an error
+                    return response()->json([
+                        'message' => 'The specified role does not exist!',
+                        'status' => 400,
+                    ], 400);
+                }
+
                 return response()->json(['message' => 'User registered successfully!','status'=>200],200);
             } else {
                 return response()->json(['message' => 'User registration failed!'], 500);
