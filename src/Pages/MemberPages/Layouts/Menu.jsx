@@ -1,9 +1,14 @@
 import React from "react";
-import "../../../main.css";
 import { useNavigate } from "react-router-dom";
+import "../../../main.css";
 
 function Menu() {
   const navigate = useNavigate();
+
+  // Check if user data exists in localStorage
+  const user = localStorage.getItem("user"); // Assuming "user" stores member details
+  const isMember = user !== null; // If user exists, they are a member
+
   return (
     <div className="index-page">
       <header
@@ -23,11 +28,9 @@ function Menu() {
             <ul>
               <li>
                 <a
-                  href="#hero"
                   className="active"
-                  onClick={() => {
-                    navigate("/customer/home");
-                  }}
+                  onClick={() => navigate("/customer/home")}
+                  style={{ cursor: "pointer" }}
                 >
                   Home
                 </a>
@@ -37,90 +40,68 @@ function Menu() {
               </li>
               <li>
                 <a
-                  href="#services"
-                  onClick={() => {
-                    navigate("/Customer/Membership");
-                  }}
+                  onClick={() => navigate("/Customer/Membership")}
+                  style={{ cursor: "pointer" }}
                 >
                   Membership
                 </a>
               </li>
-              <li>
-                <a
-                  href="#portfolio"
-                  onClick={() => {
-                    navigate("/customer/resource");
-                  }}
-                >
-                  Resources
-                </a>
-              </li>
-              <li>
-                <a href="#team">Announcement</a>
-              </li>
-              {/* <li className="dropdown">
-                <a href="#">
-                  <span>Dropdown</span>{" "}
-                  <i className="bi bi-chevron-down toggle-dropdown"></i>
-                </a>
-                <ul>
+              {isMember && (
+                <>
                   <li>
-                    <a href="#">Dropdown 1</a>
-                  </li>
-                  <li className="dropdown">
-                    <a href="#">
-                      <span>Deep Dropdown</span>{" "}
-                      <i className="bi bi-chevron-down toggle-dropdown"></i>
+                    <a
+                      onClick={() => navigate("/customer/resource")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Resources
                     </a>
-                    <ul>
-                      <li>
-                        <a href="#">Deep Dropdown 1</a>
-                      </li>
-                      <li>
-                        <a href="#">Deep Dropdown 2</a>
-                      </li>
-                      <li>
-                        <a href="#">Deep Dropdown 3</a>
-                      </li>
-                      <li>
-                        <a href="#">Deep Dropdown 4</a>
-                      </li>
-                      <li>
-                        <a href="#">Deep Dropdown 5</a>
-                      </li>
-                    </ul>
                   </li>
                   <li>
-                    <a href="#">Dropdown 2</a>
+                    <a
+                      onClick={() => navigate("/customer/ResourceRequest")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Resource Request
+                    </a>
                   </li>
                   <li>
-                    <a href="#">Dropdown 3</a>
+                    <a href="#contact">Contact</a>
                   </li>
+
+                  {!isMember && (
+                    <>
+                      <li>
+                        <a
+                          onClick={() => navigate("/Customer/MemberRegister")}
+                          style={{ cursor: "pointer" }}
+                        >
+                          Register
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          onClick={() => navigate("/")}
+                          style={{ cursor: "pointer" }}
+                        >
+                          Login
+                        </a>
+                      </li>
+                    </>
+                  )}
+
                   <li>
-                    <a href="#">Dropdown 4</a>
+                    <a
+                      onClick={() => navigate("/")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      LogOut
+                    </a>
                   </li>
-                </ul>
-              </li> */}
-              <li>
-                <a href="#contact">Contact</a>
-              </li>
+                </>
+              )}
             </ul>
             <i className="mobile-nav-toggle d-xl-none bi bi-list"></i>
           </nav>
-
-          {/* <a className="cta-btn" href="index.html#about">
-            Change Forum
-          </a> */}
-          <div
-            onClick={() => {
-              navigate("/Customer/MemberRegister");
-            }}
-            className="cta-btn"
-            href="index.html#about"
-            style={{ cursor: "pointer" }}
-          >
-            Register Member
-          </div>
         </div>
       </header>
     </div>

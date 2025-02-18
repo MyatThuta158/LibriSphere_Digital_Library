@@ -3,6 +3,7 @@ import { getMembership } from "../../api/membershipApi";
 import Menu from "./Layouts/Menu";
 import { MembershipContext } from "./Context/MembershipContext";
 import { useNavigate } from "react-router-dom";
+import IsSystemUser from "../../CustomHook/IsSystemUser";
 
 const Membership = () => {
   const { userData, membershipPlan, setMembershipPlan, setTotal } =
@@ -10,11 +11,14 @@ const Membership = () => {
   const [memberships, setMemberships] = useState([]); // Store membership plans
   const [selectPlan, setSelectPlan] = useState(null); // Track selected plan
   const navigate = useNavigate();
-  console.log(userData);
+  const [isMember, setIsmember] = useState(false);
 
   // Effect for logging updated membershipPlan
   useEffect(() => {
-    console.log("Updated membership plan:", membershipPlan);
+    const { isMember } = IsSystemUser();
+
+    setIsmember(isMember);
+    // console.log("Updated membership plan:", membershipPlan);
   }, [membershipPlan]);
 
   useEffect(() => {
@@ -34,53 +38,84 @@ const Membership = () => {
   return (
     <div>
       <Menu />
-      <div
-        className="border p-5 w-75 mx-auto rounded-3"
-        style={{ marginTop: "7%" }}
-      >
-        <div className="row w-100 justify-content-center">
-          <h1 className="text-center">Membership Plans</h1>
 
-          {memberships.map((membership, index) => (
-            <div className="col-md-3 border m-3" key={index}>
-              <div className="pricing-card text-center p-4">
-                <h4 className="fw-bold">{membership.PlanName}</h4>
-                <p className="text-muted">{membership.Duration}</p>
-                <h3 className="fw-bold">${membership.Price}</h3>
-                <ul className="list-unstyled">
-                  <li>✔ {membership.Description}</li>
-                </ul>
-
-                {/* Show "Subscribe" button only if no plan is selected */}
-                {selectPlan == null && (
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => {
-                      setSelectPlan({
-                        planName: membership.PlanName,
-                        price: membership.Price,
-                      });
-                      console.log(membership.id); // Log membership id
-                      setMembershipPlan({
-                        id: membership.id,
-                        duration: membership.Duration,
-                      }); // Update membership plan
-                      setTotal(membership.Price);
-                    }}
-                  >
-                    Subscribe
-                  </button>
-                )}
-              </div>
+      {/*--------This is to display membership plans---------*/}
+      <div className="pricing8 py-2" style={{ marginTop: "12vh" }}>
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-md-8 text-center">
+              <h3 className="mb-3">Pricing to make your Work Effective</h3>
+              <h6 className="subtitle font-weight-normal">
+                We offer 100% satisafaction and Money back Guarantee
+              </h6>
             </div>
-          ))}
+
+            {/* row */}
+            <div className="row mt-4">
+              {/* column */}
+
+              {memberships.map((membership, index) => (
+                <div
+                  className="col-md-4 ml-auto pricing-box align-self-center"
+                  key={index}
+                >
+                  <div className="card mb-4">
+                    <div className="card-body p-4 text-center">
+                      <h5 className="font-weight-normal">
+                        {membership.PlanName}
+                      </h5>
+                      <sup>$</sup>
+                      <span className="text-dark display-5">
+                        {membership.Price}
+                      </span>
+                      <h6 className="font-weight-light font-14">
+                        {membership.Duration}
+                      </h6>
+                      <p className="mt-4">{membership.Description}</p>
+                    </div>
+                    {/* Show "CHOOSE PLAN" button only if no plan is selected */}
+                    {selectPlan == null && isMember == true && (
+                      <button
+                        className="btn btn-info-gradiant p-3 btn-block border-0 text-white"
+                        onClick={() => {
+                          setSelectPlan({
+                            planName: membership.PlanName,
+                            price: membership.Price,
+                          });
+                          console.log(membership.id); // Log membership id
+                          setMembershipPlan({
+                            id: membership.id,
+                            duration: membership.Duration,
+                          });
+                          setTotal(membership.Price);
+                        }}
+                      >
+                        CHOOSE PLAN
+                      </button>
+                    )}
+
+                    {selectPlan == null && !isMember && (
+                      <button
+                        className="btn btn-info-gradiant p-3 btn-block border-0 text-white"
+                        onClick={() => {
+                          navigate("/Customer/MemberRegister");
+                        }}
+                      >
+                        CHOOSE PLAN
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Show Subscription Summary & Cancel Button if a plan is selected */}
       {selectPlan !== null && (
-        <div className="container d-flex justify-content-center mt-5">
-          <div className="border rounded p-3 w-50">
+        <div className="container d-flex justify-content-center mt-1">
+          <div className="border rounded p-3 w-100">
             <div className="d-flex justify-content-between">
               <p className="mb-1">{selectPlan.planName}</p>
               <p className="mb-1">${selectPlan.price}</p>
@@ -93,17 +128,19 @@ const Membership = () => {
 
             {/* Go to Payment Link */}
 
-            {/* Cancel Button */}
-            <button
-              className="btn btn-danger w-100 mt-3"
-              onClick={() => {
-                setSelectPlan(null);
-                setMembershipPlan(null);
-                setTotal(null);
-              }} // Reset selection
-            >
-              Cancel Subscription
-            </button>
+            <div className="d-flex justify-content-center">
+              {/* Cancel Button */}
+              <button
+                className="btn btn-danger w-75 mt-3"
+                onClick={() => {
+                  setSelectPlan(null);
+                  setMembershipPlan(null);
+                  setTotal(null);
+                }} // Reset selection
+              >
+                Cancel Subscription
+              </button>
+            </div>
             <div
               className="d-flex justify-content-center mt-3"
               onClick={() => {

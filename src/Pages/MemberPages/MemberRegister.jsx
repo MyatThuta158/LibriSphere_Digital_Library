@@ -3,11 +3,17 @@ import { useForm } from "react-hook-form";
 import { MembershipContext } from "./Context/MembershipContext";
 import { useNavigate } from "react-router-dom";
 import Menu from "./Layouts/Menu";
+import { createMember } from "../../api/memberApi";
+import Cookies from "js-cookie";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useAuth } from "../../Authentication/Auth";
+import IsSystemUser from "../../CustomHook/IsSystemUser";
 
 function MemberRegister() {
-  const { userData, setUserData } = useContext(MembershipContext);
-  const [formData, setFormData] = useState(null);
+  const { setUserid } = useContext(MembershipContext);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const auth = useAuth();
 
   const {
     register,
@@ -15,22 +21,45 @@ function MemberRegister() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    const formattedData = {
-      ...data,
-      // profilePic: data.profilePic[0], // Extract File object
-    };
+  const onSubmit = async (data) => {
+    const memberData = new FormData();
 
-    setUserData(formattedData);
+    memberData.append("name", data.name);
+    memberData.append("email", data.email);
+    memberData.append("gender", data.gender);
+    memberData.append("password", data.password);
+    memberData.append("DateOfBirth", data.DateOfBirth);
+    memberData.append("role", "community_member");
+    memberData.append("phone_number", data.phone_number);
 
-    navigate("/Customer/Membership");
+    const response = await createMember(memberData);
+
+    const { message, status, id, token, user } = response;
+
+    if (status === 200) {
+      auth.loginUser(user, token);
+
+      setShowModal(true);
+
+      setUserid(id);
+      console.log("success");
+    } else {
+      console.log(response);
+    }
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+    navigate("/Customer/Membership"); // Redirect after closing modal
   };
 
   useEffect(() => {
-    if (formData) {
-      console.log("Form Data Stored:", formData);
+    const { isMember } = IsSystemUser();
+
+    if (isMember) {
+      navigate("/");
     }
-  }, [formData]);
+  }, []);
 
   return (
     <div>
@@ -150,7 +179,7 @@ function MemberRegister() {
 
                         {/* Gender Field */}
                         <div className="mb-3">
-                          <label className="form-label" htmlFor="role">
+                          <label className="form-label" htmlFor="gender">
                             Gender
                           </label>
                           <select
@@ -191,26 +220,6 @@ function MemberRegister() {
                           )}
                         </div>
 
-                        {/* Profile Picture Upload */}
-                        {/* <div className="mb-3">
-                          <label className="form-label" htmlFor="profilePic">
-                            Profile Picture
-                          </label>
-                          <input
-                            type="file"
-                            id="profilePic"
-                            className="form-control"
-                            {...register("profilePic", {
-                              required: "Profile picture is required",
-                            })}
-                          />
-                          {errors.profilePic && (
-                            <span className="text-danger">
-                              {errors.profilePic.message}
-                            </span>
-                          )}
-                        </div> */}
-
                         {/* Submit Button */}
                         <div className="d-flex justify-content-end pt-3">
                           <button
@@ -221,9 +230,6 @@ function MemberRegister() {
                           </button>
                         </div>
                       </form>
-
-                      {/* Pass Form Data to Payment Component if Needed */}
-                      {/* {formData && <Payment data={formData} />} */}
                     </div>
                   </div>
                 </div>
@@ -232,6 +238,31 @@ function MemberRegister() {
           </div>
         </div>
       </section>
+
+      {/* Bootstrap Success Modal */}
+      {showModal && (
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Registration Successful</h5>
+              </div>
+              <div className="modal-body">
+                <p>Your account has been successfully registered.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleClose}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,15 +3,17 @@ import Menu from "./Layouts/Menu";
 import { useForm } from "react-hook-form";
 import { MembershipContext } from "./Context/MembershipContext";
 import { getPayment } from "../../api/paymenttypeApi";
-import { createMember } from "../../api/memberApi";
+import { changeRole, createMember } from "../../api/memberApi";
 import { createSubscription } from "../../api/subscriptionApi";
 import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
+import IsSystemUser from "../../CustomHook/IsSystemUser";
 
 function Payment() {
   const [paymentTypes, setPaymentTypes] = useState([]);
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const baseUrl = import.meta.env.VITE_API_URL;
-  const { userData, membershipPlan } = useContext(MembershipContext);
+  const { userId, membershipPlan } = useContext(MembershipContext);
   const [message, setMessage] = useState();
   const navigate = useNavigate();
 
@@ -29,6 +31,12 @@ function Payment() {
       .catch((error) => {
         console.error("Error fetching payment types:", error);
       });
+
+    const { isMember } = IsSystemUser();
+
+    if (!isMember) {
+      navigate("/Customer/MemberRegister");
+    }
   }, []);
 
   const onSelectPayment = (paymentType) => {
@@ -41,52 +49,60 @@ function Payment() {
 
   const onSubmit = (data) => {
     const memberRegister = async () => {
-      const memberData = new FormData();
+      const getStorageId = JSON.parse(localStorage.getItem("user"));
 
-      memberData.append("name", userData.name);
-      memberData.append("email", userData.email);
-      memberData.append("gender", userData.gender);
-      memberData.append("password", userData.password);
-      memberData.append("DateOfBirth", userData.DateOfBirth);
-      memberData.append("role", "member");
-      memberData.append("phone_number", userData.phone_number);
+      const idMember = getStorageId.id;
 
-      const response = await createMember(memberData);
+      // console.log("Storage Id", idMember);
+      // console.log("User Id", userId);
 
-      if (response.status === 200) {
-        const subscription = new FormData();
+      const memberId = userId ? userId : idMember;
 
-        // Get current date for MemberStartDate
-        const currentDate = new Date();
-        const formattedStartDate = currentDate.toISOString().split("T")[0];
+      // console.log("Member Id", memberId);
+      const subscription = new FormData();
 
-        // Calculate MemberEndDate by adding membershipPlan duration (in months)
-        const endDate = new Date(currentDate);
-        endDate.setMonth(
-          endDate.getMonth() + parseInt(membershipPlan.duration)
-        );
-        const formattedEndDate = endDate.toISOString().split("T")[0];
+      // Get current date for MemberStartDate
+      const currentDate = new Date();
+      const formattedStartDate = currentDate.toISOString().split("T")[0];
 
-        subscription.append("membership_plans_id", membershipPlan.id);
-        subscription.append("payment__types_id", selectedPaymentType.id);
-        subscription.append("admin_id", 1);
-        subscription.append("users_id", 3); // Hardcoded for now
-        subscription.append("PaymentScreenShot", data.PaymentScreenShot[0]); // File input
-        subscription.append("PaymentAccountName", data.PaymentAccountName);
-        subscription.append("PaymentAccountNumber", data.PaymentAccountNumber);
-        subscription.append("PaymentDate", formattedStartDate);
-        subscription.append("MemberstartDate", formattedStartDate);
-        subscription.append("MemberEndDate", formattedEndDate);
+      // Calculate MemberEndDate by adding membershipPlan duration (in months)
+      const endDate = new Date(currentDate);
+      endDate.setMonth(endDate.getMonth() + parseInt(membershipPlan.duration));
+      const formattedEndDate = endDate.toISOString().split("T")[0];
 
-        const res = await createSubscription(subscription);
+      subscription.append("membership_plans_id", membershipPlan.id);
+      subscription.append("payment__types_id", selectedPaymentType.id);
+      // subscription.append("admin_id", null);
+      subscription.append("users_id", memberId); // Hardcoded for now
+      subscription.append("PaymentScreenShot", data.PaymentScreenShot[0]); // File input
+      subscription.append("PaymentAccountName", data.PaymentAccountName);
+      subscription.append("PaymentAccountNumber", data.PaymentAccountNumber);
+      subscription.append("PaymentDate", formattedStartDate);
+      subscription.append("MemberstartDate", formattedStartDate);
+      subscription.append("MemberEndDate", formattedEndDate);
 
-        if (res.status == 200) {
+      const res = await createSubscription(subscription);
+
+      if (res.status == 200) {
+        const updateMember = {
+          role: "member",
+          userId: memberId,
+        };
+
+        // Update User's Role after successful payment
+        const updateRoleRes = await changeRole(updateMember);
+
+        if (updateRoleRes.status === 200) {
           setMessage("Account Register and subscription successfully!");
+          console.log("User role updated successfully!");
           navigate("/Customer/Home");
+        } else {
+          console.error("Failed to update user role");
         }
       }
 
-      console.log(response.status);
+      console.log(res);
+      console.log(res.status);
     };
 
     memberRegister();
@@ -95,8 +111,8 @@ function Payment() {
   return (
     <div>
       <Menu />
-      <div className="container py-5 h-100" style={{ marginTop: "5%" }}>
-        <div className="row g-4 align-item-center">
+      <div className="container py-5 mt-5">
+        <div className="row g-4 align-items-center">
           {/* Show payment types only if none is selected */}
           {!selectedPaymentType &&
             paymentTypes.map((paymentType, index) => (
@@ -125,36 +141,42 @@ function Payment() {
 
         {/* Payment Details (Only show if selected) */}
         {selectedPaymentType && (
-          <div className="mt-5 d-flex justify-content-center">
-            <div className="card p-3" style={{ width: "30vw" }}>
-              <h3 className="text-center">Payment Details</h3>
-              <p>
-                <strong>Account Name:</strong> {selectedPaymentType.AccountName}
-              </p>
-              <p>
-                <strong>Account Number:</strong>{" "}
-                {selectedPaymentType.AccountNumber}
-              </p>
-              <p>
-                <strong>Bank Name:</strong> {selectedPaymentType.BankName}
-              </p>
-              {selectedPaymentType.QR_Scan && (
-                <div className="text-center">
+          <div className="mt-5">
+            <div className="row justify-content-center">
+              <div className="col-md-6 col-12">
+                <div className="card p-3">
+                  <h3 className="text-center">Payment Details</h3>
                   <p>
-                    <strong>QR Code:</strong>
+                    <strong>Account Name:</strong>{" "}
+                    {selectedPaymentType.AccountName}
                   </p>
-                  <img
-                    src={`${baseUrl}storage/${selectedPaymentType.QR_Scan}`}
-                    alt="QR Code"
-                    style={{ maxWidth: "200px", height: "auto" }}
-                  />
+                  <p>
+                    <strong>Account Number:</strong>{" "}
+                    {selectedPaymentType.AccountNumber}
+                  </p>
+                  <p>
+                    <strong>Bank Name:</strong> {selectedPaymentType.BankName}
+                  </p>
+                  {selectedPaymentType.QR_Scan && (
+                    <div className="text-center">
+                      <p>
+                        <strong>QR Code:</strong>
+                      </p>
+                      <img
+                        src={`${baseUrl}storage/${selectedPaymentType.QR_Scan}`}
+                        alt="QR Code"
+                        className="img-fluid"
+                        style={{ maxWidth: "200px" }}
+                      />
+                    </div>
+                  )}
+                  {/* Cancel Button */}
+                  <div className="text-center mt-3">
+                    <button className="btn btn-danger" onClick={onCancel}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              )}
-              {/* Cancel Button */}
-              <div className="text-center mt-3">
-                <button className="btn btn-danger" onClick={onCancel}>
-                  Cancel
-                </button>
               </div>
             </div>
           </div>

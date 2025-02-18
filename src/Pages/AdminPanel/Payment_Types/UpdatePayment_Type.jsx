@@ -1,31 +1,53 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { createPayment } from "../../../api/paymenttypeApi";
+import { useParams, useNavigate } from "react-router-dom";
+import { getEachPayment, updatePaymentType } from "../../../api/paymenttypeApi";
 
-function AddPayment_Type() {
+function UpdatePayment_Type() {
+  const { id } = useParams();
+  const navigate = useNavigate(); // Initialize navigation
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
+    setValue,
   } = useForm();
-
-  // State to handle alert message and its type (success or danger)
+  const [loading, setLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState(null);
   const [alertType, setAlertType] = useState("");
 
+  useEffect(() => {
+    async function fetchPayment() {
+      try {
+        const response = await getEachPayment(id);
+        if (response.status === 200) {
+          const data = response.data;
+          setValue("PaymentTypeName", data.PaymentTypeName);
+          setValue("AccountName", data.AccountName);
+          setValue("AccountNumber", data.AccountNumber);
+          setValue("BankName", data.BankName);
+        } else {
+          setAlertType("danger");
+          setAlertMessage("Unable to fetch payment type data.");
+        }
+      } catch (error) {
+        setAlertType("danger");
+        setAlertMessage("An error occurred while fetching payment type data.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPayment();
+  }, [id, setValue]);
+
   const onSubmit = (data) => {
     const submit = async () => {
-      // Create a FormData object to handle file uploads
       const formData = new FormData();
-
-      // Append text inputs
       formData.append("PaymentTypeName", data.PaymentTypeName);
       formData.append("AccountName", data.AccountName);
       formData.append("AccountNumber", data.AccountNumber);
       formData.append("BankName", data.BankName);
 
-      // Append file inputs
       if (data.QR_Scan && data.QR_Scan[0]) {
         formData.append("QR_Scan", data.QR_Scan[0]);
       }
@@ -34,21 +56,22 @@ function AddPayment_Type() {
       }
 
       try {
-        // Call the API with the form data
-        const response = await createPayment(formData);
-        console.log(response.message);
-
+        const response = await updatePaymentType(id, formData);
         if (response.status === 200) {
           setAlertType("success");
           setAlertMessage(
-            response.message || "Payment type created successfully."
+            response.message || "Payment type updated successfully."
           );
-          reset();
+
+          // Wait 5 seconds before navigating back
+          setTimeout(() => {
+            navigate(-1);
+          }, 900);
         } else {
           setAlertType("danger");
           setAlertMessage(
             response.message ||
-              "An error occurred while creating the payment type."
+              "An error occurred while updating the payment type."
           );
         }
       } catch (error) {
@@ -60,11 +83,14 @@ function AddPayment_Type() {
     submit();
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container w-75 mx-auto mt-5">
-      <h2 className="text-center mb-4">Payment Type Form</h2>
+      <h2 className="text-center mb-4">Update Payment Type Form</h2>
 
-      {/* Alert Box */}
       {alertMessage && (
         <div
           className={`alert alert-${alertType} alert-dismissible fade show`}
@@ -74,9 +100,8 @@ function AddPayment_Type() {
           <button
             type="button"
             className="close"
-            data-dismiss="alert"
-            aria-label="Close"
             onClick={() => setAlertMessage(null)}
+            aria-label="Close"
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -84,20 +109,19 @@ function AddPayment_Type() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Row 1: Payment Type Name & Account Name */}
         <div className="form-row">
           <div className="form-group col-md-6">
             <label htmlFor="paymentTypeName">Payment Type Name</label>
             <input
               type="text"
+              id="paymentTypeName"
+              placeholder="Enter the payment type name."
               className={`form-control ${
                 errors.PaymentTypeName ? "is-invalid" : ""
               }`}
-              id="paymentTypeName"
               {...register("PaymentTypeName", {
                 required: "Payment Type Name is required",
               })}
-              placeholder="Enter the payment type name."
             />
             {errors.PaymentTypeName && (
               <div className="invalid-feedback">
@@ -110,14 +134,14 @@ function AddPayment_Type() {
             <label htmlFor="accountName">Account Name</label>
             <input
               type="text"
+              id="accountName"
+              placeholder="Enter the account name."
               className={`form-control ${
                 errors.AccountName ? "is-invalid" : ""
               }`}
-              id="accountName"
               {...register("AccountName", {
                 required: "Account Name is required",
               })}
-              placeholder="Enter the account name."
             />
             {errors.AccountName && (
               <div className="invalid-feedback">
@@ -127,20 +151,19 @@ function AddPayment_Type() {
           </div>
         </div>
 
-        {/* Row 2: Account Number & Bank Name */}
         <div className="form-row">
           <div className="form-group col-md-6">
             <label htmlFor="accountNumber">Account Number</label>
             <input
               type="text"
+              id="accountNumber"
+              placeholder="Enter the account number."
               className={`form-control ${
                 errors.AccountNumber ? "is-invalid" : ""
               }`}
-              id="accountNumber"
               {...register("AccountNumber", {
                 required: "Account Number is required",
               })}
-              placeholder="Enter the account number."
             />
             {errors.AccountNumber && (
               <div className="invalid-feedback">
@@ -153,10 +176,10 @@ function AddPayment_Type() {
             <label htmlFor="bankName">Bank Name</label>
             <input
               type="text"
-              className={`form-control ${errors.BankName ? "is-invalid" : ""}`}
               id="bankName"
-              {...register("BankName", { required: "Bank Name is required" })}
               placeholder="Enter the bank name."
+              className={`form-control ${errors.BankName ? "is-invalid" : ""}`}
+              {...register("BankName", { required: "Bank Name is required" })}
             />
             {errors.BankName && (
               <div className="invalid-feedback">{errors.BankName.message}</div>
@@ -164,45 +187,34 @@ function AddPayment_Type() {
           </div>
         </div>
 
-        {/* Row 3: QR Code Image & Bank Logo Image */}
         <div className="form-row">
           <div className="form-group col-md-6">
             <label htmlFor="qrScan">QR Code Image</label>
             <input
               type="file"
-              className={`form-control ${errors.QR_Scan ? "is-invalid" : ""}`}
               id="qrScan"
-              {...register("QR_Scan", {
-                required: "QR Code Image is required",
-              })}
+              className={`form-control ${errors.QR_Scan ? "is-invalid" : ""}`}
+              {...register("QR_Scan")}
             />
-            {errors.QR_Scan && (
-              <div className="invalid-feedback">{errors.QR_Scan.message}</div>
-            )}
           </div>
 
           <div className="form-group col-md-6">
             <label htmlFor="bankLogo">Bank Logo Image</label>
             <input
               type="file"
-              className={`form-control ${errors.BankLogo ? "is-invalid" : ""}`}
               id="bankLogo"
-              {...register("BankLogo", {
-                required: "Bank Logo is required",
-              })}
+              className={`form-control ${errors.BankLogo ? "is-invalid" : ""}`}
+              {...register("BankLogo")}
             />
-            {errors.BankLogo && (
-              <div className="invalid-feedback">{errors.BankLogo.message}</div>
-            )}
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary ">
-          Submit
+        <button type="submit" className="btn btn-primary btn-block">
+          Update
         </button>
       </form>
     </div>
   );
 }
 
-export default AddPayment_Type;
+export default UpdatePayment_Type;

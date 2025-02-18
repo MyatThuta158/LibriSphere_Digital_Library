@@ -142,45 +142,30 @@ function AddResources() {
   const onSubmit = async (data) => {
     const formData = new FormData();
 
-    //console.log(data.Photo);
-
-    // Append simple form data fields
     formData.append("code", data.code);
     formData.append("name", data.name);
     formData.append("date", data.date);
     formData.append("Description", data.desc);
-
-    // Append the author ID
     formData.append("author", selectValue.id);
-
-    // Append selected genres
-    //genreSelectvalue.forEach((genre) => formData.append("genres", genre.id));
     formData.append("genre", JSON.stringify(genreSelectvalue.map((g) => g.id)));
-
-    // Append files
     formData.append("Photo", data.Photo[0]);
     formData.append("file", data.file[0]);
 
-    // Log the formData content for debugging
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-
-    console.log(formData);
+    // Ensure ISBN is always included, even if empty
+    formData.append("ISBN", data.ISBN ?? "");
 
     try {
       const result = await createResource(formData);
-
+      console.log(result);
       if (result.status == 200) {
         console.log("Submitted successfully!");
-
-        reset(); // Reset the form fields to initial state
+        reset();
         setAuthorname("");
         setGenreSelectvalue([]);
         setSelectValue({});
         setImg("");
       } else {
-        console.log("cannot submitted");
+        console.log("Cannot submit");
       }
     } catch (e) {
       console.log(e);
@@ -478,18 +463,29 @@ function AddResources() {
                   </>
                 )}
               </div>
+
               <div className="form-group col-md-6">
-                <label htmlFor="title" className="d-block">
-                  Description
-                </label>
-                <textarea
-                  {...register("desc", {
-                    required: "Description is required!",
-                  })}
-                  className="w-100"
-                  style={{ height: "30vh" }}
-                ></textarea>
+                <label htmlFor="isbn">ISBN</label>
+                <input
+                  type="text"
+                  {...register("ISBN")}
+                  className="form-control"
+                  id="isbn"
+                />
               </div>
+            </div>
+
+            <div className="form-group col-md-12">
+              <label htmlFor="title" className="d-block">
+                Description
+              </label>
+              <textarea
+                {...register("desc", {
+                  required: "Description is required!",
+                })}
+                className="w-100"
+                style={{ height: "30vh" }}
+              ></textarea>
             </div>
 
             <button type="submit" className="btn btn-primary">

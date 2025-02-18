@@ -8,10 +8,14 @@ import {
   MembershipContext,
   MembershipProvider,
 } from "../Pages/MemberPages/Context/MembershipContext";
+import ViewDetailResource from "../Pages/MemberPages/ViewDetailRequest";
 
 import Payment from "../Pages/MemberPages/Payment";
 import ResourceDetail from "../Pages/MemberPages/ResourceDetail";
 import ReadResource from "../Pages/MemberPages/ReadResource";
+import RequestResources from "../Pages/MemberPages/RequestResources";
+import ViewDetailRequest from "../Pages/MemberPages/ViewDetailRequest";
+import Profile from "../Pages/MemberPages/Profile";
 
 function MemberRoute() {
   return (
@@ -48,6 +52,13 @@ function MemberRoute() {
 
       <Route path="/resource/:id" element={<ResourceDetail />} />
       <Route path="/readResource" element={<ReadResource />} />
+
+      {/* This is for request resource route */}
+      <Route path="/ResourceRequest" element={<RequestResources />} />
+      <Route path="/DetailRequest/:id" element={<ViewDetailRequest />} />
+
+      {/* This is for profile route */}
+      <Route path="/Profile" element={<Profile />} />
     </Routes>
   );
 }

@@ -14,6 +14,20 @@ import ViewAdmins from "../Pages/AdminPanel/Admins/ViewAdmins";
 import ResourceDetail from "../Pages/AdminPanel/Resources/ResourceDetail";
 import AddMembershipPlan from "../Pages/AdminPanel/MembershipPlan/AddMembershipPlan";
 import AddPayment_Type from "../Pages/AdminPanel/Payment_Types/AddPayment_Types";
+import ViewRequest from "../Pages/AdminPanel/Resource_Request/ViewRequest";
+import DetailRequest from "../Pages/AdminPanel/Resource_Request/DetailRequest";
+import ViewMemberPayments from "../Pages/AdminPanel/Payments/ViewMemberPayments";
+import DetailMemberPayment from "../Pages/AdminPanel/Payments/DetailMemberPayment";
+import NewMemberReport from "../Pages/AdminPanel/Reports/NewMemberReport";
+import SubscriptionReport from "../Pages/AdminPanel/Reports/SubscriptioinReport";
+import MembershipRevenue from "../Pages/AdminPanel/Reports/MembershipRevenue";
+import TotalRevenueReport from "../Pages/AdminPanel/Reports/TotalRevenueReport";
+import RevenueReport from "../Pages/AdminPanel/Reports/RevenueReport";
+import UpdatePayment_Type from "../Pages/AdminPanel/Payment_Types/UpdatePayment_Type";
+import AllPayment_Types from "../Pages/AdminPanel/Payment_Types/AllPayment_Types";
+import AllMembershipPlan from "../Pages/AdminPanel/MembershipPlan/AllMembershipPlan";
+import UpdateMembershipPlan from "../Pages/AdminPanel/MembershipPlan/UpdateMembershipPlan";
+import PdfViewer from "../Pages/AdminPanel/Resources/test";
 
 function AdminRoute() {
   return (
@@ -40,9 +54,50 @@ function AdminRoute() {
 
         {/* This is for membership routes */}
         <Route path="/Admin/AddMemberships" element={<AddMembershipPlan />} />
+        <Route path="/Admin/AllMemberships" element={<AllMembershipPlan />} />
+        <Route
+          path="/Admin/UpdateMemberships/:id"
+          element={<UpdateMembershipPlan />}
+        />
 
         {/* This is for payment types */}
         <Route path="/Admin/AddPaymentTypes" element={<AddPayment_Type />} />
+        <Route
+          path="/Admin/UpdatePaymentTypes/:id"
+          element={<UpdatePayment_Type />}
+        />
+        {/* This is for request resource routes */}
+        <Route path="/Admin/ViewResourceRequest" element={<ViewRequest />} />
+        <Route
+          path="/Admin/DetailResourceRequest/:id"
+          element={<DetailRequest />}
+        />
+
+        {/* This is the route to check payment */}
+        <Route path="/Admin/ViewPayments" element={<ViewMemberPayments />} />
+        <Route
+          path="/Admin/DetailPayments/:id"
+          element={<DetailMemberPayment />}
+        />
+
+        {/* This is for reports */}
+        <Route path="/Admin/NewMemberReport" element={<NewMemberReport />} />
+        <Route
+          path="/Admin/SubscriptionReport"
+          element={<SubscriptionReport />}
+        />
+
+        <Route path="/Admin/MembershipReport" element={<MembershipRevenue />} />
+
+        <Route
+          path="/Admin/TotalRevenueReport"
+          element={<TotalRevenueReport />}
+        />
+
+        <Route path="/Admin/MembershipRevenue" element={<RevenueReport />} />
+        <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />
+
+        <Route path="/Admin/PdfReader" element={<PdfViewer />} />
       </Route>
     </Routes>
   );

@@ -3,20 +3,34 @@ import { useNavigate, useParams } from "react-router-dom";
 import { detail } from "../../api/resourceApi";
 import Menu from "./Layouts/Menu";
 import axios from "axios";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaEdit, FaTrash } from "react-icons/fa";
+import { resourceReviews } from "../../api/reviewApi";
 
 function ResourceDetail() {
   const { id } = useParams(); // Get resource ID from URL
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
+  const [role, setRole] = useState(null);
+  const [userid, setUserid] = useState(0);
   const [newReview, setNewReview] = useState({
-    ReviewStar: 5,
+    ReviewStar: 0,
     ReviewMessage: "",
   });
   const [hoverStar, setHoverStar] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const baseUrl = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
+
+  // Retrieve the logged in user's id from local storage once
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUserid(parsedUser.id);
+      setRole(parsedUser.role);
+    }
+  }, []);
 
   useEffect(() => {
     const getResource = async () => {
@@ -34,29 +48,77 @@ function ResourceDetail() {
     getResource();
   }, [id]);
 
+  // reviews.map((review, i) =>
+  //   console.log(JSON.parse(review.user_id) === userid)
+  // );
+  // console.log(userid);
+
   const fetchReviews = async () => {
     try {
-      const response = await axios.get(`${baseUrl}/reviews/${id}`);
-      setReviews(response.data.reviews);
+      const resourceReview = await resourceReviews(id);
+      console.log(resourceReview);
+      setReviews(resourceReview.reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     }
   };
 
+  const handleEditReview = (review) => {
+    setEditingReviewId(review.id);
+    setNewReview({
+      ReviewStar: review.ReviewStar,
+      ReviewMessage: review.ReviewMessage,
+    });
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      await axios.delete(`${baseUrl}Reviews/Delete/${reviewId}`, {
+        data: { user_id: userid },
+      });
+      setReviews(reviews.filter((review) => review.id !== reviewId));
+    } catch (error) {
+      console.error("Error deleting review:", error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post(`${baseUrl}Reviews/Add`, {
-        resource_id: id,
-        user_id: 2,
-        ReviewStar: newReview.ReviewStar,
-        ReviewMessage: newReview.ReviewMessage,
-      });
-
-      setReviews([...reviews, response.data.review]); // Update UI with new review
-      setNewReview({ ReviewStar: 5, ReviewMessage: "" }); // Reset form
-    } catch (error) {
-      console.error("Error submitting review:", error);
+    if (editingReviewId) {
+      // Update existing review
+      try {
+        const response = await axios.put(
+          `${baseUrl}Reviews/Update/${editingReviewId}`,
+          {
+            resource_id: id,
+            user_id: userid,
+            ReviewStar: newReview.ReviewStar,
+            ReviewMessage: newReview.ReviewMessage,
+          }
+        );
+        const updatedReviews = reviews.map((review) =>
+          review.id === editingReviewId ? response.data.review : review
+        );
+        setReviews(updatedReviews);
+        setEditingReviewId(null);
+        setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+      } catch (error) {
+        console.error("Error updating review:", error);
+      }
+    } else {
+      // Add new review
+      try {
+        const response = await axios.post(`${baseUrl}Reviews/Add`, {
+          resource_id: id,
+          user_id: userid,
+          ReviewStar: newReview.ReviewStar,
+          ReviewMessage: newReview.ReviewMessage,
+        });
+        setReviews([...reviews, response.data.review]);
+        setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+      } catch (error) {
+        console.error("Error submitting review:", error);
+      }
     }
   };
 
@@ -118,19 +180,62 @@ function ResourceDetail() {
         {/* Display Existing Reviews */}
         {reviews.length > 0 ? (
           reviews.map((review, index) => (
-            <div key={index} className="p-3 border rounded mb-2">
-              <p className="fw-bold">{review.user_name}</p>
-              <div className="d-flex">
-                {[...Array(5)].map((_, i) => (
-                  <FaStar
-                    key={i}
-                    className={
-                      i < review.ReviewStar ? "text-warning" : "text-secondary"
-                    }
-                  />
-                ))}
+            <div key={index} className="p-3 border rounded mb-2 d-flex">
+              <div>
+                <img
+                  src={
+                    review.profile_pic
+                      ? `${baseUrl}storage/${review.profile_pic}`
+                      : "/Customer/pic.jpg"
+                  }
+                  alt={review.user_name}
+                  className="rounded-circle"
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    objectFit: "cover",
+                  }}
+                />
               </div>
-              <p>{review.ReviewMessage}</p>
+              <div className="ms-3 flex-grow-1">
+                <div className="d-flex align-items-center">
+                  <p className="fw-bold mb-0">{review.user_name}</p>
+                  {review.user_id === userid && (
+                    <div className="ms-auto d-flex">
+                      <FaEdit
+                        className="cursor-pointer me-2"
+                        onClick={() => handleEditReview(review)}
+                      />
+                      <FaTrash
+                        className="cursor-pointer"
+                        onClick={() => handleDeleteReview(review.id)}
+                      />
+                    </div>
+                  )}
+
+                  {(role === "manager" || role === "librarian") && (
+                    <div className="ms-auto d-flex">
+                      <FaTrash
+                        className="cursor-pointer"
+                        onClick={() => handleDeleteReview(review.id)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="d-flex">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar
+                      key={i}
+                      className={
+                        i < review.ReviewStar
+                          ? "text-warning"
+                          : "text-secondary"
+                      }
+                    />
+                  ))}
+                </div>
+                <p>{review.ReviewMessage}</p>
+              </div>
             </div>
           ))
         ) : (
@@ -139,7 +244,7 @@ function ResourceDetail() {
 
         {/* Submit Review Form */}
         <div className="mt-4">
-          <h4>Leave a Review</h4>
+          <h4>{editingReviewId ? "Edit Your Review" : "Leave a Review"}</h4>
           <form onSubmit={handleSubmit}>
             <div className="d-flex">
               {[...Array(5)].map((_, i) => {
@@ -163,8 +268,9 @@ function ResourceDetail() {
             </div>
 
             <textarea
-              className="form-control mt-2"
+              className="form-control mt-2 mb-2"
               placeholder="Write your review here..."
+              style={{ height: "20vh" }}
               value={newReview.ReviewMessage}
               onChange={(e) =>
                 setNewReview({ ...newReview, ReviewMessage: e.target.value })
@@ -172,8 +278,8 @@ function ResourceDetail() {
               required
             ></textarea>
 
-            <button type="submit" className="btn btn-primary mt-2">
-              Submit Review
+            <button type="submit" className="btn btn-primary">
+              {editingReviewId ? "Update Review" : "Submit Review"}
             </button>
           </form>
         </div>

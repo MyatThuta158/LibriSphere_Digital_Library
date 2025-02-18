@@ -5,7 +5,9 @@ import Login from "./Pages/Login";
 import AdminMenu from "./Pages/AdminPanel/SideBarMenu";
 import AdminRoute from "./Route/AdminRoute";
 import MemberRoute from "./Route/MemberRoute";
- 
+// main.jsx or index.js
+import "bootstrap/dist/css/bootstrap.min.css";
+
 function App() {
   return (
     <>

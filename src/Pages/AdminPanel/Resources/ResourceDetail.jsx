@@ -12,7 +12,9 @@ function ResourceDetail() {
 
   useEffect(() => {
     // PDF file in the "public" folder
-    setFileUrl(`/1.pdf`);
+    setFileUrl(
+      `http://127.0.0.1:8000/test_files/Jon_Gordon_The_Power_of_a_Positive_Team_Proven_Principles_and_Practices.pdf`
+    );
   }, []);
 
   const onLoadSuccess = ({ numPages }) => {

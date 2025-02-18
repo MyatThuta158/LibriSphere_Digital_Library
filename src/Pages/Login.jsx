@@ -25,14 +25,19 @@ function Login() {
       );
 
       // This get data from response
-      const { message, user, token } = response.data;
+      const { message, user, token, role } = response.data;
 
       //----Set the value to auth user---//
       auth.loginUser(user, token);
 
-      //console.log(token);
+      // console.log(response.data);
+      // console.log(role);
 
-      Navigate("/Admin/ViewAuthors", true);
+      if (role == "admin") {
+        Navigate("/Admin/ViewAuthors", true);
+      } else {
+        Navigate("/Customer/Home");
+      }
     } catch (error) {
       console.error(error.response?.data || error.message);
       console.log("Error");

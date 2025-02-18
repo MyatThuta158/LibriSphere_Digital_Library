@@ -1,29 +1,107 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
 function SideBarMenu() {
   const navigate = useNavigate();
+
+  // Toggle states for each dropdown group
+  const [authorsOpen, setAuthorsOpen] = useState(false);
+  const [genreOpen, setGenreOpen] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(false);
+  const [resourceOpen, setResourceOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
+  const [requestResourceOpen, setRequestResourceOpen] = useState(false);
+  const [paymentType, setPaymenttype] = useState(false);
+
   return (
-    <div>
+    <>
+      {/* Inline CSS */}
+      <style>{`
+        /* Fixed and scrollable sidebar */
+        .navbar-nav.sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: 250px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          background: #4e73df; /* Example background matching "bg-gradient-primary" */
+        }
+        /* Ensure the main content is shifted to the right */
+        #content-wrapper {
+          margin-left: 250px;
+        }
+        /* Dropdown Button styling */
+        .dropdown-btn {
+          background: none;
+          border: none;
+          color: inherit;
+          width: 100%;
+          text-align: left;
+          padding: 0.75rem 1rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          cursor: pointer;
+        }
+        .dropdown-btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        .dropdown-container {
+          list-style: none;
+          padding-left: 1.5rem;
+        }
+        .dropdown-item {
+          background: none;
+          border: none;
+          color: #fff;
+          text-align: left;
+          padding: 0.5rem 0;
+          width: 100%;
+          cursor: pointer;
+        }
+        .dropdown-item:hover {
+          text-decoration: underline;
+        }
+        .sidebar-heading {
+          padding: 0.75rem 1rem;
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          color: #ced4da;
+        }
+        /* Dropdown icon styling */
+        .dropdown-icon {
+          margin-left: auto;
+        }
+      `}</style>
+
       <div id="wrapper">
+        {/* Sidebar */}
         <ul
           className="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion"
           id="accordionSidebar"
         >
-          <a
-            className="sidebar-brand d-flex align-items-center justify-content-center"
-            href="index.html"
-          >
-            <div className="sidebar-brand-icon rotate-n-15">
-              <i className="fas fa-laugh-wink"></i>
-            </div>
-            <div className="sidebar-brand-text mx-3">
-              LibriSphere <sup>Admin Panel</sup>
-            </div>
-          </a>
+          {/* Sidebar Brand */}
+          <li className="nav-item">
+            <a
+              className="sidebar-brand d-flex align-items-center justify-content-center"
+              href="index.html"
+            >
+              <div className="sidebar-brand-icon rotate-n-15">
+                <i className="fas fa-laugh-wink"></i>
+              </div>
+              <div className="sidebar-brand-text mx-3">
+                LibriSphere <sup>Admin Panel</sup>
+              </div>
+            </a>
+          </li>
 
           <hr className="sidebar-divider my-0" />
 
+          {/* Dashboard */}
           <li className="nav-item active">
             <a className="nav-link" href="index.html">
               <i className="fas fa-fw fa-tachometer-alt"></i>
@@ -33,232 +111,534 @@ function SideBarMenu() {
 
           <hr className="sidebar-divider" />
 
-          <div className="sidebar-heading">Authors</div>
-
+          {/* ======= Author Dropdown ======= */}
+          <div className="sidebar-heading">Author</div>
           <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/ViewAuthors")}
-              data-toggle="collapse"
-              data-target="#collapseTwo"
-              aria-expanded="true"
-              aria-controls="collapseTwo"
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setAuthorsOpen(!authorsOpen)}
             >
               <i className="fas fa-fw fa-cog"></i>
-              <span>View Authors</span>
-            </a>
-            <div
-              id="collapseTwo"
-              className="collapse"
-              aria-labelledby="headingTwo"
-              data-parent="#accordionSidebar"
-            >
-              <div className="bg-white py-2 collapse-inner rounded">
-                <h6 className="collapse-header">Custom Components:</h6>
-                <a className="collapse-item" href="buttons.html">
-                  Buttons
-                </a>
-                <a className="collapse-item" href="cards.html">
-                  Cards
-                </a>
-              </div>
-            </div>
-          </li>
-
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              data-toggle="collapse"
-              data-target="#collapseUtilities"
-              aria-expanded="true"
-              onClick={() => navigate("/Admin/AddAuthors")}
-              aria-controls="collapseUtilities"
-            >
-              <i className="fas fa-fw fa-wrench"></i>
-              <span>Add Authors</span>
-            </a>
-            <div
-              id="collapseUtilities"
-              className="collapse"
-              aria-labelledby="headingUtilities"
-              data-parent="#accordionSidebar"
-            >
-              <div className="bg-white py-2 collapse-inner rounded">
-                <h6 className="collapse-header">Custom Utilities:</h6>
-                <a className="collapse-item" href="utilities-color.html">
-                  Colors
-                </a>
-                <a className="collapse-item" href="utilities-border.html">
-                  Borders
-                </a>
-                <a className="collapse-item" href="utilities-animation.html">
-                  Animations
-                </a>
-                <a className="collapse-item" href="utilities-other.html">
-                  Other
-                </a>
-              </div>
-            </div>
+              <span>
+                Authors{" "}
+                {authorsOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {authorsOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/ViewAuthors")}
+                  >
+                    View Authors
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AddAuthors")}
+                  >
+                    Add Authors
+                  </button>
+                </li>
+              </ul>
+            )}
           </li>
 
           <hr className="sidebar-divider" />
+
+          {/* ======= Genre Dropdown ======= */}
           <div className="sidebar-heading">Genre</div>
           <li className="nav-item">
-            <a
-              className="nav-link"
-              href=""
-              onClick={() => navigate("/Admin/AddGenre")}
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setGenreOpen(!genreOpen)}
+            >
+              <i className="fas fa-fw fa-book"></i>
+              <span>
+                Genre
+                {genreOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {genreOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AddGenre")}
+                  >
+                    Add Genre
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/ViewGenre")}
+                  >
+                    View Genre
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
+          {/* ======= Membership Dropdown ======= */}
+          <div className="sidebar-heading">Membership</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setMembershipOpen(!membershipOpen)}
+            >
+              <i className="fas fa-fw fa-user-check"></i>
+              <span>
+                Membership
+                {membershipOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+
+            {membershipOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AddMemberships")}
+                  >
+                    Add Membership
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AllMemberships")}
+                  >
+                    All Memberships
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
+          {/* ======= Resource Dropdown ======= */}
+          <div className="sidebar-heading">Resource</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn "
+              onClick={() => setResourceOpen(!resourceOpen)}
+            >
+              <i className="fas fa-fw fa-folder"></i>
+              <span>
+                Resource{" "}
+                {resourceOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {resourceOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/ViewResource")}
+                  >
+                    View Resources
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AddResource")}
+                  >
+                    Add Resources
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
+          {/* ======= Admin Dropdown ======= */}
+          <div className="sidebar-heading">Admin</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setAdminOpen(!adminOpen)}
+            >
+              <i className="fas fa-fw fa-user-shield"></i>
+              <span>
+                Admin{" "}
+                {adminOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {adminOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/RegisterAdmin")}
+                  >
+                    Register Admin
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/ViewAdmins")}
+                  >
+                    View Admins
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
+          {/* ======= Report Dropdown ======= */}
+          <div className="sidebar-heading">Report</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setReportOpen(!reportOpen)}
             >
               <i className="fas fa-fw fa-chart-area"></i>
-              <span>Add Genre</span>
-            </a>
+              <span>
+                Report{" "}
+                {reportOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {reportOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/NewMemberReport")}
+                  >
+                    New Member
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/MembershipRevenue")}
+                  >
+                    Membership Revenue
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/SubscriptionReport")}
+                  >
+                    SubscriptioinReport
+                  </button>
+                </li>
+              </ul>
+            )}
           </li>
-
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/ViewGenre")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>View Genre</span>
-            </a>
-          </li>
-          <hr className="sidebar-divider" />
-
-          <div className="sidebar-heading">Resource</div>
-
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/ViewResource")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>View Resources</span>
-            </a>
-          </li>
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/AddResource")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>Add Resources</span>
-            </a>
-          </li>
-
-          <hr className="sidebar-divider" />
-
-          <div className="sidebar-heading">Admins</div>
-
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/RegisterAdmin")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>Register Admin</span>
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/ViewAdmins")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>View Admins</span>
-            </a>
-          </li>
-
-          {/* <li className="nav-item">
-            <a className="nav-link" href="tables.html">
-              <i className="fas fa-fw fa-table"></i>
-              <span>Tables</span>
-            </a>
-          </li> */}
 
           <hr className="sidebar-divider" />
 
-          <div className="sidebar-heading">MembershipPlan</div>
-
+          {/* ======= Subscription Dropdown ======= */}
+          <div className="sidebar-heading">Subscription</div>
           <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/AddMemberships")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setSubscriptionOpen(!subscriptionOpen)}
             >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>Add Membership</span>
-            </a>
+              <i className="fas fa-fw fa-money-check-alt"></i>
+              <span>
+                Subscription{" "}
+                {subscriptionOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {subscriptionOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/ViewPayments")}
+                  >
+                    View Payments
+                  </button>
+                </li>
+              </ul>
+            )}
           </li>
 
-          {/* <li className="nav-item">
-            <a
-              className="nav-link collapsed"
-              href="#"
-              onClick={() => navigate("/Admin/ViewAdmins")}
-              data-toggle="collapse"
-              data-target="#collapsePages"
-              aria-expanded="true"
-              aria-controls="collapsePages"
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>View Admins</span>
-            </a>
-          </li> */}
+          <hr className="sidebar-divider" />
 
-          {/* <div className="sidebar-card d-none d-lg-flex">
-            <img
-              className="sidebar-card-illustration mb-2"
-              src="img/undraw_rocket.svg"
-              alt="..."
-            />
-            <p className="text-center mb-2">
-              <strong>SB Admin Pro</strong> is packed with premium features,
-              components, and more!
-            </p>
-            <a
-              className="btn btn-success btn-sm"
-              href="https://startbootstrap.com/theme/sb-admin-pro"
+          {/* ======= Payment type Dropdown ======= */}
+          <div className="sidebar-heading">Payment Type</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setPaymenttype(!paymentType)}
             >
-              Upgrade to Pro!
-            </a>
-          </div> */}
+              <i className="fas fa-fw fa-envelope"></i>
+              <span>
+                Payment Type{" "}
+                {paymentType ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {paymentType && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/AddPaymentTypes")}
+                  >
+                    Add Payment Type
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/AllPaymentTypes")}
+                  >
+                    All PaymentTypes
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
+          {/* ======= Request Resource Dropdown ======= */}
+          <div className="sidebar-heading">Request Resource</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn"
+              onClick={() => setRequestResourceOpen(!requestResourceOpen)}
+            >
+              <i className="fas fa-fw fa-envelope"></i>
+              <span>
+                Request Resource{" "}
+                {requestResourceOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {requestResourceOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item"
+                    onClick={() => navigate("/Admin/ViewResourceRequest")}
+                  >
+                    Requests
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
+        {/* End Sidebar */}
 
+        {/* Main Content Wrapper */}
         <div id="content-wrapper" className="d-flex flex-column">
           <div id="content">
+            {/* Topbar */}
             <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
               <button
                 id="sidebarToggleTop"
@@ -266,331 +646,23 @@ function SideBarMenu() {
               >
                 <i className="fa fa-bars"></i>
               </button>
-
-              {/* <form className="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control bg-light border-0 small"
-                    placeholder="Search for..."
-                    aria-label="Search"
-                    aria-describedby="basic-addon2"
-                  />
-                  <div className="input-group-append">
-                    <button className="btn btn-primary" type="button">
-                      <i className="fas fa-search fa-sm"></i>
-                    </button>
-                  </div>
-                </div>
-              </form> */}
-
-              <ul className="navbar-nav ml-auto">
-                <li className="nav-item dropdown no-arrow d-sm-none">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    id="searchDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <i className="fas fa-search fa-fw"></i>
-                  </a>
-
-                  <div
-                    className="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
-                    aria-labelledby="searchDropdown"
-                  >
-                    <form className="form-inline mr-auto w-100 navbar-search">
-                      <div className="input-group">
-                        <input
-                          type="text"
-                          className="form-control bg-light border-0 small"
-                          placeholder="Search for..."
-                          aria-label="Search"
-                          aria-describedby="basic-addon2"
-                        />
-                        <div className="input-group-append">
-                          <button className="btn btn-primary" type="button">
-                            <i className="fas fa-search fa-sm"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </form>
-                  </div>
-                </li>
-
-                <li className="nav-item dropdown no-arrow mx-1">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    id="alertsDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <i className="fas fa-bell fa-fw"></i>
-
-                    <span className="badge badge-danger badge-counter">3+</span>
-                  </a>
-
-                  <div
-                    className="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                    aria-labelledby="alertsDropdown"
-                  >
-                    <h6 className="dropdown-header">Alerts Center</h6>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="mr-3">
-                        <div className="icon-circle bg-primary">
-                          <i className="fas fa-file-alt text-white"></i>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="small text-gray-500">
-                          December 12, 2019
-                        </div>
-                        <span className="font-weight-bold">
-                          A new monthly report is ready to download!
-                        </span>
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="mr-3">
-                        <div className="icon-circle bg-success">
-                          <i className="fas fa-donate text-white"></i>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="small text-gray-500">
-                          December 7, 2019
-                        </div>
-                        $290.29 has been deposited into your account!
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="mr-3">
-                        <div className="icon-circle bg-warning">
-                          <i className="fas fa-exclamation-triangle text-white"></i>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="small text-gray-500">
-                          December 2, 2019
-                        </div>
-                        Spending Alert: noticed unusually high spending for your
-                        account.
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item text-center small text-gray-500"
-                      href="#"
-                    >
-                      Show All Alerts
-                    </a>
-                  </div>
-                </li>
-
-                <li className="nav-item dropdown no-arrow mx-1">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    id="messagesDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <i className="fas fa-envelope fa-fw"></i>
-
-                    <span className="badge badge-danger badge-counter">7</span>
-                  </a>
-
-                  <div
-                    className="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                    aria-labelledby="messagesDropdown"
-                  >
-                    <h6 className="dropdown-header">Message Center</h6>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="dropdown-list-image mr-3">
-                        <img
-                          className="rounded-circle"
-                          src="img/undraw_profile_1.svg"
-                          alt="..."
-                        />
-                        <div className="status-indicator bg-success"></div>
-                      </div>
-                      <div className="font-weight-bold">
-                        <div className="text-truncate">
-                          Hi there! I am wondering if you can help me with a
-                          problem been having.
-                        </div>
-                        <div className="small text-gray-500">
-                          Emily Fowler · 58m
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="dropdown-list-image mr-3">
-                        <img
-                          className="rounded-circle"
-                          src="img/undraw_profile_2.svg"
-                          alt="..."
-                        />
-                        <div className="status-indicator"></div>
-                      </div>
-                      <div>
-                        <div className="text-truncate">
-                          I have the photos that you ordered last month, how
-                          would you like them sent to you?
-                        </div>
-                        <div className="small text-gray-500">Jae Chun · 1d</div>
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="dropdown-list-image mr-3">
-                        <img
-                          className="rounded-circle"
-                          src="img/undraw_profile_3.svg"
-                        />
-                        <img
-                          className="rounded-circle"
-                          src="img/undraw_profile_3.svg"
-                          alt="..."
-                        />
-                        <div className="status-indicator bg-warning"></div>
-                      </div>
-                      <div>
-                        <div className="text-truncate">
-                          Last report looks great, I am very happy with the
-                          progress so far, keep up the good work!
-                        </div>
-                        <div className="small text-gray-500">
-                          Morgan Alvarez · 2d
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item d-flex align-items-center"
-                      href="#"
-                    >
-                      <div className="dropdown-list-image mr-3">
-                        <img
-                          className="rounded-circle"
-                          src="https://source.unsplash.com/Mv9hjnEUHR4/60x60"
-                        />
-                        <img
-                          className="rounded-circle"
-                          src="https://source.unsplash.com/Mv9hjnEUHR4/60x60"
-                          alt="..."
-                        />
-                      </div>
-                      <div>
-                        <div className="text-truncate">
-                          Am I a good boy? The reason I ask is because someone
-                          told me that people say this to all dogs, even if they
-                          good...
-                        </div>
-                        <div className="small text-gray-500">
-                          Chicken the Dog · 2w
-                        </div>
-                      </div>
-                    </a>
-                    <a
-                      className="dropdown-item text-center small text-gray-500"
-                      href="#"
-                    >
-                      Read More Messages
-                    </a>
-                  </div>
-                </li>
-
-                <div className="topbar-divider d-none d-sm-block"></div>
-
-                <li className="nav-item dropdown no-arrow">
-                  <a
-                    className="nav-link dropdown-toggle"
-                    href="#"
-                    id="userDropdown"
-                    role="button"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                  >
-                    <span className="mr-2 d-none d-lg-inline text-gray-600 small">
-                      Douglas McGee
-                    </span>
-                    <img
-                      className="img-profile rounded-circle"
-                      src="img/undraw_profile.svg"
-                    />
-                  </a>
-
-                  <div
-                    className="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                    aria-labelledby="userDropdown"
-                  >
-                    <a className="dropdown-item" href="#">
-                      <i className="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                      Profile
-                    </a>
-                    <a className="dropdown-item" href="#">
-                      <i className="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                      Settings
-                    </a>
-                    <a className="dropdown-item" href="#">
-                      <i className="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                      Activity Log
-                    </a>
-                    <div className="dropdown-divider"></div>
-                    <a
-                      className="dropdown-item"
-                      href="#"
-                      data-toggle="modal"
-                      data-target="#logoutModal"
-                    >
-                      <i className="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                      Logout
-                    </a>
-                  </div>
-                </li>
-              </ul>
             </nav>
-
+            {/* Main Page Content */}
             <div className="container-fluid">
               <Outlet />
             </div>
           </div>
-
+          {/* Footer */}
           <footer className="sticky-footer bg-white">
             <div className="container my-auto">
               <div className="copyright text-center my-auto">
-                <span>Copyright &copy; Your Website 2021</span>
+                <span>Copyright &copy; LibriSphere 2025</span>
               </div>
             </div>
           </footer>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
