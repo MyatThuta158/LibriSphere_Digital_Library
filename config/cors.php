@@ -15,17 +15,16 @@ return [
     |
     */
 
-
     // 'paths' => ['*'],
-    'paths' => ['api/*', 'sanctum/csrf-cookie','*','file/*'],
-     //'paths' => ['*', 'sanctum/csrf-cookie'],
-     'allowed_methods' => ['*'],
-     'allowed_origins' => [env('FONTEND_URL','http://localhost:5173')],
+    'paths'                    => ['api/*', 'sanctum/csrf-cookie', '*', 'file/*'],
+    //'paths' => ['*', 'sanctum/csrf-cookie'],
+    'allowed_methods'          => ['*'],
+    'allowed_origins'          => [env('FONTEND_URL', 'http://localhost:5173')],
     'allowed_origins_patterns' => [],
-     'allowed_headers' => ['*'],
-    'exposed_headers' => [],
-    'max_age' => 3600,
-    'supports_credentials' => true,
+    'allowed_headers'          => ['*'],
+    'exposed_headers'          => [],
+    'max_age'                  => 3600,
+    'supports_credentials'     => true,
 
 //     'paths' => ['api/*', 'sanctum/csrf-cookie', 'file/*'], // Add your paths
 // 'allowed_origins' => [env('FONTEND_URL')], // Or use '*' for testing
@@ -35,9 +34,5 @@ return [
 //  'exposed_headers' => [],
 //   'max_age' => 3600,
 //     'supports_credentials' => true,
-
-
-
-
 
 ];

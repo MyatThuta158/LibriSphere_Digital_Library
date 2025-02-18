@@ -17,9 +17,11 @@ class GenreController extends Controller
         ///-----This get all data----//
         $user=Auth::user();
 
+        //dd($user->hasRole(['manager','librarian']));
+
         //-----This check if the user can have role and permission to make the below action---///
         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
-            return response()->json(['message'=>"Unauthorize"],403);
+            return response()->json(['message'=>"Unauthorize"],401);
         }
 
         $allData=Genre::all();
@@ -35,12 +37,12 @@ class GenreController extends Controller
         $user = Auth::user();
         Log::info('User:', ['user' => $user]);
     
-        // if (!$user || !$user->hasRole(['manager','librarian']) || !$user->can('manage genre')) {
-        //     return response()->json(['message' => "Unauthorized"], 403);
-        //     Log::info('Authorize', "Authorize");
-        // }else{
-        //     Log::info('UnAuthorize', "UnAuthorize");
-        // }
+        if (!$user || !$user->hasRole(['manager','librarian']) || !$user->can('manage genre')) {
+            return response()->json(['message' => "Unauthorized"], 403);
+            Log::info('Authorize', "Authorize");
+        }else{
+            Log::info('UnAuthorize', "UnAuthorize");
+        }
     
         try {
             // Change validation to use 'name' column but keep 'genre_name' as input field

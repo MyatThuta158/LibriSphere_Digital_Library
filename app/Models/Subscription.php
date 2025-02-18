@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ class Subscription extends Model
     protected $fillable = [
         'admin_id',
         'membership_plans_id',
-        'payment__types_id',
+        'payment_types_id',
         'users_id',
         'PaymentScreenShot',
         'PaymentAccountName',
@@ -20,10 +19,10 @@ class Subscription extends Model
         'PaymentDate',
         'MemberstartDate',
         'MemberEndDate',
+        'PaymentStatus',
     ];
 
     public $timestamps = false;
-
 
     // Relationship with Admin model
     public function admin()
@@ -40,7 +39,7 @@ class Subscription extends Model
     // Relationship with PaymentType model
     public function paymentType()
     {
-        return $this->belongsTo(Payment_Types::class, 'payment__types_id');
+        return $this->belongsTo(Payment_Types::class, 'payment_types_id');
     }
 
     // Relationship with User model

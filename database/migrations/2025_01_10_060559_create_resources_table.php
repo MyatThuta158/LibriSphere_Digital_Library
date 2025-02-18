@@ -16,11 +16,13 @@ return new class extends Migration
             $table->string('code');
             $table->string('name');
             $table->string('publish_date');
+            $table->string('ISBN')->nullable();
             $table->text('cover_photo');
             $table->text('file');
             $table->text('Description');
+            $table->integer('MemberViewCount');
             $table->foreignId('author_id')->constrained('authors')->onDelete('cascade');
-          
+
         });
     }
 

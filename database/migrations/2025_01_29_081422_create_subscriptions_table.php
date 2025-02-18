@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id()->primary()->autoIncrement();
-            $table->foreignId('admin_id')->constrained('admins')->onDelete('cascade');
+            $table->foreignId('admin_id')->nullable()->constrained('admins')->onDelete('cascade');
             $table->foreignId('membership_plans_id')->constrained('membership_plans')->onDelete('cascade');
-            $table->foreignId('payment__types_id')->constrained('payment__types')->onDelete('cascade');
+            $table->foreignId('payment_types_id')->constrained('payment_types')->onDelete('cascade');
             $table->foreignId('users_id')->constrained('users')->onDelete('cascade');
             $table->text('PaymentScreenShot');
             $table->string('PaymentAccountName');
@@ -23,7 +23,8 @@ return new class extends Migration
             $table->string('PaymentDate');
             $table->string('MemberstartDate');
             $table->string('MemberEndDate');
-            
+            $table->string('PaymentStatus');
+
         });
     }
 

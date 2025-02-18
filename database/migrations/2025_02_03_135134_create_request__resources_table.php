@@ -11,8 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('request__resources', function (Blueprint $table) {
-            $table->id();
+        Schema::create('request_resources', function (Blueprint $table) {
+            $table->id()->primary()->autoIncrement();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('Title');
+            $table->string('ISBN')->nullable();
+            $table->string('Author')->nullable();
+            $table->string('Language');
+            $table->string('PublishYear')->nullable();
+            $table->text('Resource_Photo')->nullable();
+            $table->text('Admin_Comment')->nullable();
+            $table->string('NotificationStatus');
             $table->timestamps();
         });
     }
@@ -22,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request__resources');
+        Schema::dropIfExists('request_resources');
     }
 };

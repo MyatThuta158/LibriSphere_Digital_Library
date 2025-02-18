@@ -1,14 +1,13 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Mockery\Expectation;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -18,7 +17,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        return response()->json(['message'=>'Its work']);
+        return response()->json(['message' => 'Its work']);
     }
 
     /**
@@ -27,107 +26,107 @@ class UserController extends Controller
     public function store(Request $request)
     {
         ob_clean();
-        //----This validates the request input---//
         try {
             $validate = $request->validate([
-                'name' => 'string|required',
-                'email' => 'required|email|string|unique:users,email|max:255', // Ensure email is unique
-                'password' => 'required|string|min:8',
+                'name'         => 'string|required',
+                'email'        => 'required|email|string|unique:users,email|max:255',
+                'password'     => 'required|string|min:8',
                 'phone_number' => 'required|string',
-                'DateOfBirth' => 'required|string',
-                'gender' => 'required|string|in:male,female',
-                'role' => 'required|string|in:member,community_member',
-                'ProfilePic' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image file
+                'DateOfBirth'  => 'required|string',
+                'gender'       => 'required|string|in:male,female',
+                'role'         => 'required|string|in:member,community_member',
+                'ProfilePic'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
         } catch (ValidationException $e) {
-            // Log the validation errors
             Log::error('Validation failed', [
                 'errors' => $e->errors(),
-                'input' => $request->all() // Optional: Log the input data for debugging purposes
+                'input'  => $request->all(),
             ]);
-        
-            // Return the response with validation errors
+
             return response()->json([
                 'status' => 'validation_failed',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         }
-    
+
         try {
             // Handle file upload
             $photoPath = null;
             if ($request->hasFile('ProfilePic')) {
-                $photo = $request->file('ProfilePic');
-                $photoPath = $photo->store('users', 'public'); // Store image in 'users' folder
+                $photo     = $request->file('ProfilePic');
+                $photoPath = $photo->store('users', 'public');
             }
-    
 
-          //  dd($validate);
-            // Insert data into the database
-            $result = User::create([
-                'name' => $validate['name'],
-                'email' => $validate['email'],
-                'password' => Hash::make($validate['password']),
-                'gender'=>$validate['gender'],
+            // Insert user data into the database
+            $user = User::create([
+                'name'         => $validate['name'],
+                'email'        => $validate['email'],
+                'password'     => Hash::make($validate['password']),
+                'gender'       => $validate['gender'],
                 'phone_number' => $validate['phone_number'],
-                'DateOfBirth' => $validate['DateOfBirth'],
-                'role' => $validate['role'],
-                'ProfilePic' => $photoPath, // Store the image path
+                'DateOfBirth'  => $validate['DateOfBirth'],
+                'role'         => $validate['role'],
+                'ProfilePic'   => $photoPath,
             ]);
 
-          
-    
-            //-----Check if the result is saved in the database or not---//
-            if (!$result) {
-                return response()->json(['message' => 'User registration failed!','status'=>500], 500);
+            if (! $user) {
+                return response()->json(['message' => 'User registration failed!', 'status' => 500], 500);
             }
-    
-            // You can also assign the role to the user if needed:
+
+            // Assign role to user
             $role = Role::where('name', $validate['role'])->first();
-    
             if ($role) {
-                $result->assignRole($role); // Assign role to the user
+                $user->assignRole($role);
             } else {
                 return response()->json([
                     'message' => 'The specified role does not exist!',
-                    'status' => 400,
+                    'status'  => 400,
                 ], 400);
             }
-    
-            return response()->json(['message' => 'User registered successfully!', 'status' => 200,'id'=>$result->id], 200);
+
+            // Generate Sanctum token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'User registered successfully!',
+                'status'  => 200,
+                'id'      => $user->id,
+                'token'   => $token,
+                'user'    => $user,
+            ], 200);
+
         } catch (\Exception $e) {
-            Log::error('Error occurred while registering user: ' . $e->getMessage()); // Log the error
+            Log::error('Error occurred while registering user: ' . $e->getMessage());
             return response()->json(['error' => 'Something went wrong. Please try again later!'], 500);
         }
     }
-    
 
     // Login for user//
     public function login(Request $request)
     {
-      //-----This is for input validation---//
-        $validate=$request->validate([
-            'email'=>'required|email|string',
-            'password'=>'required|string',
+        //-----This is for input validation---//
+        $validate = $request->validate([
+            'email'    => 'required|email|string',
+            'password' => 'required|string',
         ]);
 
         //---This is for login process---//
-        try{
-            if (!Auth::attempt($validate)) {
-                return response()->json(['message'=>'Invalid login credentials'],\Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
+        try {
+            if (! Auth::attempt($validate)) {
+                return response()->json(['message' => 'Invalid login credentials'], \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
             }
 
-            $user=Auth::user();
-            $token=$user->createToken('token')->plainTextToken;
+            $user  = Auth::user();
+            $token = $user->createToken('token')->plainTextToken;
             //dd($token);
             if ($token != null) {
-                //-----This set the token period as 1 day----//
-                $cookie = cookie('token', $token, 60*24); // 1 day
-                return response()->json(['message'=>'Login successfully!','user'=>$user,'cookies'=>$token])->withCookie($cookie);
+                                                            //-----This set the token period as 1 day----//
+                $cookie = cookie('token', $token, 60 * 24); // 1 day
+                return response()->json(['message' => 'Login successfully!', 'user' => $user, 'cookies' => $token])->withCookie($cookie);
             }
-            return response()->json(['message'=>'Login unsuccessfully!']);
-        }catch(\Exception $e){
-            return response()->json(['error'=>$e]);
+            return response()->json(['message' => 'Login unsuccessfully!']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e]);
         }
     }
 
@@ -139,12 +138,112 @@ class UserController extends Controller
         //
     }
 
+    public function updateRole(Request $request)
+    {
+        try {
+            $validate = $request->validate([
+                'role'   => 'required|string|in:member,community_member',
+                'userId' => 'required|exists:users,id',
+            ]);
+
+            $user = User::findOrFail($validate['userId']);
+
+            // Update role in the database
+            $user->update(['role' => $validate['role']]);
+            $user->syncRoles($validate['role']);
+
+            return response()->json([
+                'message' => 'User role updated successfully!',
+                'status'  => 200,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'  => 'Error occurred while updating the role: ' . $e->getMessage(),
+                'status' => 500,
+            ], 500);
+        }
+    }
+
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function updateInfo(Request $request, string $id)
     {
-        //
+        try {
+            // Validate only the fields you want to update
+            $validatedData = $request->validate([
+                'name'         => 'required|string',
+                'email'        => 'required|email|string|unique:users,email,' . $id,
+                'phone_number' => 'required|string',
+                'DateOfBirth'  => 'required|string',
+                'gender'       => 'required|string|in:male,female',
+
+            ]);
+
+            // Find user by ID
+            $user = User::findOrFail($id);
+
+            //dd($request->all());
+
+            // Update only the allowed fields
+            $result = $user->update($validatedData);
+
+            if (! $result) {
+                return response()->json([
+                    'message' => 'Fail to update user data!',
+                    'status'  => 500,
+
+                ], 500);
+            }
+
+            return response()->json([
+                'message' => 'User updated successfully!',
+                'status'  => 200,
+                'user'    => $user,
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'validation_failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error'  => 'Error occurred while updating user: ' . $e->getMessage(),
+                'status' => 500,
+            ], 500);
+        }
+    }
+
+    //----------This is to update profile picture-----------//
+    public function updateProfilePicture(Request $request, $id)
+    {
+        ob_clean();
+        // Find the user by the provided ID or return a 404 error.
+        $user = User::findOrFail($id);
+
+        // Validate the incoming image file.
+        $request->validate([
+            'ProfilePic' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // If an existing profile picture exists, remove it.
+        if ($user->ProfilePic && Storage::disk('public')->exists($user->ProfilePic)) {
+            Storage::disk('public')->delete($user->ProfilePic);
+        }
+
+        // Handle file upload: store the new profile picture in the 'users' directory.
+        $photo     = $request->file('ProfilePic');
+        $photoPath = $photo->store('users', 'public'); // Stored under storage/app/public/users
+
+        // Update only the ProfilePic field for the user.
+        $user->update(['ProfilePic' => $photoPath]);
+
+        // Return a success response with the URL to the updated profile picture.
+        return response()->json([
+            'message'    => 'Profile picture updated successfully!',
+            'ProfilePic' => $photoPath,
+        ], 200);
     }
 
     /**
@@ -154,4 +253,7 @@ class UserController extends Controller
     {
         //
     }
+
+    // -----------This is for member report----------//
+
 }

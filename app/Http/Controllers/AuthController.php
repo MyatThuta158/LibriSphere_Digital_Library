@@ -38,7 +38,7 @@ class AuthController extends Controller
             $cookie = cookie('token', $token, 60 * 24); // 1 day
            // dd($cookie);
             return response()
-                ->json(['message' => 'Admin login successful!', 'user' => $admin, 'token' => $token])
+                ->json(['message' => 'Admin login successful!', 'user' => $admin, 'token' => $token,'role'=>'admin'])
                 ->withCookie($cookie);
         }
 
@@ -50,7 +50,7 @@ class AuthController extends Controller
             $token = $user->createToken('user_token')->plainTextToken;
             $cookie = cookie('token', $token, 60 * 24); // 1 day
             return response()
-                ->json(['message' => 'User login successful!', 'user' => $user, 'token' => $token])
+                ->json(['message' => 'User login successful!', 'user' => $user, 'token' => $token,'role'=>'member'])
                 ->withCookie($cookie);
         }
 

@@ -20,6 +20,13 @@ class Admin extends Authenticatable
     protected $fillable = ['Name','Email','Password','Role','Gender','PhoneNumber','ProfilePicture'];
     public $timestamps=true;
 
+
+    public static function store(array $data)
+    {
+        return self::create($data);
+    }
+
+    
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class, 'admin_id');

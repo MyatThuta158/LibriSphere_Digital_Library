@@ -18,6 +18,7 @@ class RolePermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'view resources', 'guard_name' => 'api']);
         Permission::firstOrCreate(['name' => 'manage membershipPlans', 'guard_name' => 'api']);
         Permission::firstOrCreate(['name' => 'manage payment_types', 'guard_name' => 'api']);
+        Permission::firstOrCreate(['name' => 'manage request', 'guard_name' => 'api']);
 
         // Roles
         $librarian = Role::firstOrCreate(['name' => 'librarian', 'guard_name' => 'api']);
@@ -26,8 +27,8 @@ class RolePermissionSeeder extends Seeder
         $member = Role::firstOrCreate(['name' => 'community_member', 'guard_name' => 'api']);
 
         // Assign Permissions
-        $librarian->syncPermissions(['manage resources','manage membershipPlans','manage payment_types', 'manage authors', 'manage genre', 'view resources']);
-        $manager->syncPermissions(['manage resources','manage membershipPlans','manage payment_types', 'manage authors', 'manage genre', 'manage users', 'view resources']);
-        $member->syncPermissions(['view resources']);
+        $librarian->syncPermissions(['manage resources','manage membershipPlans','manage payment_types', 'manage authors', 'manage genre', 'view resources','manage request']);
+        $manager->syncPermissions(['manage resources','manage membershipPlans','manage payment_types', 'manage authors', 'manage genre', 'manage users', 'view resources','manage request']);
+        $member->syncPermissions(['view resources','manage request']);
     }
 }

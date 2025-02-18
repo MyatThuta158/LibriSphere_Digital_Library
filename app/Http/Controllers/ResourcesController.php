@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Resources;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class ResourcesController extends Controller
@@ -14,9 +12,9 @@ class ResourcesController extends Controller
      */
     public function index()
     {
-        $resources=Resources::paginate(8);
+        $resources = Resources::paginate(8);
 
-        return response()->json(['data'=>$resources],200);
+        return response()->json(['data' => $resources], 200);
     }
 
     /**
@@ -25,120 +23,115 @@ class ResourcesController extends Controller
     public function store(Request $request)
     {
 
-        ob_clean(); 
+        ob_clean();
 
         $user = Auth::user();
         // dd($user->hasRole('manager'));
-  
-         // Check if the authenticated user is a 'manager'
-         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
-             return response()->json(['error' => 'Only managers can register new admins.'], 403);
-         }
+
+        // Check if the authenticated user is a 'manager'
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage resources')) {
+            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        }
 
         //----This is validate the resource store---//
         $validate = $request->validate([
-            'code' => 'required',
-            'name' => 'required',
-            'date' => 'required',
-            'Photo' => 'required', // Ensuring it's a valid file
-            'file' => 'required', // Ensuring it's a valid file
-            'author' => 'required|exists:authors,id',
-            'genre' => 'required',
-            'genre.*' => 'required',
+            'code'        => 'required',
+            'name'        => 'required',
+            'date'        => 'required',
+            'Photo'       => 'required', // Ensuring it's a valid file
+            'file'        => 'required', // Ensuring it's a valid file
+            'ISBN'        => 'nullable|string',
+            'author'      => 'required|exists:authors,id',
+            'genre'       => 'required',
+            'genre.*'     => 'required',
             'Description' => 'required',
         ]);
 
-
-    
         //----This is for store the resource---//
         try {
             if ($request->hasFile('Photo') && $request->hasFile('file')) {
                 /////----This is for file storage processes---//
-                $photo = $request->file('Photo');
+                $photo     = $request->file('Photo');
                 $photoPath = $photo->store('userimg', 'public');
 
+                $test = $request->hasFile('Photo');
 
-
-                $test=$request->hasFile('Photo');
-                
-
-                $file = $request->file('file');
+                $file     = $request->file('file');
                 $filePath = $file->store('resources', 'public');
-               
-               
-    
+
                 if ($photoPath && $filePath) {
 
                     $result = Resources::create([
-                        'code'=>$validate['code'],
-                        'name' => $validate['name'],
-                        'publish_date' => $validate['date'],
-                        'cover_photo' => $photoPath,
-                        'file' => $filePath,
-                        'author_id' => $validate['author'],
-                        'Description' => $validate['Description'],
+                        'code'            => $validate['code'],
+                        'name'            => $validate['name'],
+                        'publish_date'    => $validate['date'],
+                        'cover_photo'     => $photoPath,
+                        'ISBN'            => $validate['ISBN'],
+                        'file'            => $filePath,
+                        'author_id'       => $validate['author'],
+                        'Description'     => $validate['Description'],
+                        'MemberViewCount' => 0,
                     ]);
 
-                    $genre=$validate['genre'];
-                    $genreArr=json_decode($genre,true);
+                    $genre    = $validate['genre'];
+                    $genreArr = json_decode($genre, true);
 
                     // Attach genres (many-to-many relation)
                     $result->genre()->attach($genreArr);
-    
+
                     return response()->json([
-                        'status' => 200,
-                        'message' => 'Data inserted successfully'
+                        'status'  => 200,
+                        'message' => 'Data inserted successfully',
                     ]);
                 } else {
-                 
+
                     return response()->json([
-                        'status' => 400,
-                        'message' => 'File path error'
+                        'status'  => 400,
+                        'message' => 'File path error',
                     ]);
                 }
             } else {
                 return response()->json([
-                    'status' => 400,
-                    'message' => 'File problems'
+                    'status'  => 400,
+                    'message' => 'File problems',
                 ]);
             }
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 500,
+                'status'  => 500,
                 'message' => 'Data not inserted',
-               
+                'error'   => $e,
+
             ]);
         }
     }
-    
 
     /**
      * Display the specified resource.
      */
     public function show($id)
     {
-        try{
-            $resource=Resources::find($id); //----This get the resource from database---//
+        try {
+            $resource = Resources::find($id); //----This get the resource from database---//
 
             //dd($resource);
             if ($resource) {
-                return response()->json(['message'=>$resource]); //-----This is the return message with data----//
-            }else{
-                return response()->json(['message'=>"No data found"]); //----This is the message when data not found--//
+                return response()->json(['message' => $resource]); //-----This is the return message with data----//
+            } else {
+                return response()->json(['message' => "No data found"]); //----This is the message when data not found--//
             }
-        }catch(\Exception $e){
-            return response()->json(['message'=>'Error in data fetching!']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error in data fetching!']);
         }
-
 
         // try {
         //     $resource = Resources::find($id); // Fetch the resource from the database.
-    
+
         //     if ($resource) {
         //         // Encode the resource data as a Base64 JSON string.
         //         $resourceJson = json_encode($resource); // Convert resource to JSON.
         //         $base64Encoded = base64_encode($resourceJson); // Encode JSON to Base64.
-    
+
         //         // Return the Base64 encoded string in the response.
         //         return response()->json([
         //             'message' => 'Resource found.',
@@ -164,11 +157,11 @@ class ResourcesController extends Controller
     {
         $user = Auth::user();
         // dd($user->hasRole('manager'));
-  
-         // Check if the authenticated user is a 'manager'
-         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
-             return response()->json(['error' => 'Only managers can register new admins.'], 403);
-         }
+
+        // Check if the authenticated user is a 'manager'
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage resources')) {
+            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        }
     }
 
     /**
@@ -178,33 +171,31 @@ class ResourcesController extends Controller
     {
         $user = Auth::user();
         // dd($user->hasRole('manager'));
-  
-         // Check if the authenticated user is a 'manager'
-         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage resources')) {
-             return response()->json(['error' => 'Only managers can register new admins.'], 403);
-         }
+
+        // Check if the authenticated user is a 'manager'
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage resources')) {
+            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        }
     }
 
-
     public function search(Request $request)
-        {
+    {
 
-           // dd("Hello World");
-            // Validate the request input
-            $request->validate([
-                'name' => 'nullable|string',
-            ]);
+        // dd("Hello World");
+        // Validate the request input
+        $request->validate([
+            'name' => 'nullable|string',
+        ]);
 
-        
-            // Get the search keyword from the request
-            $name = $request->input('name');
-           // dd($name);
-            // Query resources by name (case-insensitive)
-            $resources = Resources::when($name, function ($query, $name) {
-                return $query->where('name', 'LIKE', "%{$name}%");
-            })->paginate(8); // You can adjust the pagination as needed
+        // Get the search keyword from the request
+        $name = $request->input('name');
+        // dd($name);
+        // Query resources by name (case-insensitive)
+        $resources = Resources::when($name, function ($query, $name) {
+            return $query->where('name', 'LIKE', "%{$name}%");
+        })->paginate(8); // You can adjust the pagination as needed
 
-            return response()->json(['data' => $resources], 200);
-        }
+        return response()->json(['data' => $resources], 200);
+    }
 
 }

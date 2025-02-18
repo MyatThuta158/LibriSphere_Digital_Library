@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment__types', function (Blueprint $table) {
+        Schema::create('payment_types', function (Blueprint $table) {
             $table->id()->primary()->autoIncrement();
             $table->string("PaymentTypeName");
             $table->string("AccountName");
             $table->string('AccountNumber');
             $table->string('BankName');
+            $table->text('BankLogo');
             $table->text('QR_Scan');
-          
+
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('payment__types');
+        Schema::dropIfExists('payment_types');
     }
 };
