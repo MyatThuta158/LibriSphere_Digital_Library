@@ -1,21 +1,35 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Resources;
 
 class FileController extends Controller
 {
-    public function download(Request $request)
+    public function download($id)
     {
-        // Define the path to your file. This example uses a file stored in storage/app/public.
-        $filePath = public_path('test_files/Jon_Gordon_The_Power_of_a_Positive_Team_Proven_Principles_and_Practices.pdf');
+        // Retrieve the resource record from the database using the ID
+        $resource = Resources::find($id);
+        //dd($resource);
 
-        // Check if the file exists
+        // If the resource isn’t found, return an error response
+        if (! $resource) {
+            return response()->json(['error' => 'Resource not found'], 404);
+        }
+
+        // Construct the file path using the file attribute from the resource record.
+        // Assuming the file attribute stores the filename (e.g., "Jon_Gordon_The_Power_of_a_Positive_Team_Proven_Principles_and_Practices.pdf")
+        $filePath = public_path('storage/' . $resource->file);
+
+        // Check if the file exists on the server
         if (! file_exists($filePath)) {
             return response()->json(['error' => 'File not found'], 404);
         }
 
-        // Return the file as a download response with an optional custom file name
-        return response()->download($filePath, 'downloaded_sample.pdf');
+        // Optionally, set a custom download name. For example, you might use the resource name:
+        $downloadName = $resource->name . '.' . pathinfo($resource->file, PATHINFO_EXTENSION);
+
+        // Return the file as a download response
+        return response()->download($filePath, $downloadName);
     }
+
 }

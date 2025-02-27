@@ -29,7 +29,7 @@ class SubscriptionController extends Controller
      */
     public function store(Request $request)
     {
-       // ob_clean();
+        ob_clean();
         // Validate the request
         try {
             $validate = $request->validate([
@@ -82,17 +82,20 @@ class SubscriptionController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
+            // Log the error with additional context.
             Log::error('Subscription Store Error: ' . $e->getMessage(), [
                 'trace'        => $e->getTraceAsString(),
                 'request_data' => $request->all(),
             ]);
 
+            // Return the error response.
             return response()->json([
                 'status'  => 500,
                 'message' => 'An error occurred while saving the subscription',
                 'error'   => $e->getMessage(),
             ]);
         }
+
     }
 
     /**
@@ -165,7 +168,7 @@ class SubscriptionController extends Controller
     public function getSubscriptionDetails()
     {
         $subscriptions = Subscription::with(['user:id,name,email,ProfilePic', 'paymentType:id,PaymentTypeName'])
-            ->select('users_id', 'payment__types_id', 'id', 'PaymentDate', 'PaymentStatus')
+            ->select('users_id', 'payment_types_id', 'id', 'PaymentDate', 'PaymentStatus')
             ->paginate(3)                        // Paginate with 10 records per page
             ->through(function ($subscription) { // Use `through` instead of `map()` for pagination
                 return [

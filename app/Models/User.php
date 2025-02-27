@@ -66,6 +66,11 @@ class User extends Authenticatable
          return $this->hasMany(Reviews::class, 'user_id');
      }
 
+     public function forumPosts(){
+        return $this->hasMany(ForumPost::class, 'UserId');
+    }
+    
+
      public function Request_Resource()
     {
         return $this->hasMany(Request_Resources::class, 'Request_Resources_id');

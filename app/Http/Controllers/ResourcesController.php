@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ResourcesController extends Controller
 {
@@ -109,58 +110,117 @@ class ResourcesController extends Controller
     /**
      * Display the specified resource.
      */
+
     public function show($id)
     {
         try {
-            $resource = Resources::find($id); //----This get the resource from database---//
+            // Retrieve the resource along with its author using eager loading
+            $resource = Resources::with('author')->find($id);
 
-            //dd($resource);
             if ($resource) {
-                return response()->json(['message' => $resource]); //-----This is the return message with data----//
+                return response()->json(['data' => $resource], 200);
             } else {
-                return response()->json(['message' => "No data found"]); //----This is the message when data not found--//
+                return response()->json(['message' => 'No data found'], 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error in data fetching!']);
+            return response()->json(['message' => 'Error in data fetching!', 'error' => $e->getMessage()], 500);
         }
-
-        // try {
-        //     $resource = Resources::find($id); // Fetch the resource from the database.
-
-        //     if ($resource) {
-        //         // Encode the resource data as a Base64 JSON string.
-        //         $resourceJson = json_encode($resource); // Convert resource to JSON.
-        //         $base64Encoded = base64_encode($resourceJson); // Encode JSON to Base64.
-
-        //         // Return the Base64 encoded string in the response.
-        //         return response()->json([
-        //             'message' => 'Resource found.',
-        //             'data' => $base64Encoded,
-        //         ]);
-        //     } else {
-        //         return response()->json([
-        //             'message' => 'No data found.',
-        //         ]);
-        //     }
-        // } catch (\Exception $e) {
-        //     return response()->json([
-        //         'message' => 'Error in data fetching!',
-        //         'error' => $e->getMessage(),
-        //     ]);
-        // }
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Resources $resources)
+    public function update(Request $request, $id)
     {
         $user = Auth::user();
-        // dd($user->hasRole('manager'));
 
-        // Check if the authenticated user is a 'manager'
+        // Only managers or librarians with proper permission can update the resource.
         if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage resources')) {
-            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+            return response()->json(['error' => 'Only managers can update resources.'], 403);
+        }
+
+        // Find the resource by $id
+        $resource = Resources::find($id);
+        if (! $resource) {
+            return response()->json(['error' => 'Resource not found'], 404);
+        }
+
+        // Validate inputs: using "sometimes" so that fields not provided remain unchanged.
+        $validated = $request->validate([
+            'code'        => 'sometimes|required',
+            'name'        => 'sometimes|required',
+            'date'        => 'sometimes|required|date',
+            'Photo'       => 'sometimes|file', // Optional file upload
+            'file'        => 'sometimes|file', // Optional file upload
+            'ISBN'        => 'nullable|string',
+            'author'      => 'sometimes|required|exists:authors,id',
+            'genre'       => 'sometimes|required', // Expecting a JSON encoded array
+            'Description' => 'sometimes|required',
+        ]);
+
+        // Build an array of fields to update.
+        $data = [];
+        if ($request->has('code')) {
+            $data['code'] = $request->input('code');
+        }
+        if ($request->has('name')) {
+            $data['name'] = $request->input('name');
+        }
+        if ($request->has('date')) {
+            $data['publish_date'] = $request->input('date');
+        }
+        if ($request->has('ISBN')) {
+            $data['ISBN'] = $request->input('ISBN');
+        }
+        if ($request->has('author')) {
+            $data['author_id'] = $request->input('author');
+        }
+        if ($request->has('Description')) {
+            $data['Description'] = $request->input('Description');
+        }
+
+        // Handle cover photo update.
+        if ($request->hasFile('Photo')) {
+            // Delete the old cover photo if it exists.
+            if ($resource->cover_photo && \Storage::disk('public')->exists($resource->cover_photo)) {
+                \Storage::disk('public')->delete($resource->cover_photo);
+            }
+            $photo               = $request->file('Photo');
+            $photoPath           = $photo->store('userimg', 'public');
+            $data['cover_photo'] = $photoPath;
+        }
+
+        // Handle resource file update.
+        if ($request->hasFile('file')) {
+            // Delete the old resource file if it exists.
+            if ($resource->file && \Storage::disk('public')->exists($resource->file)) {
+                \Storage::disk('public')->delete($resource->file);
+            }
+            $file         = $request->file('file');
+            $filePath     = $file->store('resources', 'public');
+            $data['file'] = $filePath;
+        }
+
+        try {
+            // Update only the provided fields.
+            $resource->update($data);
+
+            // If genres are provided, update the many-to-many relationship.
+            if ($request->has('genre')) {
+                $genreArr = json_decode($request->input('genre'), true);
+                $resource->genre()->sync($genreArr);
+            }
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Resource updated successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Error updating resource',
+                'error'   => $e->getMessage(),
+            ]);
         }
     }
 

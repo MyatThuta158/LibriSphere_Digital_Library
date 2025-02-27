@@ -66,10 +66,12 @@ class ReviewsController extends Controller
     {
         try {
             // Retrieve reviews along with the user's name using a join
-            $reviews = Reviews::select('reviews.*', 'users.name as user_name', 'users.ProfilePic', 'users.id')
+            $reviews = Reviews::select('reviews.*', 'users.name as user_name', 'users.ProfilePic', 'users.id as user_id')
                 ->join('users', 'reviews.user_id', '=', 'users.id')
                 ->where('reviews.resource_id', $resourceId)
                 ->get();
+
+            // dd($reviews);
 
             return response()->json([
                 'status'  => 200,
@@ -103,16 +105,78 @@ class ReviewsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Reviews $reviews)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+            // Validate input only if provided, using 'sometimes'
+            $validated = $request->validate([
+                'ReviewStar'    => 'required|required|integer|min:1|max:5',
+                'ReviewMessage' => 'required|required|string|max:500',
+            ]);
+
+            // Retrieve the review by its ID
+            $review = Reviews::findOrFail($id);
+
+            // Check if the review belongs to the user making the request
+            if ($review->user_id != $request->user_id) {
+                return response()->json([
+                    'status'  => 403,
+                    'message' => 'You are not authorized to update this review.',
+                ], 403);
+            }
+
+            // Prepare data for update, only including fields present in the request
+            $data = [];
+            if ($request->has('ReviewStar')) {
+                $data['ReviewStar'] = $request->ReviewStar;
+            }
+            if ($request->has('ReviewMessage')) {
+                $data['ReviewMessage'] = $request->ReviewMessage;
+            }
+
+            // Update the review using the update() method
+            $review->update($data);
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Review updated successfully!',
+                'review'  => $review,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Failed to update review. Please try again.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Reviews $reviews)
+    public function destroy($id)
     {
-        //
+        try {
+            // Retrieve the review by its ID; if not found, findOrFail throws a ModelNotFoundException
+            $review = Reviews::findOrFail($id);
+
+            //dd($review);
+            // Delete the review
+            $review->delete();
+
+            // Return a success response
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Review deleted successfully!',
+            ], 200);
+        } catch (\Exception $e) {
+            // Return an error response if something goes wrong
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Failed to delete review. Please try again.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
+
 }

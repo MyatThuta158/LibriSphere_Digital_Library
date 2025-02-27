@@ -38,8 +38,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/User/UpdateInfo/{id}', [App\Http\Controllers\UserController::class, 'updateInfo']);
     Route::post('/User/UpdateProfile/{id}', [App\Http\Controllers\UserController::class, 'updateProfilePicture']);
 
+    //-----This is to update resource information------//
+    Route::post('/Admin/UpdateResource/{id}', [App\Http\Controllers\ResourcesController::class, 'update']);
     // -------------This is routes for reviews-------//
     Route::get('/Resource/Reviews/{id}', [App\Http\Controllers\ReviewsController::class, 'getReviewsByResourceId']);
+    Route::post('/Resource/UpdateReviews/{id}', [App\Http\Controllers\ReviewsController::class, 'update']);
+    Route::delete('/Resource/ReviewDelete/{id}', [App\Http\Controllers\ReviewsController::class, 'destroy']);
+
+    // -----------This is the route for file download------------//
+    Route::get('/downloadFile/{id}', [App\Http\Controllers\FileController::class, 'download']);
+
+    //-----------------This is for forum posts---------------//
+    Route::apiResource('posts', App\Http\Controllers\ForumPostController::class);
 });
 
 // Route::get('/file/{filename}', function ($filename) {
@@ -58,7 +68,6 @@ Route::middleware('auth:sanctum')->group(function () {
 //     return Response::file($filePath, $headers);
 // });
 
-Route::get('/downloadFile', [App\Http\Controllers\FileController::class, 'download']);
 //Route::get('/RequestLists',[App\Http\Controllers\RequestResourcesController::class,'show']);
 //Route::post('/Requests', [App\Http\Controllers\RequestResourcesController::class,'store']);
 //Route::apiResource('/admins',App\Http\Controllers\AdminController::class);
