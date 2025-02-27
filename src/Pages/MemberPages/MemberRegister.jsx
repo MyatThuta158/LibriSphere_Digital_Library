@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { MembershipContext } from "./Context/MembershipContext";
 import { useNavigate } from "react-router-dom";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import { createMember } from "../../api/memberApi";
 import Cookies from "js-cookie";
 import "bootstrap/dist/css/bootstrap.min.css";

@@ -28,6 +28,9 @@ import AllPayment_Types from "../Pages/AdminPanel/Payment_Types/AllPayment_Types
 import AllMembershipPlan from "../Pages/AdminPanel/MembershipPlan/AllMembershipPlan";
 import UpdateMembershipPlan from "../Pages/AdminPanel/MembershipPlan/UpdateMembershipPlan";
 import PdfViewer from "../Pages/AdminPanel/Resources/test";
+import ResourceAll from "../Pages/AdminPanel/Resources/ResourceAll";
+import ReadResource from "../Pages/MemberPages/ReadResource";
+import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
 
 function AdminRoute() {
   return (
@@ -47,7 +50,7 @@ function AdminRoute() {
         <Route path="/Admin/AddResource" element={<AddResources />} />
         <Route path="/Admin/ViewResource" element={<ViewResources />} />
         <Route path="/Admin/DetailResource/:id" element={<ResourceDetail />} />
-
+        <Route path="/Admin/UpdateResource/:id" element={<UpdateResources />} />
         {/* This is for admins routes */}
         <Route path="/Admin/RegisterAdmin" element={<RegisterAdmin />} />
         <Route path="/Admin/ViewAdmins" element={<ViewAdmins />} />
@@ -72,6 +75,7 @@ function AdminRoute() {
           path="/Admin/DetailResourceRequest/:id"
           element={<DetailRequest />}
         />
+        <Route path="/Admin/ReadResource/:id" element={<ReadResource />} />
 
         {/* This is the route to check payment */}
         <Route path="/Admin/ViewPayments" element={<ViewMemberPayments />} />

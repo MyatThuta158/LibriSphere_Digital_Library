@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { getMembership } from "../../api/membershipApi";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import { MembershipContext } from "./Context/MembershipContext";
 import { useNavigate } from "react-router-dom";
 import IsSystemUser from "../../CustomHook/IsSystemUser";

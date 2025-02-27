@@ -229,6 +229,65 @@ function SideBarMenu() {
 
           <hr className="sidebar-divider" />
 
+          {/* ======= Resource Dropdown ======= */}
+          <div className="sidebar-heading">Resource</div>
+          <li className="nav-item">
+            <button
+              className="nav-link dropdown-btn "
+              onClick={() => setResourceOpen(!resourceOpen)}
+            >
+              <i className="fas fa-fw fa-folder"></i>
+              <span>
+                Resource{" "}
+                {resourceOpen ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-up-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi float-end me-4 bi-caret-down-fill"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                  </svg>
+                )}
+              </span>
+            </button>
+            {resourceOpen && (
+              <ul className="dropdown-container">
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/ViewResource")}
+                  >
+                    View Resources
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="dropdown-item p-2"
+                    onClick={() => navigate("/Admin/AddResource")}
+                  >
+                    Add Resources
+                  </button>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <hr className="sidebar-divider" />
+
           {/* ======= Membership Dropdown ======= */}
           <div className="sidebar-heading">Membership</div>
           <li className="nav-item">
@@ -281,65 +340,6 @@ function SideBarMenu() {
                     onClick={() => navigate("/Admin/AllMemberships")}
                   >
                     All Memberships
-                  </button>
-                </li>
-              </ul>
-            )}
-          </li>
-
-          <hr className="sidebar-divider" />
-
-          {/* ======= Resource Dropdown ======= */}
-          <div className="sidebar-heading">Resource</div>
-          <li className="nav-item">
-            <button
-              className="nav-link dropdown-btn "
-              onClick={() => setResourceOpen(!resourceOpen)}
-            >
-              <i className="fas fa-fw fa-folder"></i>
-              <span>
-                Resource{" "}
-                {resourceOpen ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-up-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-down-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
-                  </svg>
-                )}
-              </span>
-            </button>
-            {resourceOpen && (
-              <ul className="dropdown-container">
-                <li>
-                  <button
-                    className="dropdown-item p-2"
-                    onClick={() => navigate("/Admin/ViewResource")}
-                  >
-                    View Resources
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item p-2"
-                    onClick={() => navigate("/Admin/AddResource")}
-                  >
-                    Add Resources
                   </button>
                 </li>
               </ul>

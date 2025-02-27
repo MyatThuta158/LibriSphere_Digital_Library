@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import { useForm } from "react-hook-form";
 import { MembershipContext } from "./Context/MembershipContext";
 import { getPayment } from "../../api/paymenttypeApi";
@@ -8,6 +8,7 @@ import { createSubscription } from "../../api/subscriptionApi";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import IsSystemUser from "../../CustomHook/IsSystemUser";
+import { Modal, Button } from "react-bootstrap";
 
 function Payment() {
   const [paymentTypes, setPaymentTypes] = useState([]);
@@ -50,15 +51,9 @@ function Payment() {
   const onSubmit = (data) => {
     const memberRegister = async () => {
       const getStorageId = JSON.parse(localStorage.getItem("user"));
-
       const idMember = getStorageId.id;
-
-      // console.log("Storage Id", idMember);
-      // console.log("User Id", userId);
-
       const memberId = userId ? userId : idMember;
 
-      // console.log("Member Id", memberId);
       const subscription = new FormData();
 
       // Get current date for MemberStartDate
@@ -71,8 +66,7 @@ function Payment() {
       const formattedEndDate = endDate.toISOString().split("T")[0];
 
       subscription.append("membership_plans_id", membershipPlan.id);
-      subscription.append("payment__types_id", selectedPaymentType.id);
-      // subscription.append("admin_id", null);
+      subscription.append("payment_types_id", selectedPaymentType.id);
       subscription.append("users_id", memberId); // Hardcoded for now
       subscription.append("PaymentScreenShot", data.PaymentScreenShot[0]); // File input
       subscription.append("PaymentAccountName", data.PaymentAccountName);
@@ -182,13 +176,6 @@ function Payment() {
           </div>
         )}
 
-        {/* Success Message Alert */}
-        {message && (
-          <div className="alert alert-success mt-3" role="alert">
-            {message}
-          </div>
-        )}
-
         {/* Form will only be shown after selecting a payment type */}
         {selectedPaymentType && (
           <div className="mt-3">
@@ -256,6 +243,21 @@ function Payment() {
               </button>
             </form>
           </div>
+        )}
+
+        {/* Success Message Modal */}
+        {message && (
+          <Modal show={true} onHide={() => setMessage(null)}>
+            <Modal.Header closeButton>
+              <Modal.Title>Payment Successful</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>{message}</Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setMessage(null)}>
+                Close
+              </Button>
+            </Modal.Footer>
+          </Modal>
         )}
       </div>
     </div>

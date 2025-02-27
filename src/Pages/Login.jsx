@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import { useAuth } from "../Authentication/Auth";
 import { useNavigate } from "react-router-dom";
+import Menu from "./Layouts/Menu";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -46,6 +47,9 @@ function Login() {
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div style={{ overflow: "hidden", zIndex: "1000" }}>
+        <Menu />
+      </div>
       <div className="card p-4 shadow" style={{ width: "400px" }}>
         <h2 className="text-center mb-4">Login</h2>
         <form onSubmit={handleSubmit}>

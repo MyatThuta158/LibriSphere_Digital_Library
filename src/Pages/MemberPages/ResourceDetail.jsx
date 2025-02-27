@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { detail } from "../../api/resourceApi";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import axios from "axios";
 import { FaStar, FaEdit, FaTrash } from "react-icons/fa";
-import { resourceReviews } from "../../api/reviewApi";
+import {
+  resourceReviews,
+  updateReview,
+  deleteReview,
+} from "../../api/reviewApi"; // Import deleteReview
 
 function ResourceDetail() {
   const { id } = useParams(); // Get resource ID from URL
@@ -18,11 +22,14 @@ function ResourceDetail() {
     ReviewMessage: "",
   });
   const [hoverStar, setHoverStar] = useState(null);
-  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editingReviewId, setEditingReviewId] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("success"); // "success" or "error"
   const baseUrl = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  // Retrieve the logged in user's id from local storage once
+  // Retrieve the logged in user's id and role from local storage once
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -36,7 +43,7 @@ function ResourceDetail() {
     const getResource = async () => {
       try {
         const response = await detail(id);
-        setResource(response.message);
+        setResource(response.data);
         fetchReviews(); // Fetch existing reviews
       } catch (error) {
         console.error("Error fetching resource:", error);
@@ -48,37 +55,47 @@ function ResourceDetail() {
     getResource();
   }, [id]);
 
-  // reviews.map((review, i) =>
-  //   console.log(JSON.parse(review.user_id) === userid)
-  // );
-  // console.log(userid);
-
   const fetchReviews = async () => {
     try {
       const resourceReview = await resourceReviews(id);
-      console.log(resourceReview);
       setReviews(resourceReview.reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
     }
   };
 
+  // When the edit icon is clicked, initialize the input with the review's current values
   const handleEditReview = (review) => {
-    setEditingReviewId(review.id);
     setNewReview({
       ReviewStar: review.ReviewStar,
       ReviewMessage: review.ReviewMessage,
     });
+    setEditingReviewId(review.id);
   };
 
+  // Cancel editing mode
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+  };
+
+  // Delete review when user clicks the delete icon
   const handleDeleteReview = async (reviewId) => {
     try {
-      await axios.delete(`${baseUrl}Reviews/Delete/${reviewId}`, {
-        data: { user_id: userid },
-      });
-      setReviews(reviews.filter((review) => review.id !== reviewId));
+      // Use the provided deleteReview function
+      await deleteReview(reviewId);
+      // Remove the deleted review from the state
+      setReviews((prevReviews) =>
+        prevReviews.filter((review) => review.id !== reviewId)
+      );
+      setModalMessage("Review deleted successfully!");
+      setModalType("success");
+      setShowModal(true);
     } catch (error) {
       console.error("Error deleting review:", error);
+      setModalMessage("Failed to delete review. Please try again.");
+      setModalType("error");
+      setShowModal(true);
     }
   };
 
@@ -87,23 +104,28 @@ function ResourceDetail() {
     if (editingReviewId) {
       // Update existing review
       try {
-        const response = await axios.put(
-          `${baseUrl}Reviews/Update/${editingReviewId}`,
-          {
-            resource_id: id,
-            user_id: userid,
-            ReviewStar: newReview.ReviewStar,
-            ReviewMessage: newReview.ReviewMessage,
-          }
-        );
+        const updatedData = {
+          reviewid: editingReviewId,
+          resource_id: id,
+          user_id: userid,
+          ReviewStar: newReview.ReviewStar,
+          ReviewMessage: newReview.ReviewMessage,
+        };
+        const response = await updateReview(editingReviewId, updatedData);
         const updatedReviews = reviews.map((review) =>
-          review.id === editingReviewId ? response.data.review : review
+          review.id === editingReviewId ? response.review : review
         );
         setReviews(updatedReviews);
         setEditingReviewId(null);
         setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+        setModalMessage("Review updated successfully!");
+        setModalType("success");
+        setShowModal(true);
       } catch (error) {
         console.error("Error updating review:", error);
+        setModalMessage("Failed to update review. Please try again.");
+        setModalType("error");
+        setShowModal(true);
       }
     } else {
       // Add new review
@@ -116,10 +138,20 @@ function ResourceDetail() {
         });
         setReviews([...reviews, response.data.review]);
         setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+        setModalMessage("Review added successfully!");
+        setModalType("success");
+        setShowModal(true);
       } catch (error) {
         console.error("Error submitting review:", error);
+        setModalMessage("Failed to add review. Please try again.");
+        setModalType("error");
+        setShowModal(true);
       }
     }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
   };
 
   if (loading) {
@@ -149,17 +181,14 @@ function ResourceDetail() {
           <div className="col-md-8">
             <h2 className="fw-bold">{resource.name}</h2>
             <p className="text-muted">By Author ID: {resource.author_id}</p>
-
             <div className="d-flex align-items-center mb-3">
               <span className="badge bg-success">5.0 / 5.0</span>
               <span className="ms-2 text-primary">
                 {reviews.length} Review(s)
               </span>
             </div>
-
             <p className="w-50 text-justify">{resource.Description}</p>
             <p className="fw-bold">Publish Date: {resource.publish_date}</p>
-
             {/* Download Button */}
             <div
               onClick={() => navigate(`/Customer/readResource`)}
@@ -176,8 +205,6 @@ function ResourceDetail() {
       {/* Reviews Section */}
       <div className="container">
         <h3>User Reviews</h3>
-
-        {/* Display Existing Reviews */}
         {reviews.length > 0 ? (
           reviews.map((review, index) => (
             <div key={index} className="p-3 border rounded mb-2 d-flex">
@@ -212,7 +239,6 @@ function ResourceDetail() {
                       />
                     </div>
                   )}
-
                   {(role === "manager" || role === "librarian") && (
                     <div className="ms-auto d-flex">
                       <FaTrash
@@ -266,7 +292,6 @@ function ResourceDetail() {
                 );
               })}
             </div>
-
             <textarea
               className="form-control mt-2 mb-2"
               placeholder="Write your review here..."
@@ -277,13 +302,64 @@ function ResourceDetail() {
               }
               required
             ></textarea>
-
-            <button type="submit" className="btn btn-primary">
-              {editingReviewId ? "Update Review" : "Submit Review"}
-            </button>
+            <div className="d-flex">
+              <button type="submit" className="btn btn-primary">
+                {editingReviewId ? "Update Review" : "Submit Review"}
+              </button>
+              {editingReviewId && (
+                <button
+                  type="button"
+                  className="btn btn-secondary ms-2"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
         </div>
       </div>
+
+      {/* Modal for Success/Error Messages */}
+      {showModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex="-1"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div
+                className={`modal-header ${
+                  modalType === "success" ? "bg-success" : "bg-danger"
+                } text-white`}
+              >
+                <h5 className="modal-title">
+                  {modalType === "success" ? "Success" : "Error"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={closeModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{modalMessage}</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={closeModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

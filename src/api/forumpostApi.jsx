@@ -1,0 +1,9 @@
+import apiClient from "./apiClient";
+
+//---------this get all posts from api---//
+export const getPosts = (params = {}) =>
+  apiClient.get("/posts", { params }).then((res) => res.data);
+
+//---------this get each post info from api---//
+export const getSinglePosts = (id) =>
+  apiClient.get(`/posts/${id}`).then((res) => res.data);

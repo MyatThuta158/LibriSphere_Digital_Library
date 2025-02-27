@@ -239,9 +239,11 @@ h6 {
 
 .header .logo {
   line-height: 1;
+  display: none;
 }
 
 .header .logo img {
+  display: none;
   max-height: 36px;
   margin-right: 8px;
 }
@@ -853,14 +855,14 @@ h6 {
 /*--------------------------------------------------------------
 # Global Sections
 --------------------------------------------------------------*/
-section,
+/* section,
 .section {
   color: var(--default-color);
   background-color: var(--background-color);
   padding: 60px 0;
   scroll-margin-top: 90px;
   overflow: clip;
-}
+} */
 
 @media (max-width: 1199px) {
   section,

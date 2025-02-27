@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import { useForm } from "react-hook-form";
 import { updatePfinfo, updatePfpic } from "../../api/memberApi"; // Added updatePfpic import
 

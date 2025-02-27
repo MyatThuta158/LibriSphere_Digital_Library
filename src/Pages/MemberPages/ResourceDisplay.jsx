@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import { fetchResource, search } from "../../api/resourceApi";
 import { Link } from "react-router-dom";
 import { Spinner, Alert } from "react-bootstrap";

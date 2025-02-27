@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import Menu from "./Layouts/Menu";
+import Menu from "../Layouts/Menu";
 import {
   changeNotiStatus,
   createRequest,
