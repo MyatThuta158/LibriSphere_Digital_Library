@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ForumPost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 
 class ForumPostController extends Controller
@@ -18,7 +19,7 @@ class ForumPostController extends Controller
             $limit = $request->input('limit', 10);
 
             // Retrieve posts ordered by creation date (latest first) with pagination
-            $posts = ForumPost::orderBy('created_at', 'desc')->paginate($limit);
+            $posts = ForumPost::with('User')->orderBy('created_at', 'desc')->paginate($limit);
 
             return response()->json([
                 'success' => true,
@@ -150,15 +151,16 @@ class ForumPostController extends Controller
     public function show($id)
     {
         try {
-            // Find the post by ID
-            $post = ForumPost::findOrFail($id);
+            // Find the post by ID and include user data
+            $post = ForumPost::with('user')->findOrFail($id);
 
             // Increment the 'views' column by 1
             $post->increment('PostViews');
 
             return response()->json([
-                'status' => 200,
-                'data'   => $post,
+                'status'  => 200,
+                'data'    => $post,
+                'user_id' => $post->user_id, // Retrieve the user_id
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
