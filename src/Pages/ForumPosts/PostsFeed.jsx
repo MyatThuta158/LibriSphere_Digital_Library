@@ -2,72 +2,497 @@ import React, { useEffect, useState } from "react";
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { getPosts } from "../../api/forumpostApi"; // Use your provided function
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { getPosts, uploadPost } from "../../api/forumpostApi";
 import { useNavigate } from "react-router-dom";
 
 function PostsFeed() {
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const limit = 10; // posts per page
+  const limit = 10;
   const navigate = useNavigate();
+  const [flag, setFlag] = useState(true);
+
+  // Modal state for creating a post
+  const [showModal, setShowModal] = useState(false);
+  const [postForm, setPostForm] = useState({
+    Title: "",
+    Description: "",
+    Photo1: null,
+    Photo2: null,
+    Photo3: null,
+  });
+
+  // Upload status messages
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadError, setUploadError] = useState("");
+
+  // Simulated current user; replace with actual auth data as needed
+  const currentUser = {
+    name: "John Doe",
+    ProfilePic: null,
+  };
 
   useEffect(() => {
-    fetchPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (flag) {
+      fetchPosts();
+    }
+  }, [flag]);
 
   const fetchPosts = async () => {
     try {
       const response = await getPosts({ page, limit });
       if (response.success) {
         const paginatedData = response.data;
-        const newPosts = paginatedData.data;
+        const newPosts = paginatedData.data.filter((post) => post.user); // Filter out posts without a user
 
-        // Simply append new posts without filtering duplicates
         setPosts((prevPosts) => [...prevPosts, ...newPosts]);
 
         if (paginatedData.current_page < paginatedData.last_page) {
           setPage(paginatedData.current_page + 1);
         } else {
-          // Reset page to 1 to loop back
-          setPage(1);
+          setHasMore(false);
         }
-      } else {
-        console.error("API error:", response.error);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
   };
 
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    arrows: true,
+  // Modal handlers
+  const openModal = () => {
+    setUploadMessage("");
+    setUploadError("");
+    setShowModal(true);
+  };
+  const closeModal = () => setShowModal(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setPostForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Base URL for your storage images. Adjust if necessary.
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setPostForm((prev) => ({ ...prev, [name]: files[0] }));
+  };
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userId = user.id;
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setFlag(false);
+    // Clear any previous messages
+    setUploadMessage("");
+    setUploadError("");
+
+    const formData = new FormData();
+    formData.append("UserId", userId);
+    formData.append("Title", postForm.Title);
+    formData.append("Description", postForm.Description);
+    if (postForm.Photo1) formData.append("Photo1", postForm.Photo1);
+    if (postForm.Photo2) formData.append("Photo2", postForm.Photo2);
+    if (postForm.Photo3) formData.append("Photo3", postForm.Photo3);
+
+    try {
+      const response = await uploadPost(formData);
+      console.log(response);
+      if (response.success) {
+        // Prepend the new post to the feed
+        // setPosts((prev) => [response.data, ...prev]);
+        setFlag(true);
+        console.log(posts);
+        setUploadMessage("Post uploaded successfully!");
+        // Reset form state
+        setPostForm({
+          Title: "",
+          Description: "",
+          Photo1: null,
+          Photo2: null,
+          Photo3: null,
+        });
+        // Optionally close the modal after a delay
+        setTimeout(() => {
+          closeModal();
+          setUploadMessage("");
+        }, 1500);
+      } else {
+        setUploadError("Failed to upload post.");
+      }
+    } catch (error) {
+      console.error("Error uploading post:", error);
+      setUploadError("Error uploading post.");
+    }
+  };
+
   const baseStorageUrl = "http://127.0.0.1:8000/storage";
+
+  const styles = {
+    pageSection: {
+      display: "flex",
+      background: "#f0f2f5",
+      minHeight: "100vh",
+    },
+    mainContent: {
+      flex: 1,
+      padding: "20px",
+      marginLeft: "20px",
+    },
+    container: {
+      maxWidth: "800px",
+      margin: "0 auto",
+    },
+    // Facebook-style Create Post Box
+    createPostButton: {
+      width: "100%",
+      padding: "14px 20px",
+      background: "#fff",
+      borderRadius: "8px",
+      boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+      border: "1px solid #ddd",
+      cursor: "pointer",
+      marginBottom: "20px",
+      textAlign: "left",
+      fontSize: "1rem",
+      color: "#65676b",
+      display: "flex",
+      alignItems: "center",
+    },
+    // Modal overlay
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+      padding: "20px",
+    },
+    modalContainer: {
+      background: "#fff",
+      borderRadius: "10px",
+      width: "100%",
+      maxWidth: "600px",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+      overflow: "hidden",
+    },
+    modalHeader: {
+      padding: "16px",
+      borderBottom: "1px solid #ddd",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    modalHeaderTitle: {
+      fontSize: "1.25rem",
+      fontWeight: "bold",
+      color: "#050505",
+    },
+    modalCloseButton: {
+      background: "none",
+      border: "none",
+      fontSize: "1.5rem",
+      cursor: "pointer",
+      color: "#65676b",
+    },
+    modalBody: {
+      padding: "16px",
+    },
+    modalUserSection: {
+      display: "flex",
+      alignItems: "center",
+      marginBottom: "16px",
+    },
+    modalUserAvatar: {
+      width: "40px",
+      height: "40px",
+      borderRadius: "50%",
+      objectFit: "cover",
+      marginRight: "10px",
+    },
+    modalTextArea: {
+      width: "100%",
+      border: "none",
+      resize: "none",
+      fontSize: "1rem",
+      outline: "none",
+    },
+    // Additional file inputs styling
+    fileInputGroup: {
+      marginBottom: "16px",
+    },
+    fileInputLabel: {
+      display: "block",
+      marginBottom: "8px",
+      fontWeight: "600",
+      color: "#555",
+    },
+    fileInput: {
+      width: "100%",
+      padding: "8px",
+      border: "1px solid #ccc",
+      borderRadius: "5px",
+      fontSize: "1rem",
+    },
+    modalFooter: {
+      padding: "16px",
+      borderTop: "1px solid #ddd",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    modalFooterButton: {
+      background: "#1877f2",
+      border: "none",
+      color: "#fff",
+      padding: "10px 20px",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontWeight: "bold",
+    },
+    // Photo upload label style
+    photoUploadLabel: {
+      display: "flex",
+      alignItems: "center",
+      cursor: "pointer",
+      color: "#1877f2",
+      fontSize: "0.9rem",
+    },
+    photoUploadInput: {
+      display: "none",
+    },
+    // Styles for post cards (existing feed)
+    postCard: {
+      backgroundColor: "#fff",
+      borderRadius: "8px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      marginBottom: "20px",
+      overflow: "hidden",
+      border: "1px solid #ddd",
+    },
+    postHeader: {
+      display: "flex",
+      alignItems: "center",
+      padding: "16px",
+    },
+    avatar: {
+      width: "50px",
+      height: "50px",
+      borderRadius: "50%",
+      marginRight: "10px",
+      objectFit: "cover",
+    },
+    userInfo: {
+      display: "flex",
+      flexDirection: "column",
+    },
+    userName: {
+      fontWeight: "bold",
+      fontSize: "1rem",
+      marginBottom: "4px",
+    },
+    date: {
+      fontSize: "0.8rem",
+      color: "#666",
+    },
+    bannerImage: {
+      width: "100%",
+      height: "300px",
+      objectFit: "cover",
+    },
+    postContent: {
+      padding: "16px",
+    },
+    postTitle: {
+      fontSize: "1.25rem",
+      fontWeight: "bold",
+      marginBottom: "8px",
+      cursor: "pointer",
+    },
+    postDescription: {
+      fontSize: "1rem",
+      lineHeight: "1.5",
+      color: "#555",
+      marginBottom: "16px",
+    },
+    readMore: {
+      fontSize: "0.9rem",
+      color: "#1877f2",
+      cursor: "pointer",
+      textDecoration: "none",
+      fontWeight: "bold",
+    },
+    // Message styles
+    messageSuccess: {
+      color: "green",
+      marginBottom: "16px",
+      fontWeight: "bold",
+    },
+    messageError: {
+      color: "red",
+      marginBottom: "16px",
+      fontWeight: "bold",
+    },
+  };
+
+  // Function to truncate post descriptions
+  const truncateDescription = (description, postId) => {
+    const words = description.split(" ");
+    if (words.length > 20) {
+      return (
+        <>
+          {words.slice(0, 20).join(" ")}...{" "}
+          <span
+            style={styles.readMore}
+            onClick={() => navigate(`/community/postdetail/${postId}`)}
+          >
+            See More
+          </span>
+        </>
+      );
+    }
+    return description;
+  };
 
   return (
     <HelmetProvider>
       <Helmet>
         <link rel="stylesheet" type="text/css" href="/style/style111.css" />
       </Helmet>
-      <section
-        className="d-flex"
-        style={{ position: "relative", bottom: "10%" }}
-      >
+      <section style={styles.pageSection}>
         <SideBar />
-        <div className="main-content">
-          <div className="container pt-1 mt-1">
+        <div style={styles.mainContent} className="main-content">
+          <div style={styles.container} className="container">
+            {/* Facebook-style Create Post Box */}
+            <div style={styles.createPostButton} onClick={openModal}>
+              <img
+                src={
+                  currentUser.ProfilePic
+                    ? `${baseStorageUrl}/${currentUser.ProfilePic}`
+                    : "/Customer/pic.jpg"
+                }
+                alt="User Avatar"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  marginRight: "10px",
+                  objectFit: "cover",
+                }}
+              />
+              What's on your mind, {currentUser.name}?
+            </div>
+
+            {/* Modal for Creating a Post */}
+            {showModal && (
+              <div style={styles.modalOverlay}>
+                <div style={styles.modalContainer}>
+                  <div style={styles.modalHeader}>
+                    <span style={styles.modalHeaderTitle}>Create Post</span>
+                    <button
+                      style={styles.modalCloseButton}
+                      onClick={closeModal}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                  <div style={styles.modalBody}>
+                    <div style={styles.modalUserSection}>
+                      <img
+                        src={
+                          currentUser.ProfilePic
+                            ? `${baseStorageUrl}/${currentUser.ProfilePic}`
+                            : "/Customer/pic.jpg"
+                        }
+                        alt="User Avatar"
+                        style={styles.modalUserAvatar}
+                      />
+                      <textarea
+                        style={styles.modalTextArea}
+                        placeholder={`What's on your mind, ${currentUser.name}?`}
+                        name="Description"
+                        value={postForm.Description}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    {/* Optional Title Input */}
+                    <div style={{ marginBottom: "16px" }}>
+                      <input
+                        type="text"
+                        placeholder="Title (optional)"
+                        name="Title"
+                        value={postForm.Title}
+                        onChange={handleInputChange}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "6px",
+                          fontSize: "1rem",
+                        }}
+                      />
+                    </div>
+                    {/* Additional file inputs for Photo2 and Photo3 */}
+                    <div style={styles.fileInputGroup}>
+                      <label style={styles.fileInputLabel}>
+                        Upload Photo 1
+                      </label>
+                      <input
+                        type="file"
+                        name="Photo1"
+                        accept="image/*"
+                        style={styles.fileInput}
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                    <div style={styles.fileInputGroup}>
+                      <label style={styles.fileInputLabel}>
+                        Upload Photo 2
+                      </label>
+                      <input
+                        type="file"
+                        name="Photo2"
+                        accept="image/*"
+                        style={styles.fileInput}
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                    <div style={styles.fileInputGroup}>
+                      <label style={styles.fileInputLabel}>
+                        Upload Photo 3
+                      </label>
+                      <input
+                        type="file"
+                        name="Photo3"
+                        accept="image/*"
+                        style={styles.fileInput}
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                    {/* Display success or error message */}
+                    {uploadMessage && (
+                      <div style={styles.messageSuccess}>{uploadMessage}</div>
+                    )}
+                    {uploadError && (
+                      <div style={styles.messageError}>{uploadError}</div>
+                    )}
+                    <div style={styles.modalFooter}>
+                      <button
+                        style={styles.modalFooterButton}
+                        onClick={handleFormSubmit}
+                      >
+                        Post
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <InfiniteScroll
               dataLength={posts.length}
               next={fetchPosts}
@@ -80,72 +505,63 @@ function PostsFeed() {
               }
             >
               {posts.map((post, index) => {
-                // Create an array of available images (non-null values)
-                const images = [post.Photo1, post.Photo2, post.Photo3].filter(
-                  Boolean
-                );
+                const postImage = post.Photo1
+                  ? `${baseStorageUrl}/${post.Photo1}`
+                  : "https://via.placeholder.com/800x300/cccccc/000000?text=No+Image";
                 return (
                   <div
                     key={`${post.ForumPostId}-${index}`}
-                    className="card post-item bg-transparent border-0 mb-2"
+                    style={styles.postCard}
                   >
-                    <a href={`post-details/${post.ForumPostId}`}>
-                      {images.length === 1 && (
-                        <img
-                          className="card-img-top rounded-0"
-                          src={`${baseStorageUrl}/${images[0]}`}
-                          alt={post.Title}
-                        />
-                      )}
-                      {images.length > 1 && (
-                        <Slider {...sliderSettings}>
-                          {images.map((img, idx) => (
-                            <div key={idx}>
-                              <img
-                                className="card-img-top rounded-0"
-                                src={`${baseStorageUrl}/${img}`}
-                                alt={`${post.Title} ${idx + 1}`}
-                              />
-                            </div>
-                          ))}
-                        </Slider>
-                      )}
-                      {/* If no images, nothing is rendered */}
-                    </a>
-                    <div className="card-body px-0">
-                      <h2 className="card-title">
-                        <a
-                          className="text-black opacity-75-onHover"
-                          href={`post-details/${post.ForumPostId}`}
-                        >
-                          {post.Title}
-                        </a>
-                      </h2>
-                      <ul className="post-meta mt-3">
-                        <li className="d-inline-block mr-3">
-                          <span className="fas fa-clock text-primary"></span>
-                          <a className="ml-1" href="#">
-                            {new Date(post.created_at).toLocaleDateString()}
-                          </a>
-                        </li>
-                        <li className="d-inline-block">
-                          <span className="fas fa-list-alt text-primary"></span>
-                          <a className="ml-1" href="#">
-                            Photography
-                          </a>
-                        </li>
-                      </ul>
-                      <p className="card-text my-4">
-                        {post.Description.substring(0, 150)}...
-                      </p>
-                      <a
-                        className="btn btn-primary"
-                        onClick={() => {
-                          navigate(`/community/postdetail/${post.ForumPostId}`);
-                        }}
+                    <div style={styles.postHeader}>
+                      <img
+                        src={
+                          post.user.ProfilePic
+                            ? `${baseStorageUrl}/${post.user.ProfilePic}`
+                            : "/Customer/pic.jpg"
+                        }
+                        alt="User Avatar"
+                        style={styles.avatar}
+                      />
+                      <div style={styles.userInfo}>
+                        <div style={styles.userName}>
+                          {post.user.name || "Anonymous"}
+                        </div>
+                        <div style={styles.date}>
+                          {new Date(post.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <img
+                      src={postImage}
+                      alt={post.Title}
+                      style={styles.bannerImage}
+                    />
+                    <div style={styles.postContent}>
+                      <h2
+                        style={styles.postTitle}
+                        onClick={() =>
+                          navigate(`/community/postdetail/${post.ForumPostId}`)
+                        }
                       >
-                        Read More{" "}
-                      </a>
+                        {post.Title}
+                      </h2>
+                      <p style={styles.postDescription}>
+                        {truncateDescription(
+                          post.Description,
+                          post.ForumPostId
+                        )}
+                      </p>
+                    </div>
+                    <div style={{ padding: "0 16px 16px" }}>
+                      <span
+                        style={styles.readMore}
+                        onClick={() =>
+                          navigate(`/community/postdetail/${post.ForumPostId}`)
+                        }
+                      >
+                        Read More →
+                      </span>
                     </div>
                   </div>
                 );
