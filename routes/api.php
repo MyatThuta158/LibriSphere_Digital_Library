@@ -50,6 +50,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //-----------------This is for forum posts---------------//
     Route::apiResource('posts', App\Http\Controllers\ForumPostController::class);
+    Route::get('/userposts/{id}', [App\Http\Controllers\ForumPostController::class, 'userPosts']);
+
+    //-----------------This is for forum posts discussion---------------//
+    Route::apiResource('discussions', App\Http\Controllers\DiscussionController::class);
 });
 
 // Route::get('/file/{filename}', function ($filename) {

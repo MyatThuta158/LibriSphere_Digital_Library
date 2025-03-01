@@ -23,4 +23,9 @@ class ForumPost extends Model
     {
         return $this->belongsTo(User::class, 'UserId');
     }
+
+    public function discussions()
+    {
+        return $this->hasMany(Discussion::class, 'UserId', 'id');
+    }
 }

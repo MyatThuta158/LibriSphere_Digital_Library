@@ -81,7 +81,7 @@ class ForumPostController extends Controller
                 'PostViews'   => 0,
             ]);
 
-            return response()->json(['success' => true, 'data' => $forumPost], 201);
+            return Response::json(['success' => true, 'data' => $forumPost], 201);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
@@ -196,5 +196,30 @@ class ForumPostController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+
+    public function userPosts($id){
+        try {
+            // Validate that the ID is an integer
+            if (!is_numeric($id)) {
+                return response()->json(['success' => false, 'error' => 'Invalid user ID.'], 400);
+            }
+    
+            // Retrieve posts that belong to the given user ID, ordered by creation date
+            $posts = ForumPost::with('user')
+                ->where('UserId', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+    
+            // Check if the user has any posts
+            if ($posts->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No posts found for this user.'], 404);
+            }
+    
+            return response()->json(['success' => true, 'data' => $posts], 200);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }  
     }
 }

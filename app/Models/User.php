@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -12,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable,HasApiTokens,HasRoles;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -30,7 +29,6 @@ class User extends Authenticatable
         'ProfilePic',
     ];
     protected $guard_name = 'api';
-    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -51,7 +49,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
         ];
     }
 
@@ -60,19 +58,24 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class, 'users_id');
     }
 
-     // Relationship: A User has many Reviews
-     public function reviews()
-     {
-         return $this->hasMany(Reviews::class, 'user_id');
-     }
+    // Relationship: A User has many Reviews
+    public function reviews()
+    {
+        return $this->hasMany(Reviews::class, 'user_id');
+    }
 
-     public function forumPosts(){
+    public function forumPosts()
+    {
         return $this->hasMany(ForumPost::class, 'UserId');
     }
-    
 
-     public function Request_Resource()
+    public function Request_Resource()
     {
         return $this->hasMany(Request_Resources::class, 'Request_Resources_id');
+    }
+
+    public function Discussion()
+    {
+        return $this->hasMany(Discussion::class, 'UserId');
     }
 }
