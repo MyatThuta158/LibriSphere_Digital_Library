@@ -11,3 +11,7 @@ export const getSinglePosts = (id) =>
 //---------this upload posts---//
 export const uploadPost = (data) =>
   apiClient.post(`/posts`, data).then((res) => res.data);
+
+//---------this display posts---//
+export const showUseruploadedPost = (id) =>
+  apiClient.get(`/userposts/${id}`).then((res) => res.data);

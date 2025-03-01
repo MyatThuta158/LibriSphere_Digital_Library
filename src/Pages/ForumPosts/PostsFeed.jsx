@@ -11,7 +11,9 @@ function PostsFeed() {
   const [hasMore, setHasMore] = useState(true);
   const limit = 10;
   const navigate = useNavigate();
-  const [flag, setFlag] = useState(true);
+
+  // Use a refresh counter to trigger a re-fetch when a new post is created
+  const [refreshCount, setRefreshCount] = useState(0);
 
   // Modal state for creating a post
   const [showModal, setShowModal] = useState(false);
@@ -33,11 +35,14 @@ function PostsFeed() {
     ProfilePic: null,
   };
 
+  // When refreshCount changes, reset posts & pagination and fetch posts
   useEffect(() => {
-    if (flag) {
-      fetchPosts();
-    }
-  }, [flag]);
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
+    fetchPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshCount]);
 
   const fetchPosts = async () => {
     try {
@@ -51,7 +56,7 @@ function PostsFeed() {
         if (paginatedData.current_page < paginatedData.last_page) {
           setPage(paginatedData.current_page + 1);
         } else {
-          setHasMore(false);
+          setHasMore(true);
         }
       }
     } catch (error) {
@@ -77,13 +82,13 @@ function PostsFeed() {
     setPostForm((prev) => ({ ...prev, [name]: files[0] }));
   };
 
+  // Retrieve user info from local storage
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user.id;
 
   const handleFormSubmit = async (e) => {
+    setRefreshCount(0);
     e.preventDefault();
-    setFlag(false);
-    // Clear any previous messages
     setUploadMessage("");
     setUploadError("");
 
@@ -99,11 +104,10 @@ function PostsFeed() {
       const response = await uploadPost(formData);
       console.log(response);
       if (response.success) {
-        // Prepend the new post to the feed
-        // setPosts((prev) => [response.data, ...prev]);
-        setFlag(true);
-        console.log(posts);
+        // Increment the refresh counter to trigger the useEffect to re-fetch posts
+        setRefreshCount(1);
         setUploadMessage("Post uploaded successfully!");
+
         // Reset form state
         setPostForm({
           Title: "",
@@ -112,7 +116,8 @@ function PostsFeed() {
           Photo2: null,
           Photo3: null,
         });
-        // Optionally close the modal after a delay
+
+        // Optionally close the modal after a short delay
         setTimeout(() => {
           closeModal();
           setUploadMessage("");
@@ -437,7 +442,7 @@ function PostsFeed() {
                         }}
                       />
                     </div>
-                    {/* Additional file inputs for Photo2 and Photo3 */}
+                    {/* File inputs */}
                     <div style={styles.fileInputGroup}>
                       <label style={styles.fileInputLabel}>
                         Upload Photo 1
@@ -474,7 +479,7 @@ function PostsFeed() {
                         onChange={handleFileChange}
                       />
                     </div>
-                    {/* Display success or error message */}
+                    {/* Display messages */}
                     {uploadMessage && (
                       <div style={styles.messageSuccess}>{uploadMessage}</div>
                     )}
@@ -493,6 +498,7 @@ function PostsFeed() {
                 </div>
               </div>
             )}
+
             <InfiniteScroll
               dataLength={posts.length}
               next={fetchPosts}
