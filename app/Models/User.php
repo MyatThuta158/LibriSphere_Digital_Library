@@ -74,8 +74,13 @@ class User extends Authenticatable
         return $this->hasMany(Request_Resources::class, 'Request_Resources_id');
     }
 
-    public function Discussion()
+    public function discussions()
     {
-        return $this->hasMany(Discussion::class, 'UserId');
+        return $this->hasMany(Discussion::class, 'UserId', 'id');
+    }
+
+    public function votes()
+    {
+        return $this->hasMany(Votes::class);
     }
 }

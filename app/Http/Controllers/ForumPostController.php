@@ -214,7 +214,7 @@ class ForumPostController extends Controller
     
             // Check if the user has any posts
             if ($posts->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'No posts found for this user.'], 404);
+                return Response::json(['success' => false, 'message' => 'No posts found for this user.'], 404);
             }
     
             return response()->json(['success' => true, 'data' => $posts], 200);

@@ -28,4 +28,9 @@ class ForumPost extends Model
     {
         return $this->hasMany(Discussion::class, 'UserId', 'id');
     }
+
+    public function votes()
+    {
+        return $this->hasMany(Votes::class);
+    }
 }

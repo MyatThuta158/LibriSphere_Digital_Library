@@ -54,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //-----------------This is for forum posts discussion---------------//
     Route::apiResource('discussions', App\Http\Controllers\DiscussionController::class);
+
+    //-----------------This is for votes---------------//
+    Route::apiResource('/votes', App\Http\Controllers\VotesController::class);
 });
 
 // Route::get('/file/{filename}', function ($filename) {
