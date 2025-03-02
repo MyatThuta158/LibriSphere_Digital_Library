@@ -366,9 +366,7 @@ function PostsFeed() {
 
   return (
     <HelmetProvider>
-      <Helmet>
-        <link rel="stylesheet" type="text/css" href="/style/style111.css" />
-      </Helmet>
+      
       <section style={styles.pageSection}>
         <SideBar />
         <div style={styles.mainContent} className="main-content">

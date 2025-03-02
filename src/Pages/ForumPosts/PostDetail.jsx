@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getSinglePosts } from "../../api/forumpostApi";
 import { uploadDiscussion, showAlldiscussions } from "../../api/discussionApi";
+import { postVote } from "../../api/voteApi"; // Promise-based API functions
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick"; // slider library
@@ -9,21 +10,27 @@ import Slider from "react-slick"; // slider library
 function PostDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]); // list of discussion comments
-  const [newComment, setNewComment] = useState(""); // new comment input
+  const [comments, setComments] = useState([]); // discussions/comments
+  const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [flag, setFlag] = useState(false);
 
-  // Get current user from localStorage (ensure it’s available throughout the component)
+  // State to track the current user's vote on this post.
+  // The vote record should include an id and vote_type_id.
+  const [userVote, setUserVote] = useState(null);
+
+  // Get the current user from localStorage.
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
-  // Fetch the post data
+  // Fetch the post data.
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const response = await getSinglePosts(id);
         setPost(response.data);
+        // If your API returns user vote information, you might set it here:
+        // setUserVote(response.data.userVote);
       } catch (err) {
         setError(err);
       } finally {
@@ -34,12 +41,11 @@ function PostDetail() {
     fetchPost();
   }, [id]);
 
-  // Fetch all discussions related to the forum post using your showAlldiscussions function
+  // Fetch all discussions related to the forum post.
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const res = await showAlldiscussions(id);
-        // Assume your response is like { discussions: [...] }
         if (res.discussions) {
           setComments(res.discussions);
         } else {
@@ -51,44 +57,56 @@ function PostDetail() {
     };
 
     fetchComments();
-  }, [id, flag, comments]);
+  }, [id, flag]);
 
-  // Process to upload discussion (comment)
+  // Handle discussion (comment) submission.
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (newComment.trim() === "") return;
     try {
-      // Data to send with the discussion upload
       const data = {
         ForumPostId: id,
         Content: newComment,
         UserId: storedUser.id,
       };
-
-      // Await the response from the promise-based uploadDiscussion
-      const response = await uploadDiscussion(data);
-      console.log(response);
-
-      // Get the new discussion from the response
-      const newDiscussion = response.discussion;
-
-      if (newDiscussion) {
-        // If the discussion doesn't include a user object, add one using the current user's info.
-        if (!newDiscussion.user) {
-          newDiscussion.user = {
-            name: storedUser.name || "Unknown",
-            ProfilePic: storedUser.ProfilePic || null,
-          };
-        }
-        // Update the comment list with the new discussion
-        setComments((prevComments) => [...prevComments, newDiscussion]);
-        setFlag(true);
-      }
-      // Clear the comment input field
+      await uploadDiscussion(data);
+      // Trigger re-fetch of discussions.
+      setFlag((prev) => !prev);
       setNewComment("");
     } catch (err) {
       console.error("Error uploading discussion:", err);
     }
+  };
+
+  // Handle vote actions: voteTypeId should be 1 (upvote) or 2 (downvote).
+  const handleVote = async (voteTypeId) => {
+    if (!storedUser) return; // Ensure a user is logged in
+
+    // If no vote exists, create a new vote.
+    if (!userVote) {
+      try {
+        const response = await postVote({
+          user_id: storedUser.id,
+          ForumPostId: id,
+          vote_type_id: voteTypeId,
+        });
+        setUserVote(response.vote);
+      } catch (err) {
+        console.error("Error posting vote:", err);
+      }
+    }
+    // If a vote exists and the new type is different, update it.
+    else if (userVote.vote_type_id !== voteTypeId) {
+      try {
+        const response = await updateVote(userVote.id, {
+          vote_type_id: voteTypeId,
+        });
+        setUserVote(response.vote);
+      } catch (err) {
+        console.error("Error updating vote:", err);
+      }
+    }
+    // If the vote type is the same, you might opt to do nothing (or implement an unvote action).
   };
 
   if (loading) {
@@ -99,16 +117,16 @@ function PostDetail() {
     return <div>Error loading post: {error.message}</div>;
   }
 
-  // Build an array of photos if available
+  // Build an array of photos if available.
   const photos = [];
   if (post.Photo1) photos.push(post.Photo1);
   if (post.Photo2) photos.push(post.Photo2);
   if (post.Photo3) photos.push(post.Photo3);
 
-  // Format the creation date for display in the post header
+  // Format the post creation date.
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
-  // Slider settings for react-slick
+  // Settings for the react-slick slider.
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -117,7 +135,7 @@ function PostDetail() {
     slidesToScroll: 1,
   };
 
-  // Inline styles for layout and design (omitted for brevity)
+  // Inline styles for layout.
   const containerStyle = {
     display: "flex",
     background: "#f0f2f5",
@@ -197,16 +215,14 @@ function PostDetail() {
     color: "#fff",
     cursor: "pointer",
   };
-
   const scrollableStyle = {
-    maxHeight: "300px", // adjust the height as needed
+    maxHeight: "300px",
     overflowY: "auto",
   };
 
   return (
     <HelmetProvider>
       <Helmet>
-        {/* Include react-slick styles */}
         <link rel="stylesheet" type="text/css" href="/style/style111.css" />
         <link
           rel="stylesheet"
@@ -220,7 +236,6 @@ function PostDetail() {
         />
       </Helmet>
       <div style={containerStyle}>
-        {/* Sidebar remains on the left */}
         <SideBar />
         <div style={mainContentStyle}>
           <div style={cardStyle}>
@@ -267,14 +282,25 @@ function PostDetail() {
               </p>
             </div>
             <div style={actionsStyle}>
-              <button style={actionButtonStyle}>
-                <i className="fas fa-heart"></i> Like
+              <button
+                style={{
+                  ...actionButtonStyle,
+                  color:
+                    userVote && userVote.vote_type_id === 1 ? "blue" : "#555",
+                }}
+                onClick={() => handleVote(1)}
+              >
+                <i className="fas fa-arrow-up"></i> Upvote
               </button>
-              <button style={actionButtonStyle}>
-                <i className="fas fa-comment"></i> Comment
-              </button>
-              <button style={actionButtonStyle}>
-                <i className="fas fa-share"></i> Share
+              <button
+                style={{
+                  ...actionButtonStyle,
+                  color:
+                    userVote && userVote.vote_type_id === 2 ? "red" : "#555",
+                }}
+                onClick={() => handleVote(2)}
+              >
+                <i className="fas fa-arrow-down"></i> Downvote
               </button>
             </div>
             <div style={commentSectionStyle}>
@@ -303,8 +329,6 @@ function PostDetail() {
                           {new Date(comment.created_at).toLocaleString()}
                         </div>
                       </div>
-
-                      {/* Show icons if logged-in user owns the comment */}
                       {storedUser?.id === comment.user?.id && (
                         <div style={{ marginLeft: "auto" }}>
                           <button
@@ -338,7 +362,10 @@ function PostDetail() {
                               className="bi bi-trash3"
                               viewBox="0 0 16 16"
                             >
-                              <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
+                              <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5" />
+                              <path d="M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1z" />
+                              <path d="M1.958 3-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5z" />
+                              <path d="M-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Z" />
                             </svg>
                           </button>
                         </div>
@@ -349,7 +376,6 @@ function PostDetail() {
                   <div>No comments yet.</div>
                 )}
               </div>
-
               <form
                 style={commentInputContainerStyle}
                 onSubmit={handleCommentSubmit}
