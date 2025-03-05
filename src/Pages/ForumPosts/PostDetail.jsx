@@ -12,6 +12,7 @@ import {
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick";
+import VoterLists from "./Layout/VoterLists"; // adjust the path as needed
 
 function PostDetail() {
   const { id } = useParams();
@@ -28,6 +29,8 @@ function PostDetail() {
   const [voteCounts, setVoteCounts] = useState({ upvotes: 0, downvotes: 0 });
   // State to store all voters (vote records) for this post.
   const [voters, setVoters] = useState([]);
+  // State to toggle the voter popup modal.
+  const [showVoterPopup, setShowVoterPopup] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
@@ -132,7 +135,6 @@ function PostDetail() {
             user_id: storedUser.id,
             ForumPostId: id,
           });
-
           console.log(response);
           setUserVote(null);
           updateVoteCounts();
@@ -243,7 +245,12 @@ function PostDetail() {
     fontSize: "16px",
     color: "#555",
   };
-  const votersStyle = { fontSize: "14px", color: "#333", marginTop: "5px" };
+  const votersStyle = {
+    fontSize: "14px",
+    color: "#333",
+    marginTop: "5px",
+    cursor: "pointer", // indicate it's clickable
+  };
   const commentSectionStyle = { padding: "16px", borderTop: "1px solid #ddd" };
   const commentHeaderStyle = {
     marginBottom: "12px",
@@ -372,7 +379,11 @@ function PostDetail() {
                   {voteCounts.downvotes})
                 </button>
               </div>
-              <div style={votersStyle}>
+              <div
+                style={votersStyle}
+                onClick={() => setShowVoterPopup(true)}
+                title="Click to view voter list"
+              >
                 Voters:{" "}
                 {voters && voters.length > 0
                   ? voters.map((vote) => vote.user.name).join(", ")
@@ -405,22 +416,6 @@ function PostDetail() {
                           {new Date(comment.created_at).toLocaleString()}
                         </div>
                       </div>
-                      {storedUser?.id === comment.user?.id && (
-                        <div style={{ marginLeft: "auto" }}>
-                          <button
-                            style={actionButtonStyle}
-                            onClick={() => handleUpdateComment(comment.id)}
-                          >
-                            {/* TODO: Add edit icon and functionality */}
-                          </button>
-                          <button
-                            style={actionButtonStyle}
-                            onClick={() => handleDeleteComment(comment.id)}
-                          >
-                            {/* TODO: Add delete icon and functionality */}
-                          </button>
-                        </div>
-                      )}
                     </div>
                   ))
                 ) : (
@@ -445,6 +440,14 @@ function PostDetail() {
           </div>
         </div>
       </div>
+      {/* Render the VoterLists popup modal */}
+      {showVoterPopup && (
+        <VoterLists
+          id={id}
+          onClose={() => setShowVoterPopup(false)}
+          show={showVoterPopup}
+        />
+      )}
     </HelmetProvider>
   );
 }
