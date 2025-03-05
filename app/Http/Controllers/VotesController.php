@@ -99,14 +99,21 @@ class VotesController extends Controller
 
     public function getVoters($forumPostId)
     {
-        // Retrieve votes for the given post and eager-load the user relationship.
-        $votes = Votes::with('user')->where('ForumPostId', $forumPostId)->get();
+        // Retrieve votes for the given post and eager-load the user and votetypes relationships.
+        $votes = Votes::with('user', 'voteType')->where('ForumPostId', $forumPostId)->get();
 
-        // Extract distinct users from the vote records.
-        $users = $votes->pluck('user')->unique('id')->values();
+        // Map each vote to include user data and the vote_type_id.
+        $voters = $votes->map(function ($vote) {
+            return [
+                'user'         => $vote->user,
+                'vote_type_id' => $vote->vote_type_id,
+            ];
+        })->unique(function ($item) {
+            return $item['user']['id']; // Ensure each user appears only once.
+        })->values();
 
         return response()->json([
-            'users' => $users,
+            'voters' => $voters,
         ], 200);
     }
 
