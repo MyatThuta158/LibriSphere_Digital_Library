@@ -7,6 +7,23 @@ use Illuminate\Validation\ValidationException;
 
 class VotesController extends Controller
 {
+
+    public function countVotes($forumPostId)
+    {
+        $upvotes = Votes::where('ForumPostId', $forumPostId)
+            ->where('vote_type_id', 1)
+            ->count();
+
+        $downvotes = Votes::where('ForumPostId', $forumPostId)
+            ->where('vote_type_id', 2)
+            ->count();
+
+        return response()->json([
+            'upvotes'   => $upvotes,
+            'downvotes' => $downvotes,
+        ], 200);
+    }
+
     /**
      * Store a newly created vote in storage.
      */
@@ -41,16 +58,21 @@ class VotesController extends Controller
      * Update the specified vote in storage.
      * Allows user to update to the opposite vote.
      */
-    public function update(Request $request, $id)
+    public function updateVote(Request $request)
     {
-        // Retrieve the vote record using its unique id
-        $vote = Votes::findOrFail($id);
 
         try {
-            // Validate that the new vote_type_id is provided and valid (1 for upvote or 2 for downvote)
-            $data = $request->validate([
+            $validate = $request->validate([
+                'user_id'      => 'required|integer',
+                'ForumPostId'  => 'required|integer',
                 'vote_type_id' => 'required|integer|in:1,2',
             ]);
+
+            //dd($validate);
+            // Retrieve the vote record using its unique id
+            $vote = Votes::where('user_id', $validate['user_id'])
+                ->where('ForumPostId', $validate['ForumPostId'])
+                ->first();
         } catch (ValidationException $e) {
             // Return a JSON response with the validation error details.
             return response()->json([
@@ -60,18 +82,55 @@ class VotesController extends Controller
         }
 
         // Check if the new vote type is different from the current vote type.
-        if ($vote->vote_type_id == $data['vote_type_id']) {
+        if ($vote->vote_type_id == $validate['vote_type_id']) {
             return response()->json([
                 'message' => 'The vote type is the same as the current one.',
             ], 400);
         }
 
         // Update the vote with the new vote type.
-        $vote->update(['vote_type_id' => $data['vote_type_id']]);
+        $vote->update(['vote_type_id' => $validate['vote_type_id']]);
 
         return response()->json([
             'message' => 'Vote updated successfully.',
             'vote'    => $vote,
+        ], 200);
+    }
+
+    public function getVoters($forumPostId)
+    {
+        // Retrieve votes for the given post and eager-load the user relationship.
+        $votes = Votes::with('user')->where('ForumPostId', $forumPostId)->get();
+
+        // Extract distinct users from the vote records.
+        $users = $votes->pluck('user')->unique('id')->values();
+
+        return response()->json([
+            'users' => $users,
+        ], 200);
+    }
+
+    public function delete(Request $request)
+    {
+        $data = $request->validate([
+            'user_id'     => 'required|integer',
+            'ForumPostId' => 'required|integer',
+        ]);
+
+        $vote = Votes::where('user_id', $data['user_id'])
+            ->where('ForumPostId', $data['ForumPostId'])
+            ->first();
+
+        if (! $vote) {
+            return response()->json([
+                'message' => 'Vote not found.',
+            ], 404);
+        }
+
+        $vote->delete();
+
+        return response()->json([
+            'message' => 'Vote deleted successfully.',
         ], 200);
     }
 

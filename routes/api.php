@@ -57,6 +57,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //-----------------This is for votes---------------//
     Route::apiResource('/votes', App\Http\Controllers\VotesController::class);
+    Route::post('/votes/update', [App\Http\Controllers\VotesController::class, 'updateVote']);
+    Route::get('/votes/count/{id}', [App\Http\Controllers\VotesController::class, 'countVotes']);
+    Route::get('/votes/voters/{id}', [App\Http\Controllers\VotesController::class, 'getVoters']);
+    Route::post('/votes/delete', [App\Http\Controllers\VotesController::class, 'delete']);
 });
 
 // Route::get('/file/{filename}', function ($filename) {
