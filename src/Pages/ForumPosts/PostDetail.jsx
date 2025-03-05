@@ -2,62 +2,115 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getSinglePosts } from "../../api/forumpostApi";
 import { uploadDiscussion, showAlldiscussions } from "../../api/discussionApi";
-import { postVote } from "../../api/voteApi"; // Promise-based API functions
+import {
+  postVote,
+  viewVote,
+  updateVote,
+  getVoters,
+  deleteVote,
+} from "../../api/voteApi";
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import Slider from "react-slick"; // slider library
+import Slider from "react-slick";
 
 function PostDetail() {
   const { id } = useParams();
   const [post, setPost] = useState(null);
-  const [comments, setComments] = useState([]); // discussions/comments
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [flag, setFlag] = useState(false);
 
   // State to track the current user's vote on this post.
-  // The vote record should include an id and vote_type_id.
   const [userVote, setUserVote] = useState(null);
+  // State to store vote counts: upvotes and downvotes.
+  const [voteCounts, setVoteCounts] = useState({ upvotes: 0, downvotes: 0 });
+  // State to store all voters (vote records) for this post.
+  const [voters, setVoters] = useState([]);
 
-  // Get the current user from localStorage.
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
-  // Fetch the post data.
+  // Fetch post data.
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const response = await getSinglePosts(id);
         setPost(response.data);
-        // If your API returns user vote information, you might set it here:
-        // setUserVote(response.data.userVote);
       } catch (err) {
         setError(err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPost();
   }, [id]);
 
-  // Fetch all discussions related to the forum post.
+  // Fetch discussions (comments) for the post.
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const res = await showAlldiscussions(id);
-        if (res.discussions) {
-          setComments(res.discussions);
-        } else {
-          setComments([]);
-        }
+        setComments(res.discussions || []);
       } catch (err) {
         console.error("Error fetching discussions:", err);
       }
     };
-
     fetchComments();
   }, [id, flag]);
+
+  // Fetch vote counts.
+  const updateVoteCounts = async () => {
+    try {
+      const data = await viewVote(id);
+      setVoteCounts(data);
+    } catch (err) {
+      console.error("Error fetching vote counts:", err);
+    }
+  };
+
+  // Fetch all votes for the post and set both the voters list and the current user's vote.
+  const updateVotes = async () => {
+    //console.log("Stored user", storedUser);
+    try {
+      const votersData = await getVoters(id);
+      //console.log("Vote", votersData);
+      //  console.log("Voters data from API:", votersData);
+
+      // Assuming your votes are inside the 'users' property:
+      const votesArray = votersData.users;
+
+      // Log each vote in the array.
+      // votesArray.forEach((vote, index) => {
+      //   console.log(`User Vote ${index + 1}:`, vote.id);
+      //   //console.log(storedUser.id);
+      // });
+
+      // Set the voters state with the array.
+      setVoters(votesArray);
+
+      //   console.log("Stored user", storedUser);
+
+      if (storedUser) {
+        // Use the proper property (e.g., vote.user_id) to compare with storedUser.id.
+        const currentUserVote = votesArray.find(
+          (vote) => vote.id === storedUser.id
+        );
+
+        // console.log("Current user vote:", currentUserVote);
+        setUserVote(currentUserVote || null);
+        // console.log("vote user", userVote);
+      }
+    } catch (err) {
+      console.error("Error fetching votes:", err);
+    }
+  };
+
+  // When the component mounts or when the post id changes, update the vote counts and votes.
+  useEffect(() => {
+    updateVoteCounts();
+    updateVotes();
+  }, [id]);
 
   // Handle discussion (comment) submission.
   const handleCommentSubmit = async (e) => {
@@ -70,7 +123,6 @@ function PostDetail() {
         UserId: storedUser.id,
       };
       await uploadDiscussion(data);
-      // Trigger re-fetch of discussions.
       setFlag((prev) => !prev);
       setNewComment("");
     } catch (err) {
@@ -80,10 +132,48 @@ function PostDetail() {
 
   // Handle vote actions: voteTypeId should be 1 (upvote) or 2 (downvote).
   const handleVote = async (voteTypeId) => {
-    if (!storedUser) return; // Ensure a user is logged in
+    if (!storedUser) return; // Only logged in users can vote
 
-    // If no vote exists, create a new vote.
-    if (!userVote) {
+    // console.log(
+    //   "Current vote type:",
+    //   userVote?.vote_type_id,
+    //   "New vote type:",
+    //   voteTypeId
+    // );
+
+    console.log("User Vote", userVote);
+
+    if (userVote) {
+      // console.log("Hello", userVote.vote_type_id);
+      if (userVote.vote_type_id === voteTypeId) {
+        try {
+          await deleteVote({ user_id: storedUser.id, ForumPostId: id });
+          setUserVote(null);
+          updateVoteCounts();
+          updateVotes();
+        } catch (err) {
+          console.error("Error removing vote:", err);
+        }
+        return;
+      } else {
+        // Update vote if changing from one type to the other.
+        try {
+          // console.log("Updating vote with id:", userVote.id);
+          const response = await updateVote({
+            user_id: storedUser.id,
+            ForumPostId: id,
+            vote_type_id: voteTypeId,
+          });
+          // Update the current user's vote using the returned vote object.
+          setUserVote(response.vote);
+          await updateVoteCounts();
+          await updateVotes();
+        } catch (err) {
+          console.error("Error updating vote:", err);
+        }
+      }
+    } else {
+      // Post a new vote if none exists.
       try {
         const response = await postVote({
           user_id: storedUser.id,
@@ -91,42 +181,25 @@ function PostDetail() {
           vote_type_id: voteTypeId,
         });
         setUserVote(response.vote);
+        await updateVoteCounts();
+        await updateVotes();
       } catch (err) {
         console.error("Error posting vote:", err);
       }
     }
-    // If a vote exists and the new type is different, update it.
-    else if (userVote.vote_type_id !== voteTypeId) {
-      try {
-        const response = await updateVote(userVote.id, {
-          vote_type_id: voteTypeId,
-        });
-        setUserVote(response.vote);
-      } catch (err) {
-        console.error("Error updating vote:", err);
-      }
-    }
-    // If the vote type is the same, you might opt to do nothing (or implement an unvote action).
   };
 
-  if (loading) {
-    return <div>Loading post...</div>;
-  }
+  if (loading) return <div>Loading post...</div>;
+  if (error) return <div>Error loading post: {error.message}</div>;
 
-  if (error) {
-    return <div>Error loading post: {error.message}</div>;
-  }
-
-  // Build an array of photos if available.
+  // Collect photos if available.
   const photos = [];
   if (post.Photo1) photos.push(post.Photo1);
   if (post.Photo2) photos.push(post.Photo2);
   if (post.Photo3) photos.push(post.Photo3);
 
-  // Format the post creation date.
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
-  // Settings for the react-slick slider.
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -135,7 +208,7 @@ function PostDetail() {
     slidesToScroll: 1,
   };
 
-  // Inline styles for layout.
+  // Inline styles for the component.
   const containerStyle = {
     display: "flex",
     background: "#f0f2f5",
@@ -167,9 +240,16 @@ function PostDetail() {
   const contentStyle = { padding: "16px" };
   const actionsStyle = {
     display: "flex",
-    justifyContent: "space-around",
+    flexDirection: "column",
+    alignItems: "center",
     padding: "12px 16px",
     borderTop: "1px solid #ddd",
+  };
+  const voteButtonsContainerStyle = {
+    display: "flex",
+    justifyContent: "space-around",
+    width: "100%",
+    marginBottom: "10px",
   };
   const actionButtonStyle = {
     border: "none",
@@ -178,6 +258,7 @@ function PostDetail() {
     fontSize: "16px",
     color: "#555",
   };
+  const votersStyle = { fontSize: "14px", color: "#333", marginTop: "5px" };
   const commentSectionStyle = { padding: "16px", borderTop: "1px solid #ddd" };
   const commentHeaderStyle = {
     marginBottom: "12px",
@@ -282,26 +363,36 @@ function PostDetail() {
               </p>
             </div>
             <div style={actionsStyle}>
-              <button
-                style={{
-                  ...actionButtonStyle,
-                  color:
-                    userVote && userVote.vote_type_id === 1 ? "blue" : "#555",
-                }}
-                onClick={() => handleVote(1)}
-              >
-                <i className="fas fa-arrow-up"></i> Upvote
-              </button>
-              <button
-                style={{
-                  ...actionButtonStyle,
-                  color:
-                    userVote && userVote.vote_type_id === 2 ? "red" : "#555",
-                }}
-                onClick={() => handleVote(2)}
-              >
-                <i className="fas fa-arrow-down"></i> Downvote
-              </button>
+              <div style={voteButtonsContainerStyle}>
+                <button
+                  style={{
+                    ...actionButtonStyle,
+                    color:
+                      userVote && userVote.vote_type_id === 1 ? "blue" : "#555",
+                  }}
+                  onClick={() => handleVote(1)}
+                >
+                  <i className="fas fa-arrow-up"></i> Upvote (
+                  {voteCounts.upvotes})
+                </button>
+                <button
+                  style={{
+                    ...actionButtonStyle,
+                    color:
+                      userVote && userVote.vote_type_id === 2 ? "red" : "#555",
+                  }}
+                  onClick={() => handleVote(2)}
+                >
+                  <i className="fas fa-arrow-down"></i> Downvote (
+                  {voteCounts.downvotes})
+                </button>
+              </div>
+              <div style={votersStyle}>
+                Voters:{" "}
+                {voters && voters.length > 0
+                  ? voters.map((user) => user.name).join(", ")
+                  : "No voters yet."}
+              </div>
             </div>
             <div style={commentSectionStyle}>
               <div style={commentHeaderStyle}>Discussions</div>
@@ -335,38 +426,13 @@ function PostDetail() {
                             style={actionButtonStyle}
                             onClick={() => handleUpdateComment(comment.id)}
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="bi bi-pencil-square"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-                              />
-                            </svg>
+                            {/* TODO: Add edit icon and functionality */}
                           </button>
                           <button
                             style={actionButtonStyle}
                             onClick={() => handleDeleteComment(comment.id)}
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="bi bi-trash3"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5" />
-                              <path d="M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1z" />
-                              <path d="M1.958 3-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5z" />
-                              <path d="M-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Z" />
-                            </svg>
+                            {/* TODO: Add delete icon and functionality */}
                           </button>
                         </div>
                       )}
