@@ -18,4 +18,4 @@ export const getVoters = (id) =>
 
 //---------this delete vote from api---//
 export const deleteVote = (data) =>
-  apiClient.get(`/votes/delete`, data).then((res) => res.data);
+  apiClient.post(`/votes/delete`, data).then((res) => res.data);

@@ -71,35 +71,26 @@ function PostDetail() {
 
   // Fetch all votes for the post and set both the voters list and the current user's vote.
   const updateVotes = async () => {
-    //console.log("Stored user", storedUser);
     try {
       const votersData = await getVoters(id);
-      //console.log("Vote", votersData);
-      //  console.log("Voters data from API:", votersData);
+      // Assuming your votes are inside the 'voters' property:
+      const votesArray = votersData.voters;
+      console.log("Voter array", votesArray);
 
-      // Assuming your votes are inside the 'users' property:
-      const votesArray = votersData.users;
-
-      // Log each vote in the array.
-      // votesArray.forEach((vote, index) => {
-      //   console.log(`User Vote ${index + 1}:`, vote.id);
-      //   //console.log(storedUser.id);
-      // });
+      // Log each vote's user id.
+      votesArray.forEach((vote, index) => {
+        console.log(`User Vote ${index + 1}:`, vote.user.id);
+      });
 
       // Set the voters state with the array.
       setVoters(votesArray);
 
-      //   console.log("Stored user", storedUser);
-
       if (storedUser) {
-        // Use the proper property (e.g., vote.user_id) to compare with storedUser.id.
+        // Find the vote record for the current user using the nested user.id.
         const currentUserVote = votesArray.find(
-          (vote) => vote.id === storedUser.id
+          (vote) => vote.user.id === storedUser.id
         );
-
-        // console.log("Current user vote:", currentUserVote);
         setUserVote(currentUserVote || null);
-        // console.log("vote user", userVote);
       }
     } catch (err) {
       console.error("Error fetching votes:", err);
@@ -134,20 +125,15 @@ function PostDetail() {
   const handleVote = async (voteTypeId) => {
     if (!storedUser) return; // Only logged in users can vote
 
-    // console.log(
-    //   "Current vote type:",
-    //   userVote?.vote_type_id,
-    //   "New vote type:",
-    //   voteTypeId
-    // );
-
-    console.log("User Vote", userVote);
-
     if (userVote) {
-      // console.log("Hello", userVote.vote_type_id);
       if (userVote.vote_type_id === voteTypeId) {
         try {
-          await deleteVote({ user_id: storedUser.id, ForumPostId: id });
+          const response = await deleteVote({
+            user_id: storedUser.id,
+            ForumPostId: id,
+          });
+
+          console.log(response);
           setUserVote(null);
           updateVoteCounts();
           updateVotes();
@@ -158,7 +144,6 @@ function PostDetail() {
       } else {
         // Update vote if changing from one type to the other.
         try {
-          // console.log("Updating vote with id:", userVote.id);
           const response = await updateVote({
             user_id: storedUser.id,
             ForumPostId: id,
@@ -390,7 +375,7 @@ function PostDetail() {
               <div style={votersStyle}>
                 Voters:{" "}
                 {voters && voters.length > 0
-                  ? voters.map((user) => user.name).join(", ")
+                  ? voters.map((vote) => vote.user.name).join(", ")
                   : "No voters yet."}
               </div>
             </div>
