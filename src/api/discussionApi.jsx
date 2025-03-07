@@ -7,3 +7,7 @@ export const uploadDiscussion = (data) =>
 //---------this is all comments---//
 export const showAlldiscussions = (id) =>
   apiClient.get(`/discussions/${id}`).then((res) => res.data);
+
+//---------this update posts comments---//
+export const updateComments = (data, id) =>
+  apiClient.post(`/discussion/update/${id}`, data).then((res) => res.data);

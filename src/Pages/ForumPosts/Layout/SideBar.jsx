@@ -18,7 +18,7 @@ function SideBar() {
                 <li className="nav-item active">
                   <a
                     className="nav-link text-white px-0 pt-0"
-                    href="index.html"
+                    onClick={() => navigate("/Community/posts")}
                   >
                     Home
                   </a>
@@ -32,38 +32,15 @@ function SideBar() {
                   </a>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link text-white px-0" href="contact.html">
-                    Contact
-                  </a>
-                </li>
-                <li className="nav-item accordion">
-                  <div id="drop-menu" className="drop-menu collapse">
-                    <a className="d-block" href="index-2.html">
-                      Home 2
-                    </a>
-                    <a className="d-block" href="category.html">
-                      Category
-                    </a>
-                    <a className="d-block" href="post-details.html">
-                      Post Details
-                    </a>
-                    <a className="d-block" href="privacy.html">
-                      Privacy &amp; Policy
-                    </a>
-                  </div>
                   <a
-                    className="nav-link text-white"
-                    href="#!"
-                    role="button"
-                    data-toggle="collapse"
-                    data-target="#drop-menu"
-                    aria-expanded="false"
-                    aria-controls="drop-menu"
+                    className="nav-link text-white px-0"
+                    onClick={() => navigate("/Community/useruploadedpost")}
                   >
-                    Pages
+                    Profile
                   </a>
                 </li>
-                <li className="nav-item mt-3">
+
+                {/* <li className="nav-item mt-3">
                   <select
                     className="custom-select bg-transparent rounded-0 text-white shadow-none"
                     id="pick-lang"
@@ -72,7 +49,7 @@ function SideBar() {
                     <option value="en">English</option>
                     <option value="fr">French</option>
                   </select>
-                </li>
+                </li> */}
               </ul>
             </div>
 

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getSinglePosts } from "../../api/forumpostApi";
-import { uploadDiscussion, showAlldiscussions } from "../../api/discussionApi";
+import {
+  uploadDiscussion,
+  showAlldiscussions,
+  updateComments,
+} from "../../api/discussionApi";
 import {
   postVote,
   viewVote,
@@ -13,6 +17,21 @@ import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick";
 import VoterLists from "./Layout/VoterLists"; // adjust the path as needed
+
+// Helper component to dismiss <img> tag if the image fails to load.
+function ImageWithFallback({ src, alt, style, ...props }) {
+  const [error, setError] = useState(false);
+  if (error || !src) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      style={style}
+      onError={() => setError(true)}
+      {...props}
+    />
+  );
+}
 
 function PostDetail() {
   const { id } = useParams();
@@ -31,6 +50,10 @@ function PostDetail() {
   const [voters, setVoters] = useState([]);
   // State to toggle the voter popup modal.
   const [showVoterPopup, setShowVoterPopup] = useState(false);
+
+  // ---- New state for editing comments ----
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentContent, setEditingCommentContent] = useState("");
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
@@ -76,20 +99,9 @@ function PostDetail() {
   const updateVotes = async () => {
     try {
       const votersData = await getVoters(id);
-      // Assuming your votes are inside the 'voters' property:
       const votesArray = votersData.voters;
-      console.log("Voter array", votesArray);
-
-      // Log each vote's user id.
-      votesArray.forEach((vote, index) => {
-        console.log(`User Vote ${index + 1}:`, vote.user.id);
-      });
-
-      // Set the voters state with the array.
       setVoters(votesArray);
-
       if (storedUser) {
-        // Find the vote record for the current user using the nested user.id.
         const currentUserVote = votesArray.find(
           (vote) => vote.user.id === storedUser.id
         );
@@ -124,18 +136,17 @@ function PostDetail() {
     }
   };
 
-  // Handle vote actions: voteTypeId should be 1 (upvote) or 2 (downvote).
+  // Handle vote actions.
   const handleVote = async (voteTypeId) => {
     if (!storedUser) return; // Only logged in users can vote
 
     if (userVote) {
       if (userVote.vote_type_id === voteTypeId) {
         try {
-          const response = await deleteVote({
+          await deleteVote({
             user_id: storedUser.id,
             ForumPostId: id,
           });
-          console.log(response);
           setUserVote(null);
           updateVoteCounts();
           updateVotes();
@@ -144,14 +155,12 @@ function PostDetail() {
         }
         return;
       } else {
-        // Update vote if changing from one type to the other.
         try {
           const response = await updateVote({
             user_id: storedUser.id,
             ForumPostId: id,
             vote_type_id: voteTypeId,
           });
-          // Update the current user's vote using the returned vote object.
           setUserVote(response.vote);
           await updateVoteCounts();
           await updateVotes();
@@ -160,7 +169,6 @@ function PostDetail() {
         }
       }
     } else {
-      // Post a new vote if none exists.
       try {
         const response = await postVote({
           user_id: storedUser.id,
@@ -174,6 +182,33 @@ function PostDetail() {
         console.error("Error posting vote:", err);
       }
     }
+  };
+
+  // ----- New functions for updating a comment -----
+  const handleEditClick = (comment) => {
+    // Only allow editing if the current user is the owner of the comment.
+    if (storedUser && comment.user.id === storedUser.id) {
+      setEditingCommentId(comment.id);
+      setEditingCommentContent(comment.Content);
+    }
+  };
+
+  const handleUpdateComment = async () => {
+    if (editingCommentContent.trim() === "") return;
+    try {
+      const data = { Content: editingCommentContent };
+      await updateComments(data, editingCommentId);
+      setFlag((prev) => !prev); // trigger re-fetching of discussions
+      setEditingCommentId(null);
+      setEditingCommentContent("");
+    } catch (err) {
+      console.error("Error updating comment:", err);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentContent("");
   };
 
   if (loading) return <div>Loading post...</div>;
@@ -249,7 +284,7 @@ function PostDetail() {
     fontSize: "14px",
     color: "#333",
     marginTop: "5px",
-    cursor: "pointer", // indicate it's clickable
+    cursor: "pointer",
   };
   const commentSectionStyle = { padding: "16px", borderTop: "1px solid #ddd" };
   const commentHeaderStyle = {
@@ -292,6 +327,31 @@ function PostDetail() {
     maxHeight: "300px",
     overflowY: "auto",
   };
+  const editAreaStyle = {
+    display: "flex",
+    flexDirection: "column",
+    marginTop: "8px",
+  };
+  const editButtonStyle = {
+    marginTop: "4px",
+    alignSelf: "flex-end",
+    padding: "4px 8px",
+    borderRadius: "4px",
+    border: "none",
+    background: "#28a745",
+    color: "#fff",
+    cursor: "pointer",
+  };
+  const cancelButtonStyle = {
+    marginTop: "4px",
+    alignSelf: "flex-end",
+    padding: "4px 8px",
+    borderRadius: "4px",
+    border: "none",
+    background: "#dc3545",
+    color: "#fff",
+    cursor: "pointer",
+  };
 
   return (
     <HelmetProvider>
@@ -317,7 +377,7 @@ function PostDetail() {
                 <Slider {...sliderSettings}>
                   {photos.map((photo, index) => (
                     <div key={index}>
-                      <img
+                      <ImageWithFallback
                         style={{ width: "100%", height: "auto" }}
                         src={`http://127.0.0.1:8000/storage/${photo}`}
                         alt={`${post.Title} - Slide ${index + 1}`}
@@ -328,7 +388,7 @@ function PostDetail() {
               </div>
             )}
             <div style={headerStyle}>
-              <img
+              <ImageWithFallback
                 style={avatarStyle}
                 src={
                   post.user?.ProfilePic
@@ -396,7 +456,7 @@ function PostDetail() {
                 {comments && comments.length > 0 ? (
                   comments.map((comment, index) => (
                     <div key={index} style={commentItemStyle}>
-                      <img
+                      <ImageWithFallback
                         style={commentAvatarStyle}
                         src={
                           comment.user?.ProfilePic
@@ -405,17 +465,81 @@ function PostDetail() {
                         }
                         alt="Comment User Avatar"
                       />
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: "bold", fontSize: "16px" }}>
                           {comment.user?.name || "Unknown"}
                         </div>
-                        <div style={{ fontSize: "14px", color: "#555" }}>
-                          {comment.Content}
-                        </div>
-                        <div style={{ fontSize: "12px", color: "#888" }}>
-                          {new Date(comment.created_at).toLocaleString()}
-                        </div>
+                        {editingCommentId === comment.id ? (
+                          <div style={editAreaStyle}>
+                            <textarea
+                              value={editingCommentContent}
+                              onChange={(e) =>
+                                setEditingCommentContent(e.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "8px",
+                                borderRadius: "4px",
+                                border: "1px solid #ccc",
+                              }}
+                            />
+                            <div>
+                              <button
+                                onClick={handleUpdateComment}
+                                style={editButtonStyle}
+                              >
+                                Update
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                style={cancelButtonStyle}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: "14px", color: "#555" }}>
+                              {comment.Content}
+                            </div>
+                            <div style={{ fontSize: "12px", color: "#888" }}>
+                              {new Date(comment.created_at).toLocaleString()}
+                            </div>
+                          </>
+                        )}
                       </div>
+                      {storedUser &&
+                        comment.user?.id === storedUser.id &&
+                        editingCommentId !== comment.id && (
+                          <button
+                            onClick={() => handleEditClick(comment)}
+                            style={{
+                              border: "none",
+                              background: "none",
+                              cursor: "pointer",
+                              fontSize: "16px",
+                              color: "#007bff",
+                              marginLeft: "8px",
+                            }}
+                            title="Edit Comment"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              fill="currentColor"
+                              className="bi bi-pencil-square"
+                              viewBox="0 0 16 16"
+                            >
+                              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                              <path
+                                fillRule="evenodd"
+                                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                              />
+                            </svg>
+                          </button>
+                        )}
                     </div>
                   ))
                 ) : (
