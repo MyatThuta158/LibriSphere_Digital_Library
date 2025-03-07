@@ -89,8 +89,11 @@ class DiscussionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Discussion $discussion)
+    public function update(Request $request, $id)
     {
+        // Retrieve the discussion by its id
+        $discussion = Discussion::findOrFail($id);
+
         // Ensure the authenticated user is the owner of the discussion.
         if (auth()->id() !== $discussion->UserId) {
             return response()->json(['error' => 'Unauthorized'], 403);

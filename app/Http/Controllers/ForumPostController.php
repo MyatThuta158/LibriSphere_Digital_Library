@@ -198,28 +198,132 @@ class ForumPostController extends Controller
         }
     }
 
-
-    public function userPosts($id){
+    public function userPosts($id)
+    {
         try {
             // Validate that the ID is an integer
-            if (!is_numeric($id)) {
+            if (! is_numeric($id)) {
                 return response()->json(['success' => false, 'error' => 'Invalid user ID.'], 400);
             }
-    
+
             // Retrieve posts that belong to the given user ID, ordered by creation date
             $posts = ForumPost::with('user')
                 ->where('UserId', $id)
                 ->orderBy('created_at', 'desc')
                 ->get();
-    
+
             // Check if the user has any posts
             if ($posts->isEmpty()) {
                 return Response::json(['success' => false, 'message' => 'No posts found for this user.'], 404);
             }
-    
+
             return response()->json(['success' => true, 'data' => $posts], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }  
+        }
+    }
+
+    //-----------This is the report section-----//
+    public function multiIntervalReport(Request $request)
+    {
+        try {
+            // Optional filter: allow filtering by user id.
+            $userId = $request->input('user_id');
+
+            // Define the intervals in days. Replace 90 with 60.
+            $intervals = [7, 14, 28, 60];
+            $reports   = [];
+
+            foreach ($intervals as $days) {
+                // Calculate the start date for the interval.
+                $startDate = \Carbon\Carbon::now()->subDays($days - 1)->startOfDay();
+                $endDate   = \Carbon\Carbon::now()->endOfDay();
+
+                // Build the query with optional user filter and date range.
+                $query = ForumPost::query();
+                if ($userId) {
+                    $query->where('UserId', $userId);
+                }
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+
+                // Aggregate total views per day using quoted column name.
+                $result = $query->selectRaw('DATE(created_at) as date, SUM("PostViews") as total_views')
+                    ->groupBy('date')
+                    ->orderBy('date')
+                    ->get();
+
+                // Prepare a daily report ensuring every day is represented.
+                $dailyReport = [];
+                for ($i = 0; $i < $days; $i++) {
+                    $date = \Carbon\Carbon::now()->subDays($days - 1 - $i)->toDateString();
+                    // Find record for the current date, if any.
+                    $record = $result->first(function ($item) use ($date) {
+                        return $item->date == $date;
+                    });
+
+                    $dailyReport[] = [
+                        'date'        => $date,
+                        'total_views' => $record ? $record->total_views : 0,
+                    ];
+                }
+
+                // Save the report for the current interval.
+                $reports["{$days}_days"] = $dailyReport;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data'    => $reports,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    //-----------This is the sum of total user engagement report----///
+    public function totalUserEngagement(Request $request)
+    {
+        try {
+            // Optional: filter by a specific user ID.
+            $userId = $request->input('user_id');
+
+            // Define the intervals in days.
+            $intervals = [7, 14, 28, 60];
+            $results   = [];
+
+            foreach ($intervals as $days) {
+                // Calculate the start and end date for the interval.
+                $startDate = \Carbon\Carbon::now()->subDays($days - 1)->startOfDay();
+                $endDate   = \Carbon\Carbon::now()->endOfDay();
+
+                // Build the query with an optional user filter.
+                $query = ForumPost::query();
+                if ($userId) {
+                    $query->where('UserId', $userId);
+                }
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+
+                // Aggregate the total views and count total posts.
+                $aggregates = $query->selectRaw('SUM("PostViews") as total_views, COUNT(*) as total_posts')->first();
+
+                $results["{$days}_days"] = [
+                    'total_views' => (int) $aggregates->total_views,
+                    'total_posts' => (int) $aggregates->total_posts,
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data'    => $results,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 }

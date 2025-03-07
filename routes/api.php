@@ -51,10 +51,11 @@ Route::middleware('auth:sanctum')->group(function () {
     //-----------------This is for forum posts---------------//
     Route::apiResource('posts', App\Http\Controllers\ForumPostController::class);
     Route::get('/userposts/{id}', [App\Http\Controllers\ForumPostController::class, 'userPosts']);
-
+    Route::get('/userposts/report/{id}', [App\Http\Controllers\ForumPostController::class, 'multiIntervalReport']);
+    Route::get('/userposts/totalengagement/{id}', [App\Http\Controllers\ForumPostController::class, 'totalUserEngagement']);
     //-----------------This is for forum posts discussion---------------//
     Route::apiResource('discussions', App\Http\Controllers\DiscussionController::class);
-
+    Route::post('/discussion/update/{id}', [App\Http\Controllers\DiscussionController::class, 'update']);
     //-----------------This is for votes---------------//
     Route::apiResource('/votes', App\Http\Controllers\VotesController::class);
     Route::post('/votes/update', [App\Http\Controllers\VotesController::class, 'updateVote']);

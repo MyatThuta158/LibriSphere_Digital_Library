@@ -27,7 +27,7 @@ class ForumPosts extends Seeder
         // Create 50 fake forum posts
         for ($i = 0; $i < 50; $i++) {
             ForumPost::create([
-                'UserId'      => $faker->randomElement($userIds),
+                'UserId'      => 89,
                 'Title'       => $faker->sentence(6),
                 'Description' => $faker->paragraph(4),
                 // 70% chance to generate a photo path for Photo1, otherwise null.
@@ -36,7 +36,8 @@ class ForumPosts extends Seeder
                 'Photo2'      => $faker->boolean(50) ? 'posts/' . $faker->lexify('photo????') . '.jpg' : null,
                 'Photo3'      => $faker->boolean(50) ? 'posts/' . $faker->lexify('photo????') . '.jpg' : null,
                 // 30% chance to generate a file path, otherwise null.
-                'File'        => $faker->boolean(30) ? 'posts/' . $faker->lexify('file????') . '.pdf' : null,
+
+                'PostViews'   => rand(101, 200),
             ]);
         }
     }
