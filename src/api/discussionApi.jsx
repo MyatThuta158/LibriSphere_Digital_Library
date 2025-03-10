@@ -11,3 +11,7 @@ export const showAlldiscussions = (id) =>
 //---------this update posts comments---//
 export const updateComments = (data, id) =>
   apiClient.post(`/discussion/update/${id}`, data).then((res) => res.data);
+
+//---------this update posts comments---//
+export const deleteDiscussion = (id) =>
+  apiClient.delete(`/discussions/${id}`).then((res) => res.data);

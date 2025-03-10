@@ -5,6 +5,7 @@ import {
   uploadDiscussion,
   showAlldiscussions,
   updateComments,
+  deleteDiscussion,
 } from "../../api/discussionApi";
 import {
   postVote,
@@ -16,9 +17,10 @@ import {
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick";
-import VoterLists from "./Layout/VoterLists"; // adjust the path as needed
+import VoterLists from "./Layout/VoterLists";
+import { Modal, Button } from "react-bootstrap"; // using react-bootstrap for the modal
 
-// Helper component to dismiss <img> tag if the image fails to load.
+// Helper component to display an image with fallback in case of error.
 function ImageWithFallback({ src, alt, style, ...props }) {
   const [error, setError] = useState(false);
   if (error || !src) return null;
@@ -42,18 +44,19 @@ function PostDetail() {
   const [error, setError] = useState(null);
   const [flag, setFlag] = useState(false);
 
-  // State to track the current user's vote on this post.
+  // Vote states
   const [userVote, setUserVote] = useState(null);
-  // State to store vote counts: upvotes and downvotes.
   const [voteCounts, setVoteCounts] = useState({ upvotes: 0, downvotes: 0 });
-  // State to store all voters (vote records) for this post.
   const [voters, setVoters] = useState([]);
-  // State to toggle the voter popup modal.
   const [showVoterPopup, setShowVoterPopup] = useState(false);
 
-  // ---- New state for editing comments ----
+  // States for editing comments
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState("");
+
+  // New states for delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
@@ -95,7 +98,7 @@ function PostDetail() {
     }
   };
 
-  // Fetch all votes for the post and set both the voters list and the current user's vote.
+  // Fetch all votes and set both the voters list and the current user's vote.
   const updateVotes = async () => {
     try {
       const votersData = await getVoters(id);
@@ -112,7 +115,6 @@ function PostDetail() {
     }
   };
 
-  // When the component mounts or when the post id changes, update the vote counts and votes.
   useEffect(() => {
     updateVoteCounts();
     updateVotes();
@@ -138,15 +140,11 @@ function PostDetail() {
 
   // Handle vote actions.
   const handleVote = async (voteTypeId) => {
-    if (!storedUser) return; // Only logged in users can vote
-
+    if (!storedUser) return;
     if (userVote) {
       if (userVote.vote_type_id === voteTypeId) {
         try {
-          await deleteVote({
-            user_id: storedUser.id,
-            ForumPostId: id,
-          });
+          await deleteVote({ user_id: storedUser.id, ForumPostId: id });
           setUserVote(null);
           updateVoteCounts();
           updateVotes();
@@ -184,9 +182,8 @@ function PostDetail() {
     }
   };
 
-  // ----- New functions for updating a comment -----
+  // Handle editing a comment.
   const handleEditClick = (comment) => {
-    // Only allow editing if the current user is the owner of the comment.
     if (storedUser && comment.user.id === storedUser.id) {
       setEditingCommentId(comment.id);
       setEditingCommentContent(comment.Content);
@@ -198,7 +195,7 @@ function PostDetail() {
     try {
       const data = { Content: editingCommentContent };
       await updateComments(data, editingCommentId);
-      setFlag((prev) => !prev); // trigger re-fetching of discussions
+      setFlag((prev) => !prev);
       setEditingCommentId(null);
       setEditingCommentContent("");
     } catch (err) {
@@ -211,6 +208,30 @@ function PostDetail() {
     setEditingCommentContent("");
   };
 
+  // Open delete modal and store the comment to delete.
+  const openDeleteModal = (comment) => {
+    setCommentToDelete(comment);
+    setShowDeleteModal(true);
+  };
+
+  // Confirm deletion in the modal.
+  const confirmDelete = async () => {
+    try {
+      // console.log(commentToDelete.id);
+      await deleteDiscussion(commentToDelete.id);
+      setFlag((prev) => !prev);
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+    setShowDeleteModal(false);
+    setCommentToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setCommentToDelete(null);
+  };
+
   if (loading) return <div>Loading post...</div>;
   if (error) return <div>Error loading post: {error.message}</div>;
 
@@ -221,7 +242,6 @@ function PostDetail() {
   if (post.Photo3) photos.push(post.Photo3);
 
   const formattedDate = new Date(post.created_at).toLocaleDateString();
-
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -230,132 +250,10 @@ function PostDetail() {
     slidesToScroll: 1,
   };
 
-  // Inline styles for the component.
-  const containerStyle = {
-    display: "flex",
-    background: "#f0f2f5",
-    minHeight: "100vh",
-  };
-  const mainContentStyle = { flex: 1, padding: "20px" };
-  const cardStyle = {
-    maxWidth: "600px",
-    margin: "20px auto",
-    background: "#fff",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    overflow: "hidden",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-  };
-  const headerStyle = {
-    display: "flex",
-    alignItems: "center",
-    padding: "16px",
-    borderBottom: "1px solid #ddd",
-  };
-  const avatarStyle = {
-    width: "50px",
-    height: "50px",
-    borderRadius: "50%",
-    marginRight: "12px",
-  };
-  const titleStyle = { padding: "16px", borderBottom: "1px solid #ddd" };
-  const contentStyle = { padding: "16px" };
-  const actionsStyle = {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "12px 16px",
-    borderTop: "1px solid #ddd",
-  };
-  const voteButtonsContainerStyle = {
-    display: "flex",
-    justifyContent: "space-around",
-    width: "100%",
-    marginBottom: "10px",
-  };
-  const actionButtonStyle = {
-    border: "none",
-    background: "none",
-    cursor: "pointer",
-    fontSize: "16px",
-    color: "#555",
-  };
-  const votersStyle = {
-    fontSize: "14px",
-    color: "#333",
-    marginTop: "5px",
-    cursor: "pointer",
-  };
-  const commentSectionStyle = { padding: "16px", borderTop: "1px solid #ddd" };
-  const commentHeaderStyle = {
-    marginBottom: "12px",
-    fontSize: "18px",
-    fontWeight: "bold",
-  };
-  const commentItemStyle = {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "12px",
-  };
-  const commentAvatarStyle = {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    marginRight: "8px",
-  };
-  const commentInputContainerStyle = {
-    display: "flex",
-    alignItems: "center",
-    marginTop: "16px",
-  };
-  const commentInputStyle = {
-    flex: 1,
-    padding: "8px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-  };
-  const commentButtonStyle = {
-    marginLeft: "8px",
-    padding: "8px 12px",
-    borderRadius: "4px",
-    border: "none",
-    background: "#007bff",
-    color: "#fff",
-    cursor: "pointer",
-  };
-  const scrollableStyle = {
-    maxHeight: "300px",
-    overflowY: "auto",
-  };
-  const editAreaStyle = {
-    display: "flex",
-    flexDirection: "column",
-    marginTop: "8px",
-  };
-  const editButtonStyle = {
-    marginTop: "4px",
-    alignSelf: "flex-end",
-    padding: "4px 8px",
-    borderRadius: "4px",
-    border: "none",
-    background: "#28a745",
-    color: "#fff",
-    cursor: "pointer",
-  };
-  const cancelButtonStyle = {
-    marginTop: "4px",
-    alignSelf: "flex-end",
-    padding: "4px 8px",
-    borderRadius: "4px",
-    border: "none",
-    background: "#dc3545",
-    color: "#fff",
-    cursor: "pointer",
-  };
-
   return (
     <HelmetProvider>
       <Helmet>
+        {/* Include your custom styles and external CSS here */}
         <link rel="stylesheet" type="text/css" href="/style/style111.css" />
         <link
           rel="stylesheet"
@@ -367,11 +265,28 @@ function PostDetail() {
           type="text/css"
           href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick-theme.min.css"
         />
+        {/* Bootstrap CSS (if not already included in your project) */}
+        <link
+          rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        />
       </Helmet>
-      <div style={containerStyle}>
+      <div
+        style={{ display: "flex", background: "#f0f2f5", minHeight: "100vh" }}
+      >
         <SideBar />
-        <div style={mainContentStyle}>
-          <div style={cardStyle}>
+        <div style={{ flex: 1, padding: "20px" }}>
+          <div
+            style={{
+              maxWidth: "600px",
+              margin: "20px auto",
+              background: "#fff",
+              borderRadius: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              overflow: "hidden",
+              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            }}
+          >
             {photos.length > 0 && (
               <div style={{ maxHeight: "400px", overflow: "hidden" }}>
                 <Slider {...sliderSettings}>
@@ -387,9 +302,21 @@ function PostDetail() {
                 </Slider>
               </div>
             )}
-            <div style={headerStyle}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "16px",
+                borderBottom: "1px solid #ddd",
+              }}
+            >
               <ImageWithFallback
-                style={avatarStyle}
+                style={{
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  marginRight: "12px",
+                }}
                 src={
                   post.user?.ProfilePic
                     ? `http://127.0.0.1:8000/storage/${post.user.ProfilePic}`
@@ -406,19 +333,37 @@ function PostDetail() {
                 </div>
               </div>
             </div>
-            <div style={titleStyle}>
+            <div style={{ padding: "16px", borderBottom: "1px solid #ddd" }}>
               <h2 style={{ margin: 0, fontSize: "22px" }}>{post.Title}</h2>
             </div>
-            <div style={contentStyle}>
+            <div style={{ padding: "16px" }}>
               <p style={{ lineHeight: "1.6", fontSize: "16px", color: "#333" }}>
                 {post.Description}
               </p>
             </div>
-            <div style={actionsStyle}>
-              <div style={voteButtonsContainerStyle}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "12px 16px",
+                borderTop: "1px solid #ddd",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-around",
+                  width: "100%",
+                  marginBottom: "10px",
+                }}
+              >
                 <button
                   style={{
-                    ...actionButtonStyle,
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontSize: "16px",
                     color:
                       userVote && userVote.vote_type_id === 1 ? "blue" : "#555",
                   }}
@@ -429,7 +374,10 @@ function PostDetail() {
                 </button>
                 <button
                   style={{
-                    ...actionButtonStyle,
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    fontSize: "16px",
                     color:
                       userVote && userVote.vote_type_id === 2 ? "red" : "#555",
                   }}
@@ -440,7 +388,12 @@ function PostDetail() {
                 </button>
               </div>
               <div
-                style={votersStyle}
+                style={{
+                  fontSize: "14px",
+                  color: "#333",
+                  marginTop: "5px",
+                  cursor: "pointer",
+                }}
                 onClick={() => setShowVoterPopup(true)}
                 title="Click to view voter list"
               >
@@ -450,14 +403,37 @@ function PostDetail() {
                   : "No voters yet."}
               </div>
             </div>
-            <div style={commentSectionStyle}>
-              <div style={commentHeaderStyle}>Discussions</div>
-              <div className="h-100" style={scrollableStyle}>
+            <div style={{ padding: "16px", borderTop: "1px solid #ddd" }}>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}
+              >
+                Discussions
+              </div>
+              <div
+                className="h-100"
+                style={{ maxHeight: "300px", overflowY: "auto" }}
+              >
                 {comments && comments.length > 0 ? (
                   comments.map((comment, index) => (
-                    <div key={index} style={commentItemStyle}>
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: "12px",
+                      }}
+                    >
                       <ImageWithFallback
-                        style={commentAvatarStyle}
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          marginRight: "8px",
+                        }}
                         src={
                           comment.user?.ProfilePic
                             ? `http://127.0.0.1:8000/storage/${comment.user.ProfilePic}`
@@ -470,7 +446,13 @@ function PostDetail() {
                           {comment.user?.name || "Unknown"}
                         </div>
                         {editingCommentId === comment.id ? (
-                          <div style={editAreaStyle}>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              marginTop: "8px",
+                            }}
+                          >
                             <textarea
                               value={editingCommentContent}
                               onChange={(e) =>
@@ -486,13 +468,31 @@ function PostDetail() {
                             <div>
                               <button
                                 onClick={handleUpdateComment}
-                                style={editButtonStyle}
+                                style={{
+                                  marginTop: "4px",
+                                  alignSelf: "flex-end",
+                                  padding: "4px 8px",
+                                  borderRadius: "4px",
+                                  border: "none",
+                                  background: "#28a745",
+                                  color: "#fff",
+                                  cursor: "pointer",
+                                }}
                               >
                                 Update
                               </button>
                               <button
                                 onClick={handleCancelEdit}
-                                style={cancelButtonStyle}
+                                style={{
+                                  marginTop: "4px",
+                                  alignSelf: "flex-end",
+                                  padding: "4px 8px",
+                                  borderRadius: "4px",
+                                  border: "none",
+                                  background: "#dc3545",
+                                  color: "#fff",
+                                  cursor: "pointer",
+                                }}
                               >
                                 Cancel
                               </button>
@@ -512,33 +512,59 @@ function PostDetail() {
                       {storedUser &&
                         comment.user?.id === storedUser.id &&
                         editingCommentId !== comment.id && (
-                          <button
-                            onClick={() => handleEditClick(comment)}
-                            style={{
-                              border: "none",
-                              background: "none",
-                              cursor: "pointer",
-                              fontSize: "16px",
-                              color: "#007bff",
-                              marginLeft: "8px",
-                            }}
-                            title="Edit Comment"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="bi bi-pencil-square"
-                              viewBox="0 0 16 16"
+                          <div className="d-flex">
+                            <button
+                              onClick={() => handleEditClick(comment)}
+                              style={{
+                                border: "none",
+                                background: "none",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                                color: "#007bff",
+                                marginLeft: "8px",
+                              }}
+                              title="Edit Comment"
                             >
-                              <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-                              />
-                            </svg>
-                          </button>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                className="bi bi-pencil-square"
+                                viewBox="0 0 16 16"
+                              >
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                <path
+                                  fillRule="evenodd"
+                                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                                />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => openDeleteModal(comment)}
+                              style={{
+                                border: "none",
+                                background: "none",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                                color: "#007bff",
+                                marginLeft: "8px",
+                              }}
+                              title="Delete Comment"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                className="bi bi-trash"
+                                viewBox="0 0 16 16"
+                              >
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                              </svg>
+                            </button>
+                          </div>
                         )}
                     </div>
                   ))
@@ -547,16 +573,36 @@ function PostDetail() {
                 )}
               </div>
               <form
-                style={commentInputContainerStyle}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginTop: "16px",
+                }}
                 onSubmit={handleCommentSubmit}
               >
                 <textarea
                   placeholder="Add a comment..."
-                  style={commentInputStyle}
+                  style={{
+                    flex: 1,
+                    padding: "8px",
+                    borderRadius: "4px",
+                    border: "1px solid #ccc",
+                  }}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                 />
-                <button style={commentButtonStyle} type="submit">
+                <button
+                  style={{
+                    marginLeft: "8px",
+                    padding: "8px 12px",
+                    borderRadius: "4px",
+                    border: "none",
+                    background: "#007bff",
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                  type="submit"
+                >
                   Post
                 </button>
               </form>
@@ -564,7 +610,25 @@ function PostDetail() {
           </div>
         </div>
       </div>
-      {/* Render the VoterLists popup modal */}
+
+      {/* Bootstrap Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={cancelDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this discussion?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelDelete}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {showVoterPopup && (
         <VoterLists
           id={id}
