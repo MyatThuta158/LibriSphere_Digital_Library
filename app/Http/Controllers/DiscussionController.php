@@ -116,18 +116,32 @@ class DiscussionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Discussion $discussion)
+    public function destroy($id)
     {
         // Ensure the authenticated user is the owner of the discussion.
-        if (auth()->id() !== $discussion->UserId) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        // if (auth()->id() !== $discussion->UserId) {
+        //     return response()->json(['error' => 'Unauthorized'], 403);
+        // }
+        $discussion = Discussion::findOrFail($id);
+
+        if ($discussion) {
+            // Delete the discussion.
+            $result = $discussion->delete();
+            // dd($result);
+            if ($result) {
+                return response()->json([
+                    'message' => 'Discussion deleted successfully',
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Discussion could not be deleted',
+                ], 500);
+            }
+        } else {
+            return response()->json([
+                'message' => 'Discussion not found',
+            ], 404);
         }
 
-        // Delete the discussion.
-        $discussion->delete();
-
-        return response()->json([
-            'message' => 'Discussion deleted successfully',
-        ], 200);
     }
 }
