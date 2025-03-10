@@ -8,6 +8,7 @@ import MemberRoute from "./Route/MemberRoute";
 // main.jsx or index.js
 import "bootstrap/dist/css/bootstrap.min.css";
 import CommunityMemberRoute from "./Route/CommunityMemberRoute";
+import Unauthorized from "./Pages/Layouts/Unauthorized";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/*" element={<AdminRoute />} />
             <Route path="/customer/*" element={<MemberRoute />} />
             <Route path="/community/*" element={<CommunityMemberRoute />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
             {/* <Route path="/customer/home" element={<Home />} /> */}
           </Routes>
         </BrowserRouter>

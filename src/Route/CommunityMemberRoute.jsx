@@ -5,17 +5,26 @@ import PostDetail from "../Pages/ForumPosts/PostDetail";
 import UserPostsDisplay from "../Pages/ForumPosts/UserPostsDisplay";
 import PostEngagement from "../Pages/ForumPosts/PostEngagement";
 import SideBar from "../Pages/ForumPosts/Layout/SideBar";
+import PermissionForRoute from "../Authentication/PermissionForRoute";
 
 function CommunityMemberRoute() {
   return (
     <div>
       <Routes>
-        <Route path="/posts" element=<PostsFeed /> />
-        <Route path="/postdetail/:id" element={<PostDetail />} />
-        <Route path="/useruploadedpost" element={<UserPostsDisplay />} />
+        <Route
+          element={
+            <PermissionForRoute
+              role={["admin", "community_member", "member"]}
+            />
+          }
+        >
+          <Route path="/posts" element=<PostsFeed /> />
+          <Route path="/postdetail/:id" element={<PostDetail />} />
+          <Route path="/useruploadedpost" element={<UserPostsDisplay />} />
 
-        <Route path="/posts" element={<SideBar />}>
-          <Route path="/posts/postengagement" element={<PostEngagement />} />
+          <Route path="/posts" element={<SideBar />}>
+            <Route path="/posts/postengagement" element={<PostEngagement />} />
+          </Route>
         </Route>
       </Routes>
     </div>
