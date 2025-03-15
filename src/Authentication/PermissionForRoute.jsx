@@ -6,10 +6,13 @@ import { useAuth } from "./Auth";
 function PermissionForRoute({ role }) {
   const { user } = useAuth();
 
+  console.log(user);
+
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
+  console.log(user.role);
   if (!role.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }

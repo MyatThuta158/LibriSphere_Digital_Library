@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { getSinglePosts } from "../../api/forumpostApi";
 import {
@@ -19,6 +19,8 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick";
 import VoterLists from "./Layout/VoterLists";
 import { Modal, Button } from "react-bootstrap"; // using react-bootstrap for the modal
+import { Can } from "@casl/react"; // Optionally, use the <Can> component
+import { AbilityContext } from "../../Authentication/PermissionForUser";
 
 // Helper component to display an image with fallback in case of error.
 function ImageWithFallback({ src, alt, style, ...props }) {
@@ -58,7 +60,11 @@ function PostDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
 
+  // Retrieve stored user (for demonstration, from localStorage)
   const storedUser = JSON.parse(localStorage.getItem("user"));
+
+  // Get ability from CASL context
+  const ability = useContext(AbilityContext);
 
   // Fetch post data.
   useEffect(() => {
@@ -217,7 +223,6 @@ function PostDetail() {
   // Confirm deletion in the modal.
   const confirmDelete = async () => {
     try {
-      // console.log(commentToDelete.id);
       await deleteDiscussion(commentToDelete.id);
       setFlag((prev) => !prev);
     } catch (err) {
@@ -350,43 +355,50 @@ function PostDetail() {
                 borderTop: "1px solid #ddd",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-around",
-                  width: "100%",
-                  marginBottom: "10px",
-                }}
-              >
-                <button
+              {/* Conditionally render vote buttons if the user has permission */}
+              {ability.can("vote", "votes") && (
+                <div
                   style={{
-                    border: "none",
-                    background: "none",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    color:
-                      userVote && userVote.vote_type_id === 1 ? "blue" : "#555",
+                    display: "flex",
+                    justifyContent: "space-around",
+                    width: "100%",
+                    marginBottom: "10px",
                   }}
-                  onClick={() => handleVote(1)}
                 >
-                  <i className="fas fa-arrow-up"></i> Upvote (
-                  {voteCounts.upvotes})
-                </button>
-                <button
-                  style={{
-                    border: "none",
-                    background: "none",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    color:
-                      userVote && userVote.vote_type_id === 2 ? "red" : "#555",
-                  }}
-                  onClick={() => handleVote(2)}
-                >
-                  <i className="fas fa-arrow-down"></i> Downvote (
-                  {voteCounts.downvotes})
-                </button>
-              </div>
+                  <button
+                    style={{
+                      border: "none",
+                      background: "none",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      color:
+                        userVote && userVote.vote_type_id === 1
+                          ? "blue"
+                          : "#555",
+                    }}
+                    onClick={() => handleVote(1)}
+                  >
+                    <i className="fas fa-arrow-up"></i> Upvote (
+                    {voteCounts.upvotes})
+                  </button>
+                  <button
+                    style={{
+                      border: "none",
+                      background: "none",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      color:
+                        userVote && userVote.vote_type_id === 2
+                          ? "red"
+                          : "#555",
+                    }}
+                    onClick={() => handleVote(2)}
+                  >
+                    <i className="fas fa-arrow-down"></i> Downvote (
+                    {voteCounts.downvotes})
+                  </button>
+                </div>
+              )}
               <div
                 style={{
                   fontSize: "14px",
@@ -509,37 +521,41 @@ function PostDetail() {
                           </>
                         )}
                       </div>
-                      {storedUser &&
-                        comment.user?.id === storedUser.id &&
-                        editingCommentId !== comment.id && (
-                          <div className="d-flex">
-                            <button
-                              onClick={() => handleEditClick(comment)}
-                              style={{
-                                border: "none",
-                                background: "none",
-                                cursor: "pointer",
-                                fontSize: "16px",
-                                color: "#007bff",
-                                marginLeft: "8px",
-                              }}
-                              title="Edit Comment"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                fill="currentColor"
-                                className="bi bi-pencil-square"
-                                viewBox="0 0 16 16"
+                      {storedUser && editingCommentId !== comment.id && (
+                        <div className="d-flex">
+                          {comment.user?.id === storedUser.id &&
+                            ability.can("update", "discussion") && (
+                              <button
+                                onClick={() => handleEditClick(comment)}
+                                style={{
+                                  border: "none",
+                                  background: "none",
+                                  cursor: "pointer",
+                                  fontSize: "16px",
+                                  color: "#007bff",
+                                  marginLeft: "8px",
+                                }}
+                                title="Edit Comment"
                               >
-                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
-                                <path
-                                  fillRule="evenodd"
-                                  d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
-                                />
-                              </svg>
-                            </button>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  fill="currentColor"
+                                  className="bi bi-pencil-square"
+                                  viewBox="0 0 16 16"
+                                >
+                                  <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          {(comment.user?.id === storedUser.id ||
+                            storedUser.role === "manager" ||
+                            storedUser.role === "librarian") && (
                             <button
                               onClick={() => openDeleteModal(comment)}
                               style={{
@@ -547,7 +563,7 @@ function PostDetail() {
                                 background: "none",
                                 cursor: "pointer",
                                 fontSize: "16px",
-                                color: "#007bff",
+
                                 marginLeft: "8px",
                               }}
                               title="Delete Comment"
@@ -564,8 +580,9 @@ function PostDetail() {
                                 <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
                               </svg>
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))
                 ) : (

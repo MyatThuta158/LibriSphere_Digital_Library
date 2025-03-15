@@ -14,7 +14,7 @@ function CommunityMemberRoute() {
         <Route
           element={
             <PermissionForRoute
-              role={["admin", "community_member", "member"]}
+              role={["manager", "librarian", "community_member", "member"]}
             />
           }
         >

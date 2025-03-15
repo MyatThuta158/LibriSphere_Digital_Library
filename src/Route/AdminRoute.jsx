@@ -32,11 +32,12 @@ import ResourceAll from "../Pages/AdminPanel/Resources/ResourceAll";
 import ReadResource from "../Pages/MemberPages/ReadResource";
 import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
 import PermissionForRoute from "../Authentication/PermissionForRoute";
+import UserPrediction from "../Pages/AdminPanel/Reports/UserPrediction";
 
 function AdminRoute() {
   return (
     <Routes>
-      <Route element={<PermissionForRoute role="admin" />}>
+      <Route element={<PermissionForRoute role={["manager", "librarian"]} />}>
         <Route path="/Admin" element={<SideBarMenu />}>
           {/* This is for Authors Route */}
           <Route path="/Admin/AddAuthors" element={<AddAuthors />} />
@@ -108,6 +109,8 @@ function AdminRoute() {
             path="/Admin/TotalRevenueReport"
             element={<TotalRevenueReport />}
           />
+
+          <Route path="/Admin/UserPredict" element={<UserPrediction />} />
 
           <Route path="/Admin/MembershipRevenue" element={<RevenueReport />} />
           <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />

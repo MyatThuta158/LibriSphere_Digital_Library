@@ -4,6 +4,7 @@ import Menu from "../Layouts/Menu";
 import { MembershipContext } from "./Context/MembershipContext";
 import { useNavigate } from "react-router-dom";
 import IsSystemUser from "../../CustomHook/IsSystemUser";
+import { Ability } from "../../Authentication/PermissionForUser";
 
 const Membership = () => {
   const { userData, membershipPlan, setMembershipPlan, setTotal } =
@@ -12,6 +13,8 @@ const Membership = () => {
   const [selectPlan, setSelectPlan] = useState(null); // Track selected plan
   const navigate = useNavigate();
   const [isMember, setIsmember] = useState(false);
+
+  const ability = Ability();
 
   // Effect for logging updated membershipPlan
   useEffect(() => {
@@ -74,25 +77,27 @@ const Membership = () => {
                       <p className="mt-4">{membership.Description}</p>
                     </div>
                     {/* Show "CHOOSE PLAN" button only if no plan is selected */}
-                    {selectPlan == null && isMember == true && (
-                      <button
-                        className="btn btn-info-gradiant p-3 btn-block border-0 text-white"
-                        onClick={() => {
-                          setSelectPlan({
-                            planName: membership.PlanName,
-                            price: membership.Price,
-                          });
-                          console.log(membership.id); // Log membership id
-                          setMembershipPlan({
-                            id: membership.id,
-                            duration: membership.Duration,
-                          });
-                          setTotal(membership.Price);
-                        }}
-                      >
-                        CHOOSE PLAN
-                      </button>
-                    )}
+                    {selectPlan == null &&
+                      isMember == true &&
+                      ability.can("choose", "membership") && (
+                        <button
+                          className="btn btn-info-gradiant p-3 btn-block border-0 text-white"
+                          onClick={() => {
+                            setSelectPlan({
+                              planName: membership.PlanName,
+                              price: membership.Price,
+                            });
+                            console.log(membership.id); // Log membership id
+                            setMembershipPlan({
+                              id: membership.id,
+                              duration: membership.Duration,
+                            });
+                            setTotal(membership.Price);
+                          }}
+                        >
+                          CHOOSE PLAN
+                        </button>
+                      )}
 
                     {selectPlan == null && !isMember && (
                       <button

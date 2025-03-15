@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
+import { Ability } from "../../Authentication/PermissionForUser";
 
 function SideBarMenu() {
   const navigate = useNavigate();
@@ -14,6 +15,8 @@ function SideBarMenu() {
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
   const [requestResourceOpen, setRequestResourceOpen] = useState(false);
   const [paymentType, setPaymenttype] = useState(false);
+
+  const ability = Ability();
 
   return (
     <>
@@ -346,131 +349,147 @@ function SideBarMenu() {
             )}
           </li>
 
-          <hr className="sidebar-divider" />
-
           {/* ======= Admin Dropdown ======= */}
-          <div className="sidebar-heading">Admin</div>
-          <li className="nav-item">
-            <button
-              className="nav-link dropdown-btn"
-              onClick={() => setAdminOpen(!adminOpen)}
-            >
-              <i className="fas fa-fw fa-user-shield"></i>
-              <span>
-                Admin{" "}
-                {adminOpen ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-up-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-down-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
-                  </svg>
-                )}
-              </span>
-            </button>
-            {adminOpen && (
-              <ul className="dropdown-container">
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/Admin/RegisterAdmin")}
-                  >
-                    Register Admin
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/Admin/ViewAdmins")}
-                  >
-                    View Admins
-                  </button>
-                </li>
-              </ul>
-            )}
-          </li>
 
-          <hr className="sidebar-divider" />
+          {ability.can("add", "admin") && (
+            <>
+              <hr className="sidebar-divider" />
+              <div className="sidebar-heading">Admin</div>
+              <li className="nav-item">
+                <button
+                  className="nav-link dropdown-btn"
+                  onClick={() => setAdminOpen(!adminOpen)}
+                >
+                  <i className="fas fa-fw fa-user-shield"></i>
+                  <span>
+                    Admin{" "}
+                    {adminOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-up-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-down-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {adminOpen && (
+                  <ul className="dropdown-container">
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/RegisterAdmin")}
+                      >
+                        Register Admin
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/ViewAdmins")}
+                      >
+                        View Admins
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            </>
+          )}
 
           {/* ======= Report Dropdown ======= */}
-          <div className="sidebar-heading">Report</div>
-          <li className="nav-item">
-            <button
-              className="nav-link dropdown-btn"
-              onClick={() => setReportOpen(!reportOpen)}
-            >
-              <i className="fas fa-fw fa-chart-area"></i>
-              <span>
-                Report{" "}
-                {reportOpen ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-up-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    className="bi float-end me-4 bi-caret-down-fill"
-                    viewBox="0 0 16 16"
-                  >
-                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
-                  </svg>
+
+          {ability.can("view", "reports") && (
+            <>
+              <hr className="sidebar-divider" />
+              <div className="sidebar-heading">Report</div>
+              <li className="nav-item">
+                <button
+                  className="nav-link dropdown-btn"
+                  onClick={() => setReportOpen(!reportOpen)}
+                >
+                  <i className="fas fa-fw fa-chart-area"></i>
+                  <span>
+                    Report{" "}
+                    {reportOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-up-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-down-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {reportOpen && (
+                  <ul className="dropdown-container">
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/NewMemberReport")}
+                      >
+                        New Member
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/MembershipRevenue")}
+                      >
+                        Membership Revenue
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/SubscriptionReport")}
+                      >
+                        SubscriptioinReport
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/UserPredict")}
+                      >
+                        User Prediction
+                      </button>
+                    </li>
+                  </ul>
                 )}
-              </span>
-            </button>
-            {reportOpen && (
-              <ul className="dropdown-container">
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/Admin/NewMemberReport")}
-                  >
-                    New Member
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/Admin/MembershipRevenue")}
-                  >
-                    Membership Revenue
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item"
-                    onClick={() => navigate("/Admin/SubscriptionReport")}
-                  >
-                    SubscriptioinReport
-                  </button>
-                </li>
-              </ul>
-            )}
-          </li>
+              </li>
+            </>
+          )}
 
           <hr className="sidebar-divider" />
 

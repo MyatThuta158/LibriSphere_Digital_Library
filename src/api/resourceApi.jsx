@@ -23,3 +23,7 @@ export const detail = (id) =>
 //-----This is the update function for resource----///
 export const resourceUpdate = (id, data) =>
   apiClient.post(`/Admin/UpdateResource/${id}`, data).then((res) => res.data);
+
+//----This is get all resources genre----//
+export const getResources = () =>
+  apiClient.get(`/getResource`).then((response) => response.data);

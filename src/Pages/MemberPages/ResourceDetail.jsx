@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { detail } from "../../api/resourceApi";
 import Menu from "../Layouts/Menu";
@@ -9,6 +9,8 @@ import {
   updateReview,
   deleteReview,
 } from "../../api/reviewApi"; // Import deleteReview
+
+import { AbilityContext } from "../../Authentication/PermissionForUser";
 
 function ResourceDetail() {
   const { id } = useParams(); // Get resource ID from URL
@@ -29,6 +31,8 @@ function ResourceDetail() {
   const baseUrl = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
+  //-----This is for permission define---//
+  const ability = useContext(AbilityContext);
   // Retrieve the logged in user's id and role from local storage once
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -227,18 +231,22 @@ function ResourceDetail() {
               <div className="ms-3 flex-grow-1">
                 <div className="d-flex align-items-center">
                   <p className="fw-bold mb-0">{review.user_name}</p>
-                  {review.user_id === userid && (
-                    <div className="ms-auto d-flex">
-                      <FaEdit
-                        className="cursor-pointer me-2"
-                        onClick={() => handleEditReview(review)}
-                      />
-                      <FaTrash
-                        className="cursor-pointer"
-                        onClick={() => handleDeleteReview(review.id)}
-                      />
-                    </div>
-                  )}
+                  {/* If the review was uploaded by the logged-in user and the user is not a manager or librarian, show both edit and delete */}
+                  {review.user_id === userid &&
+                    role !== "manager" &&
+                    role !== "librarian" && (
+                      <div className="ms-auto d-flex">
+                        <FaEdit
+                          className="cursor-pointer me-2"
+                          onClick={() => handleEditReview(review)}
+                        />
+                        <FaTrash
+                          className="cursor-pointer"
+                          onClick={() => handleDeleteReview(review.id)}
+                        />
+                      </div>
+                    )}
+                  {/* If the logged-in user is a manager or librarian, show only the delete icon */}
                   {(role === "manager" || role === "librarian") && (
                     <div className="ms-auto d-flex">
                       <FaTrash
@@ -269,55 +277,57 @@ function ResourceDetail() {
         )}
 
         {/* Submit Review Form */}
-        <div className="mt-4">
-          <h4>{editingReviewId ? "Edit Your Review" : "Leave a Review"}</h4>
-          <form onSubmit={handleSubmit}>
-            <div className="d-flex">
-              {[...Array(5)].map((_, i) => {
-                const starValue = i + 1;
-                return (
-                  <FaStar
-                    key={i}
-                    className={`cursor-pointer ${
-                      starValue <= (hoverStar || newReview.ReviewStar)
-                        ? "text-warning"
-                        : "text-secondary"
-                    }`}
-                    onClick={() =>
-                      setNewReview({ ...newReview, ReviewStar: starValue })
-                    }
-                    onMouseEnter={() => setHoverStar(starValue)}
-                    onMouseLeave={() => setHoverStar(null)}
-                  />
-                );
-              })}
-            </div>
-            <textarea
-              className="form-control mt-2 mb-2"
-              placeholder="Write your review here..."
-              style={{ height: "20vh" }}
-              value={newReview.ReviewMessage}
-              onChange={(e) =>
-                setNewReview({ ...newReview, ReviewMessage: e.target.value })
-              }
-              required
-            ></textarea>
-            <div className="d-flex">
-              <button type="submit" className="btn btn-primary">
-                {editingReviewId ? "Update Review" : "Submit Review"}
-              </button>
-              {editingReviewId && (
-                <button
-                  type="button"
-                  className="btn btn-secondary ms-2"
-                  onClick={handleCancelEdit}
-                >
-                  Cancel
+        {ability.can("add", "review") && (
+          <div className="mt-4">
+            <h4>{editingReviewId ? "Edit Your Review" : "Leave a Review"}</h4>
+            <form onSubmit={handleSubmit}>
+              <div className="d-flex">
+                {[...Array(5)].map((_, i) => {
+                  const starValue = i + 1;
+                  return (
+                    <FaStar
+                      key={i}
+                      className={`cursor-pointer ${
+                        starValue <= (hoverStar || newReview.ReviewStar)
+                          ? "text-warning"
+                          : "text-secondary"
+                      }`}
+                      onClick={() =>
+                        setNewReview({ ...newReview, ReviewStar: starValue })
+                      }
+                      onMouseEnter={() => setHoverStar(starValue)}
+                      onMouseLeave={() => setHoverStar(null)}
+                    />
+                  );
+                })}
+              </div>
+              <textarea
+                className="form-control mt-2 mb-2"
+                placeholder="Write your review here..."
+                style={{ height: "20vh" }}
+                value={newReview.ReviewMessage}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, ReviewMessage: e.target.value })
+                }
+                required
+              ></textarea>
+              <div className="d-flex">
+                <button type="submit" className="btn btn-primary">
+                  {editingReviewId ? "Update Review" : "Submit Review"}
                 </button>
-              )}
-            </div>
-          </form>
-        </div>
+                {editingReviewId && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary ms-2"
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        )}
       </div>
 
       {/* Modal for Success/Error Messages */}

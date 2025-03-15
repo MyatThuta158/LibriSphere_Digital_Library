@@ -107,7 +107,7 @@ const NewMemberReport = () => {
 
   return (
     <div>
-      <h2>New Member Report</h2>
+      <h2>New User Report</h2>
 
       {/* Main Report Type Selection */}
       <div style={{ marginBottom: "20px" }}>

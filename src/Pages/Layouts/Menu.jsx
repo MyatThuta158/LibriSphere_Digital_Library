@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "../../main.css";
+import { Ability } from "../../Authentication/PermissionForUser";
 
 function Menu() {
   const navigate = useNavigate();
@@ -8,6 +9,8 @@ function Menu() {
   // Check if user data exists in localStorage
   const user = localStorage.getItem("user"); // Assuming "user" stores member details
   const isMember = user !== null; // If user exists, they are a member
+
+  const ability = Ability(); //This for permisstion from permissionForUser.jsx
 
   return (
     <div className="index-page">
@@ -56,14 +59,17 @@ function Menu() {
                       Resources
                     </a>
                   </li>
-                  <li>
-                    <a
-                      onClick={() => navigate("/customer/ResourceRequest")}
-                      style={{ cursor: "pointer" }}
-                    >
-                      Resource Request
-                    </a>
-                  </li>
+                  {ability.can("make", "request") && (
+                    <li>
+                      <a
+                        onClick={() => navigate("/customer/ResourceRequest")}
+                        style={{ cursor: "pointer" }}
+                      >
+                        Resource Request
+                      </a>
+                    </li>
+                  )}
+
                   <li>
                     <a href="#contact">Contact</a>
                   </li>
