@@ -1,8 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\MembershipPlan;
 use App\Models\Subscription;
+use App\Models\SubscriptionNotification;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -30,20 +34,20 @@ class SubscriptionController extends Controller
     public function store(Request $request)
     {
         ob_clean();
-        // Validate the request
+        $user = Auth::user();
+
+        //dd($user);
+
+        // Validate the request (removed MemberstartDate and MemberEndDate)
         try {
             $validate = $request->validate([
                 'admin_id'             => 'nullable|exists:admins,id',
                 'membership_plans_id'  => 'required|exists:membership_plans,id',
                 'payment_types_id'     => 'required|exists:payment_types,id',
-                'users_id'             => 'required|exists:users,id',
                 'PaymentScreenShot'    => 'required|image|mimes:jpeg,png,jpg,gif,svg',
                 'PaymentAccountName'   => 'required|string|max:255',
                 'PaymentAccountNumber' => 'required|string|max:255',
                 'PaymentDate'          => 'required|date',
-                'MemberstartDate'      => 'required|date',
-                'MemberEndDate'        => 'required|date|after:MemberstartDate',
-
             ]);
         } catch (ValidationException $e) {
             return response()->json(['message' => $e->errors()], 500);
@@ -55,19 +59,63 @@ class SubscriptionController extends Controller
                 $paymentScreenshotFile = $request->file('PaymentScreenShot');
                 $paymentScreenshotPath = $paymentScreenshotFile->store('subscriptions', 'public');
 
-                // Store subscription in the database
+                // Check for an active subscription for this user
+                $activeSubscription = Subscription::where('users_id', $user->id)
+                    ->where('SubscriptionStatus', 'active')
+                    ->first();
+
+                // Retrieve the membership plan to get its duration (in months)
+                $membershipPlan   = MembershipPlan::find($validate['membership_plans_id']);
+                $durationInMonths = $membershipPlan->Duration; // e.g., 1 means one month
+
+                $today = Carbon::now();
+
+                if ($activeSubscription) {
+                    $activeEndDate = Carbon::parse($activeSubscription->MemberEndDate);
+                    // If current subscription is still active, extend from its end date
+                    if ($today->lessThan($activeEndDate)) {
+                        $memberStartDate = $today;
+                        $memberEndDate   = $activeEndDate->copy()->addMonths($durationInMonths);
+                    } else {
+                        // Active subscription exists but has expired; start new period from today
+                        $memberStartDate = $today;
+                        $memberEndDate   = $today->copy()->addMonths($durationInMonths);
+                    }
+                } else {
+                    // No active subscription; use today's date for new subscription
+                    $memberStartDate = $today;
+                    $memberEndDate   = $today->copy()->addMonths($durationInMonths);
+                }
+
+                // Create the new subscription using the calculated dates
                 $subscription = Subscription::create([
                     'admin_id'             => $validate['admin_id'] ?? null,
                     'membership_plans_id'  => $validate['membership_plans_id'],
                     'payment_types_id'     => $validate['payment_types_id'],
-                    'users_id'             => $validate['users_id'],
+                    'users_id'             => $user->id,
                     'PaymentScreenShot'    => $paymentScreenshotPath,
                     'PaymentAccountName'   => $validate['PaymentAccountName'],
                     'PaymentAccountNumber' => $validate['PaymentAccountNumber'],
                     'PaymentDate'          => $validate['PaymentDate'],
-                    'MemberstartDate'      => $validate['MemberstartDate'],
-                    'MemberEndDate'        => $validate['MemberEndDate'],
-                    'PaymentStatus'        => "Pending",
+                    'MemberstartDate'      => $memberStartDate->toDateString(),
+                    'MemberEndDate'        => $memberEndDate->toDateString(),
+                    'PaymentStatus'        => "pending",
+                    'SubscriptionStatus'   => 'active',
+                ]);
+
+                // If an active subscription exists, update its status to 'inactive'
+                if ($activeSubscription) {
+                    $activeSubscription->update(['SubscriptionStatus' => 'inactive']);
+                    $notificationMsg = "Your subscription plan is extend and the expired date is " . $memberEndDate->toDateString();
+                } else {
+                    $notificationMsg = "Your subscription expired date is " . $memberEndDate->toDateString();
+                }
+
+                // Create the notification for the subscription
+                SubscriptionNotification::create([
+                    'SubscriptionId' => $subscription->id,
+                    'Description'    => $notificationMsg,
+                    'WatchStatus'    => 'unwatch',
                 ]);
 
                 return response()->json([
@@ -88,14 +136,12 @@ class SubscriptionController extends Controller
                 'request_data' => $request->all(),
             ]);
 
-            // Return the error response.
             return response()->json([
                 'status'  => 500,
                 'message' => 'An error occurred while saving the subscription',
                 'error'   => $e->getMessage(),
             ]);
         }
-
     }
 
     /**

@@ -20,6 +20,7 @@ class Subscription extends Model
         'MemberstartDate',
         'MemberEndDate',
         'PaymentStatus',
+        'SubscriptionStatus',
     ];
 
     public $timestamps = false;
@@ -46,5 +47,10 @@ class Subscription extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');
+    }
+
+    public function subscriptionNotifications()
+    {
+        return $this->hasMany(SubscriptionNotification::class, 'SubscriptionId');
     }
 }

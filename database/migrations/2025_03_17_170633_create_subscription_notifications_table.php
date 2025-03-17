@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('type');
-            $table->morphs('notifiable');
-            $table->text('data');
-            $table->timestamp('read_at')->nullable();
+        Schema::create('subscription_notifications', function (Blueprint $table) {
+            $table->id()->autoIncrement()->primary();
+            $table->unsignedBigInteger('SubscriptionId');
+            $table->string('Description');
+
+            $table->enum('WatchStatus', ['watched', 'unwatch']);
+
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('notifications');
+        Schema::dropIfExists('subscription_notifications');
     }
 };
