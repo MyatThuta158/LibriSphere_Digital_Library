@@ -1,45 +1,47 @@
 <?php
-
 namespace Database\Seeders;
 
+use App\Models\Admin;
 use Illuminate\Database\Seeder;
-use Illuminate\Http\Request;
-use App\Http\Controllers\AdminController; // Replace with your actual controller
+use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
     public function run(): void
     {
+        // Optionally clear the admin table to avoid duplicates
+        Admin::truncate();
+
         $admins = [
             [
-                'name' => 'Myat',
-                'email' => 'myat123@example.com',
-                'password' => 'password123', // Plain text (store method hashes it)
-                'role' => 'librarian', // Ensure this matches your form field name
-                'gender' => 'Male',
-                'phone_number' => '1234567890',
-                'profile_picture' => null,
+                'Name'           => 'Myat',
+                'Email'          => 'myat123@example.com',
+                // Make sure to hash the password
+                'Password'       => Hash::make('password123'),
+                'role'           => 'librarian',
+                'Gender'         => 'Male',
+                'PhoneNumber'    => '1234567890',
+                'ProfilePicture' => null,
             ],
             [
-                'name' => 'Thuta',
-                'email' => 'myatthuta232@gmail.com',
-                'password' => 'password123',
-                'role' => 'manager',
-                'gender' => 'Female',
-                'phone_number' => '0987654321',
-                'profile_picture' => null,
-            ]
+                'Name'           => 'Thuta',
+                'Email'          => 'admin123@gmail.com',
+                'Password'       => Hash::make('password123'),
+                'role'           => 'manager',
+                'Gender'         => 'Female',
+                'PhoneNumber'    => '0987654321',
+                'ProfilePicture' => null,
+            ],
         ];
 
         foreach ($admins as $adminData) {
-            // Simulate a request with admin data
-            $request = new Request($adminData);
+            $admin = Admin::create($adminData);
 
-            // Resolve the controller from the container
-            $controller = app()->make(AdminController::class);
-
-            // Call the store method
-            $controller->store($request);
+            // If you are using a role management package (e.g., Spatie),
+            // you can optionally assign the role:
+            if (method_exists($admin, 'assignRole')) {
+                $admin->assignRole($adminData['role']);
+            }
         }
     }
 }

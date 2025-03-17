@@ -18,6 +18,12 @@ class ResourcesController extends Controller
         return response()->json(['data' => $resources], 200);
     }
 
+    public function getResource()
+    {
+        $resource = Resources::limit(8)->get();
+        return response()->json(['data' => $resource], 200);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -53,7 +59,7 @@ class ResourcesController extends Controller
             if ($request->hasFile('Photo') && $request->hasFile('file')) {
                 /////----This is for file storage processes---//
                 $photo     = $request->file('Photo');
-                $photoPath = $photo->store('userimg', 'public');
+                $photoPath = $photo->store('resources', 'public');
 
                 $test = $request->hasFile('Photo');
 

@@ -1,19 +1,15 @@
 <?php
-
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-use Faker\Factory as Faker;
 use Carbon\Carbon;
+use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
 class MemberSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
         $faker = Faker::create();
@@ -24,40 +20,60 @@ class MemberSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName]);
         }
 
-        // Define the start and end dates for the period (March 2024 to February 2025)
-        $startDate = Carbon::create(2024, 7, 1);
-        $endDate = Carbon::create(2025, 2, 28);
+        // Define date range: October 1, 2024 to March 14, 2025 (6 months)
+        $startDate = Carbon::create(2024, 10, 1);
+        $endDate   = Carbon::create(2025, 3, 14);
+        $totalDays = $startDate->diffInDays($endDate);
 
-        // Generate 50 users within the date range
-        $userCount = 0;
+                                     // Parameters to simulate signups with a realistic pattern
+        $baseCount           = 2;    // Base daily signups
+        $dailyTrendIncrement = 0.15; // Growth factor per day
+        $weekendBoost        = 4;    // Additional signups on weekends (Saturday/Sunday)
+        $noiseRange          = 1;    // Random variation
+        $maxDailyUsers       = 10;   // Maximum signups per day (saturation)
+        $totalUsers          = 0;
 
-        // Repeat until we have 50 users
-        while ($userCount < 250 && $startDate <= $endDate) {
-            // Create a user with a random creation date within this month
-            $user = User::create([
-                'name' => $faker->name,
-                'email' => $faker->unique()->safeEmail,
-                'password' => Hash::make('password123'),
-                'gender' => $faker->randomElement(['male', 'female']),
-                'phone_number' => $faker->phoneNumber,
-                'DateOfBirth' => $faker->date,
-                'role' => 'member', // Can change based on the role you want
-                'ProfilePic' => null, // Or generate a random image URL
-                'created_at' => $faker->dateTimeBetween($startDate, $startDate->copy()->endOfMonth()), // Random date within the month
-                'updated_at' => now(),
-            ]);
+        // Loop through each day in the date range
+        for ($i = 0; $i <= $totalDays; $i++) {
+            $currentDate = $startDate->copy()->addDays($i);
+            $dayOfWeek   = $currentDate->dayOfWeek;
 
-            // Assign the role to the user
-            $role = Role::where('name', 'member')->first(); // Or dynamically choose the role
-            if ($role) {
-                $user->assignRole($role);
+            // Calculate a trend component with logistic growth to simulate saturation
+            $trendComponent = $dailyTrendIncrement * $i * (1 - ($i / $totalDays));
+
+            // Weekend seasonality: boost signups on Saturday (6) and Sunday (0)
+            $seasonalComponent = in_array($dayOfWeek, [0, 6]) ? $weekendBoost : 0;
+
+            // Compute the expected signup count and enforce a daily maximum
+            $expectedCount = $baseCount + $trendComponent + $seasonalComponent;
+            $expectedCount = min($expectedCount, $maxDailyUsers);
+
+            // Add some random noise
+            $noise          = rand(-$noiseRange, $noiseRange);
+            $dailyUserCount = max(1, round($expectedCount + $noise));
+
+            // Cap the overall user count to a total (here keeping under 950 users)
+            if (($totalUsers + $dailyUserCount) > 950) {
+                $dailyUserCount = max(0, 950 - $totalUsers);
             }
+            $totalUsers += $dailyUserCount;
 
-            $userCount++;
+            // Create each user for the day with a random assigned role
+            for ($j = 0; $j < $dailyUserCount; $j++) {
+                $assignedRole = $faker->randomElement($roles);
 
-            // Move to the next month if less than 50 users have been created
-            if ($userCount < 50) {
-                $startDate->addMonth();
+                User::create([
+                    'name'         => $faker->name,
+                    'email'        => $faker->unique()->safeEmail,
+                    'password'     => Hash::make('password123'),
+                    'gender'       => $faker->randomElement(['male', 'female']),
+                    'phone_number' => $faker->phoneNumber,
+                    'DateOfBirth'  => $faker->date(),
+                    'role'         => $assignedRole,
+                    'ProfilePic'   => null,
+                    'created_at'   => $currentDate->toDateString(),
+                    'updated_at'   => $currentDate->toDateString(),
+                ])->assignRole($assignedRole);
             }
         }
     }

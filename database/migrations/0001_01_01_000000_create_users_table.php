@@ -23,7 +23,8 @@ return new class extends Migration
             $table->string('gender');
             $table->text('ProfilePic')->nullable();
             $table->rememberToken();
-            $table->timestamps();
+            $table->date('created_at');
+            $table->date('updated_at');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

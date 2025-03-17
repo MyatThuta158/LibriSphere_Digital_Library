@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Genre;
@@ -15,18 +14,27 @@ class GenreController extends Controller
     public function index()
     {
         ///-----This get all data----//
-        $user=Auth::user();
+        $user = Auth::user();
 
         //dd($user->hasRole(['manager','librarian']));
 
         //-----This check if the user can have role and permission to make the below action---///
-        if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
-            return response()->json(['message'=>"Unauthorize"],401);
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
+            return response()->json(['message' => "Unauthorize"], 401);
         }
 
-        $allData=Genre::all();
-        return response()->json(['status'=>200,'data'=>$allData]);
+        $allData = Genre::all();
+        return response()->json(['status' => 200, 'data' => $allData]);
     }
+
+    // public function getGenre()
+    // {
+    //     // Fetch only 3 records from the Genre table
+    //     $allData = Genre::limit(5)->get();
+    //     // or: Genre::take(3)->get();
+
+    //     return response()->json(['status' => 200, 'data' => $allData]);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -36,41 +44,41 @@ class GenreController extends Controller
         Log::info('Received data:', $request->all());
         $user = Auth::user();
         Log::info('User:', ['user' => $user]);
-    
-        if (!$user || !$user->hasRole(['manager','librarian']) || !$user->can('manage genre')) {
+
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
             return response()->json(['message' => "Unauthorized"], 403);
             Log::info('Authorize', "Authorize");
-        }else{
+        } else {
             Log::info('UnAuthorize', "UnAuthorize");
         }
-    
+
         try {
             // Change validation to use 'name' column but keep 'genre_name' as input field
             $validatedData = $request->validate([
-                'genre_name' => 'required|string', // 
+                'genre_name' => 'required|string', //
             ], [
-                'genre_name.required' => 'Name is required'
-                
+                'genre_name.required' => 'Name is required',
+
             ]);
 
             //dd($validatedData);
-    
+
             Log::info('validate data:', $validatedData);
             $result = Genre::create([
-                'name' => $validatedData['genre_name'], // 
+                'name' => $validatedData['genre_name'], //
             ]);
 
             // dd($result);
-            
+
             return response()->json([
-                'status' => 200,
-                'message' => 'Data inserted successfully'
+                'status'  => 200,
+                'message' => 'Data inserted successfully',
             ]);
-    
+
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 500,
-                'message' => $e->getMessage()
+                'status'  => 500,
+                'message' => $e->getMessage(),
             ]);
         }
     }
@@ -79,14 +87,14 @@ class GenreController extends Controller
      */
     public function show($id)
     {
-         //------This is to find specific resource----//
-       $result=Genre::where('id',$id)->first();
+        //------This is to find specific resource----//
+        $result = Genre::where('id', $id)->first();
 
-       if(!$result){
-        return response()->json(['status'=>200,'message'=>'Data cannot found']);
-       }
+        if (! $result) {
+            return response()->json(['status' => 200, 'message' => 'Data cannot found']);
+        }
 
-       return response()->json(['status'=>200,'data'=>$result]); //-----This return result find value----//
+        return response()->json(['status' => 200, 'data' => $result]); //-----This return result find value----//
     }
 
     /**
@@ -95,39 +103,39 @@ class GenreController extends Controller
     public function update(Request $request, $id)
     {
         ///-----This get all data----//
-        $user=Auth::user();
+        $user = Auth::user();
 
-       // dd($user);
-         //-----This check if the user can have role and permission to make the below action---///
-         if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
-            return response()->json(['message'=>"Unauthorize"],403);
+        // dd($user);
+        //-----This check if the user can have role and permission to make the below action---///
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
+            return response()->json(['message' => "Unauthorize"], 403);
         }
-        try{
+        try {
             //----This validate for incoming value to not empty---//
             $validatedData = $request->validate([
                 'name' => 'required|unique:genres',
-            ],['name.required'=>'Name is required','name.unique'=>'Name already exists']);
+            ], ['name.required' => 'Name is required', 'name.unique' => 'Name already exists']);
 
             // dd($validatedData);
-            $result=Genre::where('id',$id)->update($validatedData);
+            $result = Genre::where('id', $id)->update($validatedData);
             // dd($result);
 
-            if($result){
+            if ($result) {
                 return response()->json([
-                    'status'=>200,
-                    'message'=>'Data updated successfully'
-            ]);
+                    'status'  => 200,
+                    'message' => 'Data updated successfully',
+                ]);
             }
 
             //----This return if the data does not enter into database----//
             return response()->json([
-                'status'=>500,
-                'message'=>'Data not updated'
+                'status'  => 500,
+                'message' => 'Data not updated',
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'status'=>500,
-                'message'=>'Data insert error!'
+                'status'  => 500,
+                'message' => 'Data insert error!',
             ]);
         }
     }
@@ -138,33 +146,33 @@ class GenreController extends Controller
     public function destroy($id)
     {
         ///-----This get all data----//
-        $user=Auth::user();
+        $user = Auth::user();
 
         //-----This check if the user can have role and permission to make the below action---///
-        if (!$user || !$user->hasRole(['manager','librarian'])||!$user->can('manage genre')) {
-            return response()->json(['message'=>"Unauthorize"],403);
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
+            return response()->json(['message' => "Unauthorize"], 403);
         }
-         //---This is for delete processes----//
-         try{
-            $result=Genre::where('id',$id)->delete();
+        //---This is for delete processes----//
+        try {
+            $result = Genre::where('id', $id)->delete();
 
-            if (!$result) {
+            if (! $result) {
                 return response()->json([
-                    'status'=>500,
-                    'message'=>'Data not deleted'
+                    'status'  => 500,
+                    'message' => 'Data not deleted',
                 ]);
             }
 
             return response()->json([
-                'status'=>200,
-                'message'=>'Data deleted successfully'
+                'status'  => 200,
+                'message' => 'Data deleted successfully',
             ]);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                'status'=>500,
-                'message'=>'Data not deleted'
+                'status'  => 500,
+                'message' => 'Data not deleted',
             ]);
         }
     }
-    
+
 }

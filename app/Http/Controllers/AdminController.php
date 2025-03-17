@@ -75,7 +75,7 @@ class AdminController extends Controller
                 'Name'         => 'string|required',
                 'Email'        => 'required|email|string|unique:admins,Email|max:255',
                 'Password'     => 'required|string|min:8',
-                'Role'         => 'required|string|in:manager,librarian',
+                'role'         => 'required|string|in:manager,librarian',
                 'phone_number' => 'required|string',
                 'Gender'       => 'required|string|in:male,female,other',
                 'PicImg'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -104,12 +104,12 @@ class AdminController extends Controller
                 'PhoneNumber'    => $validate['phone_number'],
                 'Gender'         => $validate['Gender'],
                 'ProfilePicture' => $photoPath,
-                'Role'           => $validate['Role'],
+                'role'           => $validate['role'],
             ]);
 
             if ($result) {
 
-                $role = Role::where('name', $validate['Role'])->first();
+                $role = Role::where('name', $validate['role'])->first();
 
                 if ($role) {
                     $result->assignRole($role);

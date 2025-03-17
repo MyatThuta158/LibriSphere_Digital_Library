@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/admins', App\Http\Controllers\AdminController::class);
     Route::apiResource('/authors', App\Http\Controllers\AuthorsController::class);
     Route::apiResource('/genres', App\Http\Controllers\GenreController::class);
+
     Route::apiResource('/resources', App\Http\Controllers\ResourcesController::class);
     Route::apiResource('/memberships', App\Http\Controllers\MembershipPlanController::class);
     Route::post('/memberships/update/{id}', [App\Http\Controllers\MembershipPlanController::class, 'update']);
@@ -62,6 +63,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/votes/count/{id}', [App\Http\Controllers\VotesController::class, 'countVotes']);
     Route::get('/votes/voters/{id}', [App\Http\Controllers\VotesController::class, 'getVoters']);
     Route::post('/votes/delete', [App\Http\Controllers\VotesController::class, 'delete']);
+
+    Route::post('/userprediction', [App\Http\Controllers\UserPredictionInformationController::class, 'store']);
+    Route::get('/userprediction/get', [App\Http\Controllers\UserPredictionInformationController::class, 'index']);
 });
 
 Route::post('/UserRegister', [App\Http\Controllers\UserController::class, 'store']);
@@ -75,3 +79,5 @@ Route::get('/resource/search', [App\Http\Controllers\ResourcesController::class,
 Route::get('/resource/{id}', [App\Http\Controllers\ResourcesController::class, 'show']);
 Route::post('/Reviews/Add', [App\Http\Controllers\ReviewsController::class, 'store']);
 Route::post('/admin/login', [App\Http\Controllers\AuthController::class, 'login'])->name('login');
+
+Route::get('/getResource', [App\Http\Controllers\ResourcesController::class, 'getResource']);
