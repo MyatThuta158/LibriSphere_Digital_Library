@@ -4,6 +4,11 @@ import React, { createContext, useContext } from "react";
 export const AbilityContext = createContext(new PureAbility([]));
 
 function PermissionForUser(user) {
+  // If no user is provided, return an empty ability
+  if (!user) {
+    return new PureAbility([]);
+  }
+
   const { can, cannot, build } = new AbilityBuilder(PureAbility);
 
   if (user.role === "manager") {
@@ -21,10 +26,8 @@ function PermissionForUser(user) {
     can("delete", "review");
   } else if (user.role === "librarian") {
     can("manage", "adminSome");
-
     cannot("add", "resourceRequest");
     can("delete", "discussions");
-
     cannot("add", "communityProfile");
     can("view", "resources");
     cannot("make", "payment");

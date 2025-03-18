@@ -4,52 +4,59 @@ import Cookies from "js-cookie";
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  //------This get user data from local storage----//
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const [user, setuser] = useState(userData || null);
+  // Safely get user data from local storage
+  const storedUser = localStorage.getItem("user");
+  const userData =
+    storedUser && storedUser !== "undefined" ? JSON.parse(storedUser) : null;
+  const [user, setUser] = useState(userData);
 
-  //------This get cookies data from local storage----//
-  const cookiesData = JSON.parse(localStorage.getItem("token"));
-  const [token, setToken] = useState(cookiesData || null);
+  // Safely get token data from local storage
+  const storedToken = localStorage.getItem("token");
+  const tokenData =
+    storedToken && storedToken !== "undefined" ? JSON.parse(storedToken) : null;
+  const [token, setToken] = useState(tokenData);
 
-  //------This insert the user data with use effect into local storeage---//
   useEffect(() => {
+    // Update local storage for user
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
     } else {
       localStorage.removeItem("user");
     }
 
-    //This set the token into local storage
-
+    // Update token in cookies and local storage
     if (token) {
       Cookies.set("token", token, { expires: 1 });
+      localStorage.setItem("token", JSON.stringify(token));
+    } else {
+      Cookies.remove("token");
+      localStorage.removeItem("token");
     }
   }, [user, token]);
 
-  //----This is for login user----//
+  // Function to log in a user
   const loginUser = (user, token) => {
-    setuser(user);
+    setUser(user);
     setToken(token);
-
-    //---This set cookies for user---//
     Cookies.set("token", token, { expires: 1 });
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("token", JSON.stringify(token));
   };
 
-  ////----This for memorize user---///
-  const memorizeduser = useMemo(() => ({ user, token }), [user, token]);
-
-  //---This is for logout user----//
+  // Function to log out a user
   const logoutUser = () => {
-    setuser(null);
+    setUser(null);
     setToken(null);
     Cookies.remove("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
+  // Memoize the context value to optimize performance
   const authContextValue = useMemo(
     () => ({
       user,
-      cookiesData,
+      token,
       loginUser,
       logoutUser,
     }),
@@ -57,11 +64,12 @@ export const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider value={{ loginUser, logoutUser, user, token }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
+
 export const useAuth = () => {
   return useContext(AuthContext);
 };

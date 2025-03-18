@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Ability } from "../../Authentication/PermissionForUser";
 
@@ -15,8 +15,22 @@ function SideBarMenu() {
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
   const [requestResourceOpen, setRequestResourceOpen] = useState(false);
   const [paymentType, setPaymenttype] = useState(false);
+  const [userPic, setUserpic] = useState();
+  const [userName, setUsername] = useState();
+  const [user, setUser] = useState({});
 
   const ability = Ability();
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    setUserpic(user.ProfilePicture);
+    setUsername(user.Name);
+    setUser(user);
+  }, []);
+
+  //console.log(userPic);
+  console.log("User role", user);
 
   return (
     <>
@@ -658,14 +672,107 @@ function SideBarMenu() {
         <div id="content-wrapper" className="d-flex flex-column">
           <div id="content">
             {/* Topbar */}
-            <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-              <button
-                id="sidebarToggleTop"
-                className="btn btn-link d-md-none rounded-circle mr-3"
-              >
-                <i className="fa fa-bars"></i>
-              </button>
+            <nav
+              className="navbar navbar-expand w-100 navbar-light bg-white topbar mb-4 static-top shadow"
+              style={{ height: "10vh", marginTop: "0px !important" }}
+            >
+              <div className="d-flex w-100 justify-content-end me-2">
+                <div className="dropdown">
+                  {/* Dropdown toggle */}
+                  <button
+                    className="btn dropdown-toggle d-flex align-items-center"
+                    type="button"
+                    id="userDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    style={{ background: "transparent", border: "none" }}
+                  >
+                    <img
+                      src={
+                        userPic
+                          ? `http://127.0.0.1:8000/storage/${userPic}`
+                          : `/Customer/pic.jpg`
+                      }
+                      className="img-fluid"
+                      style={{
+                        borderRadius: "30px",
+                        border: "1px solid black",
+                        width: "3.5vw",
+                        height: "7vh",
+                      }}
+                      alt="User"
+                    />
+                    <div className="ms-2 text-start">
+                      <div style={{ fontSize: "15px" }}>{userName}</div>
+                      <div className="fw-bold" style={{ fontSize: "12px" }}>
+                        {user.role}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Dropdown menu */}
+                  <ul
+                    className="dropdown-menu dropdown-menu-end ps-2 ms-1"
+                    aria-labelledby="userDropdown"
+                  >
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        style={{ color: "black" }}
+                        onClick={() => navigate("/Admin/Profile")}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-person-circle me-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                          <path
+                            fillRule="evenodd"
+                            d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
+                          />
+                        </svg>
+                        Profile
+                      </a>
+                    </li>
+
+                    <li>
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        style={{ color: "black" }}
+                        href="#logout"
+                      >
+                        Log Out
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-box-arrow-right ms-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
+                          />
+                          <path
+                            fillRule="evenodd"
+                            d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+                          />
+                        </svg>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </nav>
+
             {/* Main Page Content */}
             <div className="container-fluid">
               <Outlet />

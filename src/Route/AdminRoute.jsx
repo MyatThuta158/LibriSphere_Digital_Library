@@ -33,6 +33,7 @@ import ReadResource from "../Pages/MemberPages/ReadResource";
 import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
 import PermissionForRoute from "../Authentication/PermissionForRoute";
 import UserPrediction from "../Pages/AdminPanel/Reports/UserPrediction";
+import AdminProfile from "../Pages/AdminPanel/Admins/AdminProfile";
 
 function AdminRoute() {
   return (
@@ -116,6 +117,8 @@ function AdminRoute() {
           <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />
 
           <Route path="/Admin/PdfReader" element={<PdfViewer />} />
+
+          <Route path="/Admin/Profile" element={<AdminProfile />} />
         </Route>
       </Route>
     </Routes>
