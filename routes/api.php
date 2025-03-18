@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admins/register', [App\Http\Controllers\AdminController::class, 'store']);
     Route::apiResource('/admins', App\Http\Controllers\AdminController::class);
+    Route::post('/admins/update', [App\Http\Controllers\AdminController::class, 'update']);
+    Route::get('/admins/show', [App\Http\Controllers\AdminController::class, 'show']);
     Route::apiResource('/authors', App\Http\Controllers\AuthorsController::class);
     Route::apiResource('/genres', App\Http\Controllers\GenreController::class);
 

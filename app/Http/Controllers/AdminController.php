@@ -134,19 +134,124 @@ class AdminController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Admin $admin)
+    public function show()
     {
-        //
+        $admin = Auth::user();
+        if (! $admin) {
+            return response()->json([
+                'message' => 'Admin not found!',
+                'status'  => 404,
+            ], 404);
+        }
+
+        return response()->json([
+            'data'   => $admin,
+            'status' => 200,
+        ], 200);
+
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Admin $admin)
+    public function update(Request $request)
     {
-        //
+        ob_clean();
+        // Retrieve the authenticated admin
+        $admin = Auth::user();
+
+        //dd($admin);
+
+        if (! $admin) {
+            return response()->json([
+                'message' => 'Admin not found!',
+                'status'  => 404,
+            ], 404);
+        }
+
+        // Validate only the fields that are provided using "sometimes"
+        $validatedData = $request->validate([
+            'Name'        => 'sometimes|string',
+            'Email'       => 'sometimes|email|string|max:255|unique:admins,Email,' . $admin->id,
+            // 'Password'    => 'sometimes|string|min:8',
+            'PhoneNumber' => 'sometimes|string',
+            'Gender'      => 'sometimes|string|in:Male,Female',
+            'PicImg'      => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // 'role' is not included so it won't be updated.
+        ]);
+
+        // Handle the profile picture if provided
+        if ($request->hasFile('PicImg')) {
+            // Delete the old profile picture if it exists
+            if ($admin->ProfilePicture && \Illuminate\Support\Facades\Storage::disk('public')->exists($admin->ProfilePicture)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($admin->ProfilePicture);
+            }
+            $photo                 = $request->file('PicImg');
+            $photoPath             = $photo->store('admins', 'public');
+            $admin->ProfilePicture = $photoPath;
+        }
+
+        // Update the fields only if they are present in the request
+        if (isset($validatedData['Name'])) {
+            $admin->Name = $validatedData['Name'];
+        }
+        if (isset($validatedData['Email'])) {
+            $admin->Email = $validatedData['Email'];
+        }
+        // if (isset($validatedData['Password'])) {
+        //     $admin->Password = Hash::make($validatedData['Password']);
+        // }
+        if (isset($validatedData['PhoneNumber'])) {
+            $admin->PhoneNumber = $validatedData['PhoneNumber'];
+        }
+        if (isset($validatedData['Gender'])) {
+            $admin->Gender = $validatedData['Gender'];
+        }
+
+        // Save changes to the database
+        $admin->save();
+
+        return response()->json([
+            'message' => 'Admin updated successfully!',
+            'status'  => 200,
+        ], 200);
     }
 
+    public function resetPassword(Request $request)
+    {
+        // Retrieve the authenticated admin
+        $admin = Auth::user();
+
+        if (! $admin) {
+            return response()->json([
+                'message' => 'Admin not found!',
+                'status'  => 404,
+            ], 404);
+        }
+
+        // Validate the incoming request
+        $validatedData = $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8|confirmed',
+        ]);
+
+        // Check if the current password matches
+        if (! Hash::check($validatedData['current_password'], $admin->Password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect!',
+                'status'  => 400,
+            ], 400);
+        }
+
+        // Update the password
+        $admin->Password = Hash::make($validatedData['new_password']);
+        $admin->save();
+
+        return response()->json([
+            'message' => 'Password reset successfully!',
+            'status'  => 200,
+        ], 200);
+    }
     /**
      * Remove the specified resource from storage.
      */

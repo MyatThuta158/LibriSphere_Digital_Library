@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('membership_plans', function (Blueprint $table) {
             $table->id()->primary()->autoIncrement();
             $table->string('PlanName');
-            $table->string('Duration');
+            $table->integer('Duration');
             $table->decimal('Price');
             $table->text("Description");
             
