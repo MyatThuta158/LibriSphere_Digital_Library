@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Models\Payment_Types;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class PaymentTypesController extends Controller
 {
@@ -50,6 +49,18 @@ class PaymentTypesController extends Controller
             'BankLogo'        => 'required|image|mimes:jpeg,png,jpg,gif,svg',
             'QR_Scan'         => 'required|image|mimes:jpeg,png,jpg,gif,svg',
         ]);
+
+        // Check if the bank account number and bank name already exist in the database
+        $exists = Payment_Types::where('AccountNumber', $validate['AccountNumber'])
+            ->where('BankName', $validate['BankName'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'status'  => 400,
+                'message' => 'The bank account number is already exist in the database.',
+            ]);
+        }
 
         try {
             // Ensure both files exist
@@ -131,64 +142,62 @@ class PaymentTypesController extends Controller
         ob_clean();
         $user = Auth::user();
 
-        //dd($user);
-
         // Check if the authenticated user has the required roles or permissions
         if (! $user || ! $user->hasAnyRole(['manager', 'librarian']) || ! $user->can('manage payment_types')) {
             return response()->json(['error' => 'Only managers or librarians can update payment types.'], 403);
         }
 
-        // dd($request['PaymentTypeName']);
-
-        // Validate the request; images are optional during update.
-        $validator = Validator::make($request->all(), [
-            'PaymentTypeName' => 'required|string|max:255',
-            'AccountName'     => 'required|string|max:255',
-            'AccountNumber'   => 'required|string|max:255',
-            'BankName'        => 'required|string|max:255',
-
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 422,
-                'message' => 'Validation error',
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
-
-        $validatedData = $validator->validated();
-        // dd($validate);
         try {
-            // Retrieve the existing payment type
-            $payment_Types = Payment_Types::findOrFail($id);
+            // Validate the request; images are optional during update.
+            $validatedData = $request->validate([
+                'PaymentTypeName' => 'required|string|max:255',
+                'AccountName'     => 'required|string|max:255',
+                'AccountNumber'   => 'required|string|max:255',
+                'BankName'        => 'required|string|max:255',
+            ]);
 
-            // Update file fields if new file is provided
+            // Check if a payment type with the same AccountNumber and BankName exists (excluding current record)
+            $exists = Payment_Types::where('AccountNumber', $validatedData['AccountNumber'])
+                ->where('BankName', $validatedData['BankName'])
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'status'  => 500,
+                    'message' => 'The bank account number and bank name combination already exists.',
+                ]);
+            }
+
+            // Retrieve the existing payment type record
+            $payment_Type = Payment_Types::findOrFail($id);
+
+            // Update file fields if new files are provided
             if ($request->hasFile('QR_Scan')) {
-                $qrScanFile             = $request->file('QR_Scan');
-                $qrScanPath             = $qrScanFile->store('payment_types', 'public');
-                $payment_Types->QR_Scan = $qrScanPath;
+                $qrScanFile            = $request->file('QR_Scan');
+                $qrScanPath            = $qrScanFile->store('payment_types', 'public');
+                $payment_Type->QR_Scan = $qrScanPath;
             }
 
             if ($request->hasFile('BankLogo')) {
-                $bankLogoFile            = $request->file('BankLogo');
-                $bankLogoPath            = $bankLogoFile->store('payment_types', 'public');
-                $payment_Types->BankLogo = $bankLogoPath;
+                $bankLogoFile           = $request->file('BankLogo');
+                $bankLogoPath           = $bankLogoFile->store('payment_types', 'public');
+                $payment_Type->BankLogo = $bankLogoPath;
             }
 
             // Update the other fields from validated data
-            $payment_Types->PaymentTypeName = $validatedData['PaymentTypeName'];
-            $payment_Types->AccountName     = $validatedData['AccountName'];
-            $payment_Types->AccountNumber   = $validatedData['AccountNumber'];
-            $payment_Types->BankName        = $validatedData['BankName'];
+            $payment_Type->PaymentTypeName = $validatedData['PaymentTypeName'];
+            $payment_Type->AccountName     = $validatedData['AccountName'];
+            $payment_Type->AccountNumber   = $validatedData['AccountNumber'];
+            $payment_Type->BankName        = $validatedData['BankName'];
 
             // Save the updated model
-            $payment_Types->save();
+            $payment_Type->save();
 
             return response()->json([
                 'status'  => 200,
                 'message' => 'Payment type updated successfully',
-                'data'    => $payment_Types,
+                'data'    => $payment_Type,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -202,8 +211,33 @@ class PaymentTypesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Payment_Types $payment_Types)
+    public function destroy($id)
     {
-        //
+        $user = Auth::user();
+
+        // Check if the authenticated user has the required roles or permissions
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage payment_types')) {
+            return response()->json(['error' => 'Only managers or librarians can delete payment types.'], 403);
+        }
+
+        try {
+            // Retrieve the payment type record by ID; if not found, findOrFail will throw an exception.
+            $paymentType = Payment_Types::findOrFail($id);
+
+            // Delete the payment type record from the database
+            $paymentType->delete();
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Payment type deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'An error occurred while deleting the payment type',
+                'error'   => $e->getMessage(),
+            ]);
+        }
     }
+
 }

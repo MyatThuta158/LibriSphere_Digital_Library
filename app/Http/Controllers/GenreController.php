@@ -41,40 +41,40 @@ class GenreController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Received data:', $request->all());
+        // Log::info('Received data:', $request->all());
         $user = Auth::user();
-        Log::info('User:', ['user' => $user]);
+        // Log::info('User:', ['user' => $user]);
 
         if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
             return response()->json(['message' => "Unauthorized"], 403);
-            Log::info('Authorize', "Authorize");
-        } else {
-            Log::info('UnAuthorize', "UnAuthorize");
+            // Log::info('Authorize', "Authorize");
         }
 
         try {
-            // Change validation to use 'name' column but keep 'genre_name' as input field
             $validatedData = $request->validate([
-                'genre_name' => 'required|string', //
+                'genre_name' => 'required|string',
             ], [
                 'genre_name.required' => 'Name is required',
-
             ]);
 
-            //dd($validatedData);
+            // Check if the genre already exists in the database
+            $exists = Genre::where('name', $validatedData['genre_name'])->exists();
+            if ($exists) {
+                return response()->json([
+                    'status'  => 500,
+                    'message' => 'The genre name is already existed in the system',
+                ]);
+            }
 
             Log::info('validate data:', $validatedData);
             $result = Genre::create([
-                'name' => $validatedData['genre_name'], //
+                'name' => $validatedData['genre_name'],
             ]);
-
-            // dd($result);
 
             return response()->json([
                 'status'  => 200,
-                'message' => 'Data inserted successfully',
+                'message' => 'The genre information insert successfully',
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 500,
@@ -82,6 +82,7 @@ class GenreController extends Controller
             ]);
         }
     }
+
     /**
      * Display the specified resource.
      */
@@ -102,32 +103,41 @@ class GenreController extends Controller
      */
     public function update(Request $request, $id)
     {
-        ///-----This get all data----//
         $user = Auth::user();
-
-        // dd($user);
-        //-----This check if the user can have role and permission to make the below action---///
+        // Check if the authenticated user is a 'manager' or 'librarian' with permission to manage genres
         if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage genre')) {
-            return response()->json(['message' => "Unauthorize"], 403);
+            return response()->json(['error' => 'Only managers or librarians can update genres.'], 403);
         }
-        try {
-            //----This validate for incoming value to not empty---//
-            $validatedData = $request->validate([
-                'name' => 'required|unique:genres',
-            ], ['name.required' => 'Name is required', 'name.unique' => 'Name already exists']);
 
-            // dd($validatedData);
+        try {
+            // Validate that the name field is provided
+            $validatedData = $request->validate([
+                'name' => 'required',
+            ]);
+
+            // Check if a genre with the same name already exists, excluding the current record.
+            $exists = Genre::where('name', $validatedData['name'])
+                ->where('id', '!=', $id)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'status'  => 500,
+                    'message' => 'Genre name already exists',
+                ]);
+            }
+
+            // Update the genre data
             $result = Genre::where('id', $id)->update($validatedData);
-            // dd($result);
 
             if ($result) {
                 return response()->json([
                     'status'  => 200,
-                    'message' => 'Data updated successfully',
+                    'message' => 'Genre updated successfully',
                 ]);
             }
 
-            //----This return if the data does not enter into database----//
+            // Return error if data is not updated
             return response()->json([
                 'status'  => 500,
                 'message' => 'Data not updated',

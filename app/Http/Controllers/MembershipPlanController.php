@@ -45,12 +45,13 @@ class MembershipPlanController extends Controller
         try {
             $validatedData = $request->validate([
                 'PlanName'    => 'required|string',
-                'Duration'    => 'required|string',
+                'Duration'    => 'required|integer',
                 'Price'       => 'required|decimal:2',
                 'Description' => 'required|string',
             ]);
         } catch (ValidationException $e) {
-            return response()->json(['message' => $e]);
+            // Return only the error messages as an array
+            return response()->json(['message' => $e->errors()], 422);
         }
 
         try {
