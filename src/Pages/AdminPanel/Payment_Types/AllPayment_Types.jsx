@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// Assume these API functions are defined in your API helper file.
 import { deletePayment, allPaymentTypes } from "../../../api/paymenttypeApi";
 
 function AllPayment_Types() {
@@ -8,6 +7,9 @@ function AllPayment_Types() {
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
   const navigate = useNavigate();
 
   // Function to fetch paginated data
@@ -15,9 +17,8 @@ function AllPayment_Types() {
     setLoading(true);
     try {
       const response = await allPaymentTypes(page);
-      console.log(response.data);
       // Adjusted for the expected API response structure:
-      setPaymentTypes(response.data); // Extract the actual array
+      setPaymentTypes(response.data); // the array of payment types
       setCurrentPage(response.current_page);
       setLastPage(response.last_page);
     } catch (error) {
@@ -30,21 +31,24 @@ function AllPayment_Types() {
     fetchData(currentPage);
   }, [currentPage]);
 
-  console.log(currentPage);
-  // console.log(paymentTypes);
+  // Trigger the confirm delete modal
+  const confirmDeletePayment = (id) => {
+    setDeleteId(id);
+    setConfirmDelete(true);
+  };
 
   // Delete a payment type and refresh the data
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this payment type?")) {
-      try {
-        const response = await deletePayment(id);
-        if (response.status === 200) {
-          fetchData(currentPage);
-        }
-      } catch (error) {
-        console.error("Delete failed", error);
+  const deletePaymentItem = async () => {
+    try {
+      const response = await deletePayment(deleteId);
+      if (response.status === 200) {
+        fetchData(currentPage);
+        setDeleteSuccess(true); // show success modal
       }
+    } catch (error) {
+      console.error("Delete failed", error);
     }
+    setDeleteId(null);
   };
 
   // Navigate to the update page for a payment type
@@ -52,28 +56,20 @@ function AllPayment_Types() {
     navigate(`/Admin/UpdatePaymentTypes/${id}`);
   };
 
-  // Pagination controls
-  const goToPrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentPage < lastPage) {
-      setCurrentPage(currentPage + 1);
-    }
+  // Handler for changing pages
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
     <div className="container mt-4">
-      <h2>Payment Types</h2>
+      <h2 className="text-center">Payment Types</h2>
       {loading ? (
         <p>Loading...</p>
       ) : (
         <>
           <table className="table table-striped">
-            <thead>
+            <thead className="thead-dark">
               <tr>
                 <th>ID</th>
                 <th>Payment Type Name</th>
@@ -100,7 +96,7 @@ function AllPayment_Types() {
                     </button>
                     <button
                       className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(payment.id)}
+                      onClick={() => confirmDeletePayment(payment.id)}
                     >
                       Delete
                     </button>
@@ -110,27 +106,126 @@ function AllPayment_Types() {
             </tbody>
           </table>
 
-          <div className="d-flex w-50 mx-auto justify-content-center align-items-center">
-            <button
-              className="btn btn-secondary"
-              onClick={goToPrevious}
-              disabled={currentPage <= 1}
-            >
-              Previous
-            </button>
-            <span>
-              {currentPage} of {lastPage}
-            </span>
-
-            <button
-              className="btn btn-secondary"
-              onClick={goToNext}
-              disabled={currentPage >= lastPage}
-            >
-              Next
-            </button>
-          </div>
+          {/* Pagination */}
+          <nav>
+            <ul className="pagination justify-content-center">
+              <li
+                className={`page-item ${currentPage === 1 ? "disabled" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  Previous
+                </button>
+              </li>
+              {Array.from({ length: lastPage }, (_, index) => (
+                <li
+                  key={index}
+                  className={`page-item ${
+                    currentPage === index + 1 ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                </li>
+              ))}
+              <li
+                className={`page-item ${
+                  currentPage === lastPage ? "disabled" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
         </>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {confirmDelete && (
+        <div className="modal" style={{ display: "block" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    setDeleteId(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this payment type?</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    setDeleteId(null);
+                  }}
+                >
+                  No
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => {
+                    setConfirmDelete(false);
+                    deletePaymentItem();
+                  }}
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Modal */}
+      {deleteSuccess && (
+        <div
+          className="modal"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Success</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setDeleteSuccess(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Payment type deleted successfully.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setDeleteSuccess(false)}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

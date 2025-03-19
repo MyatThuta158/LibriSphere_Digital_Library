@@ -2,61 +2,71 @@ import React, { useState } from "react";
 import { createGenre } from "../../../api/genresAPI";
 
 function AddGenre() {
-  const initial = {
-    genre_name: "",
-  };
+  // Initial genre state
+  const initial = { genre_name: "" };
 
+  // State for the genre data, success message, and error message
+  const [genre, setGenre] = useState(initial);
   const [message, setMessage] = useState("");
-  const [Genre, setGenre] = useState(initial);
+  const [error, setError] = useState("");
 
+  // Update genre state when input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target; // Fixed here
-    setGenre({ ...Genre, [name]: value });
+    const { name, value } = e.target;
+    // Clear error when the user starts typing
+    if (error) setError("");
+    setGenre({ ...genre, [name]: value });
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!Genre.genre_name.trim()) {
-      setMessage("Genre name cannot be empty.");
+    // Validate input: if empty, set error message and stop submission
+    if (!genre.genre_name.trim()) {
+      setError("Genre name is required");
       return;
     }
 
-    try {
-      let result = await createGenre(Genre);
-      console.log(result.message);
+    // Clear any previous error message before proceeding
+    setError("");
 
-      if (result.status == 200) {
-        setMessage(result.message);
-        setGenre(initial);
-      } else {
-        setMessage("Failed to add genre.");
-      }
+    try {
+      // Call API to create the genre
+      let result = await createGenre(genre);
+
+      // Display success message from the API (or fallback message)
+      setMessage(result.message || "Genre added successfully");
+
+      // Reset form
+      setGenre(initial);
     } catch (err) {
       console.error(err);
-      setMessage("An error occurred while adding the genre.");
+      setMessage("There was an error saving the genre");
     }
   };
 
   return (
     <div>
-      <h1 className="text-center">Add Genres</h1>
-
+      <h1 className="text-center">Add Genre</h1>
       <div className="container d-flex justify-content-center">
         <form className="form-group w-50" onSubmit={handleSubmit}>
           <input
             type="text"
             name="genre_name"
-            value={Genre.genre_name}
-            className="form-control w-100"
+            value={genre.genre_name}
+            placeholder="Enter genre name"
+            className={`form-control w-100 ${error ? "is-invalid" : ""}`}
             onChange={handleInputChange}
           />
+          {/* Show error message below the input */}
+          {error && <div className="invalid-feedback d-block">{error}</div>}
           <button type="submit" className="btn btn-primary mx-auto mt-2">
             Add Genre
           </button>
         </form>
 
-        {/* Modal for displaying messages */}
+        {/* Modal for displaying success or error messages */}
         {message && (
           <div
             className="modal fade show"
@@ -68,14 +78,12 @@ function AddGenre() {
             <div className="modal-dialog">
               <div className="modal-content">
                 <div className="modal-header">
-                  <h1 className="modal-title fs-5" id="messageModalLabel">
-                    Notification
-                  </h1>
+                  <h5 className="modal-title" id="messageModalLabel">
+                    Message
+                  </h5>
                   <button
                     type="button"
                     className="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
                     onClick={() => setMessage("")}
                   ></button>
                 </div>
@@ -83,14 +91,10 @@ function AddGenre() {
                 <div className="modal-footer">
                   <button
                     type="button"
-                    className="btn btn-secondary"
-                    data-bs-dismiss="modal"
+                    className="btn btn-primary"
                     onClick={() => setMessage("")}
                   >
                     Close
-                  </button>
-                  <button type="button" className="btn btn-primary">
-                    Understood
                   </button>
                 </div>
               </div>

@@ -10,9 +10,10 @@ function AddPayment_Type() {
     reset,
   } = useForm();
 
-  // State to handle alert message and its type (success or danger)
-  const [alertMessage, setAlertMessage] = useState(null);
-  const [alertType, setAlertType] = useState("");
+  // Modal state for dialog message box
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("success");
+  const [showModal, setShowModal] = useState(false);
 
   const onSubmit = (data) => {
     const submit = async () => {
@@ -39,21 +40,23 @@ function AddPayment_Type() {
         console.log(response.message);
 
         if (response.status === 200) {
-          setAlertType("success");
-          setAlertMessage(
+          setModalType("success");
+          setModalMessage(
             response.message || "Payment type created successfully."
           );
           reset();
         } else {
-          setAlertType("danger");
-          setAlertMessage(
+          setModalType("danger");
+          setModalMessage(
             response.message ||
               "An error occurred while creating the payment type."
           );
         }
+        setShowModal(true);
       } catch (error) {
-        setAlertType("danger");
-        setAlertMessage(error.message || "An unexpected error occurred.");
+        setModalType("danger");
+        setModalMessage(error.message || "An unexpected error occurred.");
+        setShowModal(true);
       }
     };
 
@@ -63,25 +66,6 @@ function AddPayment_Type() {
   return (
     <div className="container w-75 mx-auto mt-5">
       <h2 className="text-center mb-4">Payment Type Form</h2>
-
-      {/* Alert Box */}
-      {alertMessage && (
-        <div
-          className={`alert alert-${alertType} alert-dismissible fade show`}
-          role="alert"
-        >
-          {alertMessage}
-          <button
-            type="button"
-            className="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            onClick={() => setAlertMessage(null)}
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Row 1: Payment Type Name & Account Name */}
@@ -197,10 +181,47 @@ function AddPayment_Type() {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary ">
-          Submit
+        <button type="submit" className="btn btn-primary">
+          Save
         </button>
       </form>
+
+      {/* Modal Dialog Box */}
+      {showModal && (
+        <div
+          className="modal show"
+          style={{ display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+          tabIndex="-1"
+          role="dialog"
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className={`modal-header `}>
+                <h5 className="modal-title">
+                  {modalType === "success" ? "Success" : "Error"}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{modalMessage}</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

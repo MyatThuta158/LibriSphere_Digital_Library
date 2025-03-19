@@ -989,19 +989,28 @@ function SideBarMenu() {
             </nav>
 
             {/* Main Page Content */}
-            <div className="container-fluid">
+            <div className="container-fluid bg-white">
               <Outlet />
             </div>
           </div>
           {/* Footer */}
-          <footer className="sticky-footer bg-white">
-            <div className="container my-auto">
-              <div className="copyright text-center my-auto">
-                <span>Copyright &copy; LibriSphere 2025</span>
-              </div>
-            </div>
-          </footer>
         </div>
+        <footer
+          className="bg-white"
+          style={{
+            width: "70vw",
+            position: "absolute",
+            top: "97%",
+            left: "60%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="container">
+            <div className="copyright text-center">
+              <span>Copyright &copy; LibriSphere 2025</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   );
