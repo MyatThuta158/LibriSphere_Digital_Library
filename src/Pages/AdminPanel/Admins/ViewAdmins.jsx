@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { getAdmin, deleteAdmin as deleteAdminApi } from "../../../api/adminApi";
-import Pagination from "../../Layouts/Pagination";
-import DeleteConfirmBox from "../../Layouts/DeleteConfirmBox";
 
 function ViewAdmins() {
-  const [managers, setManagers] = useState([]); // Managers data
-  const [librarians, setLibrarians] = useState([]); // Librarians data
-  const [managerPageCount, setManagerPageCount] = useState(0); // Pagination for managers
-  const [librarianPageCount, setLibrarianPageCount] = useState(0); // Pagination for librarians
-  const [currentManagerPage, setCurrentManagerPage] = useState(1); // Current page for managers
-  const [currentLibrarianPage, setCurrentLibrarianPage] = useState(1); // Current page for librarians
-  const [adminid, setAdminid] = useState(0); // Admin ID for deletion
+  const [managers, setManagers] = useState([]);
+  const [librarians, setLibrarians] = useState([]);
+  const [managerPageCount, setManagerPageCount] = useState(0);
+  const [librarianPageCount, setLibrarianPageCount] = useState(0);
+  const [currentManagerPage, setCurrentManagerPage] = useState(1);
+  const [currentLibrarianPage, setCurrentLibrarianPage] = useState(1);
+  const [adminid, setAdminid] = useState(null);
   const [flag, setFlag] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   // Fetch data for both managers and librarians
   useEffect(() => {
@@ -22,11 +22,11 @@ function ViewAdmins() {
           currentLibrarianPage
         );
 
-        // Ensure you're accessing the `data` property inside `managers` and `librarians`
-        setManagers(adminsData.data.managers?.data || []); // Safely access `data`
-        setLibrarians(adminsData.data.librarians?.data || []); // Safely access `data`
-        setManagerPageCount(adminsData.managers?.last_page || 0);
-        setLibrarianPageCount(adminsData.librarians?.last_page || 0);
+        // IMPORTANT: Access .data.managers and .data.librarians
+        setManagers(adminsData.data.managers?.data || []);
+        setLibrarians(adminsData.data.librarians?.data || []);
+        setManagerPageCount(adminsData.data.managers?.last_page || 0);
+        setLibrarianPageCount(adminsData.data.librarians?.last_page || 0);
       } catch (e) {
         console.log(e);
       }
@@ -35,136 +35,276 @@ function ViewAdmins() {
   }, [currentManagerPage, currentLibrarianPage, flag]);
 
   const handleDeleteAdmin = async () => {
-    const result = await deleteAdminApi(adminid);
-
-    if (result.status === 200) {
-      setAdminid(null);
-      setFlag(true);
+    try {
+      const result = await deleteAdminApi(adminid);
+      if (result.status === 200) {
+        setDeleteSuccess(true);
+        setFlag(!flag);
+      }
+      console.log(result.message);
+    } catch (e) {
+      console.log(e);
     }
-    console.log(result.message);
+    setAdminid(null);
+    setConfirmDelete(false);
   };
 
-  const cancelAdmin = () => {
-    setAdminid(null); // Reset admin ID on cancel
+  const cancelDelete = () => {
+    setAdminid(null);
+    setConfirmDelete(false);
   };
 
   return (
-    <div>
-      <div className="container">
-        {/* <h1 className="text-center">All Admins</h1> */}
-
-        <div className="container-fluid">
-          {/* Display managers */}
-          <h3>Managers</h3>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {managers.map((admin) => (
-                <tr key={admin.id}>
-                  <td>{admin.id}</td>
-                  <td>{admin.Name}</td>
-                  <td>{admin.Email}</td>
-                  <td
+    <div className="container mt-4">
+      <h2 className="text-center">All Admins</h2>
+      <div className="container-fluid">
+        {/* Managers Table */}
+        <h3>Managers</h3>
+        <table className="table table-striped">
+          <thead className="thead-dark">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {managers.map((admin) => (
+              <tr key={admin.id}>
+                <td>{admin.id}</td>
+                <td>{admin.Name}</td>
+                <td>{admin.Email}</td>
+                <td>
+                  <span
                     className={`badge ${
-                      admin.Role === "manager"
+                      admin.role === "manager"
                         ? "text-bg-primary"
                         : "text-bg-warning"
                     }`}
                   >
-                    {admin.Role}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-danger text-white"
-                      type="button"
-                      onClick={() => {
-                        setAdminid(admin.id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="container d-flex w-100 justify-content-center mt-3">
-            <Pagination
-              count={managerPageCount}
-              currentPage={currentManagerPage}
-              onPageChange={(page) => setCurrentManagerPage(page)}
-            />
-          </div>
-
-          {/* Display librarians */}
-          <h3>Librarians</h3>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Action</th>
+                    {admin.role}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => {
+                      setAdminid(admin.id);
+                      setConfirmDelete(true);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {librarians.map((admin) => (
-                <tr key={admin.id}>
-                  <td>{admin.id}</td>
-                  <td>{admin.Name}</td>
-                  <td>{admin.Email}</td>
-                  <td
+            ))}
+          </tbody>
+        </table>
+
+        {/* Managers Pagination */}
+        <nav>
+          <ul className="justify-content-center pagination">
+            <li
+              className={`page-item ${
+                currentManagerPage === 1 ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => setCurrentManagerPage(currentManagerPage - 1)}
+              >
+                Previous
+              </button>
+            </li>
+            {Array.from({ length: managerPageCount }, (_, index) => (
+              <li
+                key={index}
+                className={`page-item ${
+                  currentManagerPage === index + 1 ? "active" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentManagerPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+            <li
+              className={`page-item ${
+                currentManagerPage === managerPageCount ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => setCurrentManagerPage(currentManagerPage + 1)}
+              >
+                Next
+              </button>
+            </li>
+          </ul>
+        </nav>
+
+        {/* Librarians Table */}
+        <h3>Librarians</h3>
+        <table className="table table-striped">
+          <thead className="thead-dark">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {librarians.map((admin) => (
+              <tr key={admin.id}>
+                <td>{admin.id}</td>
+                <td>{admin.Name}</td>
+                <td>{admin.Email}</td>
+                <td>
+                  <span
                     className={`badge ${
-                      admin.Role === "librarian"
+                      admin.role === "librarian"
                         ? "text-bg-warning"
                         : "text-bg-primary"
                     }`}
                   >
-                    {admin.Role}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-danger text-white"
-                      type="button"
-                      onClick={() => {
-                        setAdminid(admin.id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {admin.role}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => {
+                      setAdminid(admin.id);
+                      setConfirmDelete(true);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-          <div className="container d-flex w-100 justify-content-center mt-3">
-            <Pagination
-              count={librarianPageCount}
-              currentPage={currentLibrarianPage}
-              onPageChange={(page) => setCurrentLibrarianPage(page)}
-            />
-          </div>
-        </div>
+        {/* Librarians Pagination */}
+        <nav>
+          <ul className="justify-content-center pagination">
+            <li
+              className={`page-item ${
+                currentLibrarianPage === 1 ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() =>
+                  setCurrentLibrarianPage(currentLibrarianPage - 1)
+                }
+              >
+                Previous
+              </button>
+            </li>
+            {Array.from({ length: librarianPageCount }, (_, index) => (
+              <li
+                key={index}
+                className={`page-item ${
+                  currentLibrarianPage === index + 1 ? "active" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentLibrarianPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+            <li
+              className={`page-item ${
+                currentLibrarianPage === librarianPageCount ? "disabled" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() =>
+                  setCurrentLibrarianPage(currentLibrarianPage + 1)
+                }
+              >
+                Next
+              </button>
+            </li>
+          </ul>
+        </nav>
       </div>
 
-      {adminid && (
-        <DeleteConfirmBox
-          id={adminid}
-          handleDelete={handleDeleteAdmin}
-          setNull={cancelAdmin}
-          message={"Are you sure you want to delete admin?"}
-        />
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div
+          className="modal"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirm Deletion</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={cancelDelete}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to delete this admin?</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-primary" onClick={cancelDelete}>
+                  No
+                </button>
+                <button className="btn btn-danger" onClick={handleDeleteAdmin}>
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Modal */}
+      {deleteSuccess && (
+        <div
+          className="modal"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Success</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setDeleteSuccess(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Admin deleted successfully.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setDeleteSuccess(false)}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
