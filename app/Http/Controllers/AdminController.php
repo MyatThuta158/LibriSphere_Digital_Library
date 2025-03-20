@@ -30,6 +30,7 @@ class AdminController extends Controller
             $managers = Admin::whereHas('roles', function ($query) {
                 $query->where('name', 'manager');
             })->paginate(5); // Always 5 records per page
+                             //$managers = Admin::where('role', 'manager');
 
             // Fetch admins grouped by 'librarian' role with default pagination of 5 records per page
             $librarians = Admin::whereHas('roles', function ($query) {
@@ -59,17 +60,15 @@ class AdminController extends Controller
      */
     public function store(Request $request)
     {
-        // ob_clean();
-        // dd("Hello");
-        //    $user = Auth::user();
-        //   // dd($user->hasRole('manager'));
+        ob_clean();
+        // Optionally, if you want to restrict this to only managers,
+        // uncomment the following lines and adjust as needed.
+        // $user = Auth::user();
+        // if (!$user || !$user->hasRole('manager') || !$user->can('manage users')) {
+        //     return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        // }
 
-        //    // Check if the authenticated user is a 'manager'
-        //    if (!$user || !$user->hasRole('manager')||!$user->can('manage users')) {
-        //        return response()->json(['error' => 'Only managers can register new admins.'], 403);
-        //    }
-
-        //----This validate the request input---//
+        // Validate the request input with a custom message for a duplicate email.
         try {
             $validate = $request->validate([
                 'Name'         => 'string|required',
@@ -79,8 +78,9 @@ class AdminController extends Controller
                 'phone_number' => 'required|string',
                 'Gender'       => 'required|string|in:male,female,other',
                 'PicImg'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ], [
+                'Email.unique' => 'Email already existed',
             ]);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'validation_failed',
@@ -89,7 +89,7 @@ class AdminController extends Controller
         }
 
         try {
-            // Handle file upload
+            // Handle file upload if provided
             $photoPath = null;
             if ($request->hasFile('PicImg')) {
                 $photo     = $request->file('PicImg');
@@ -108,13 +108,11 @@ class AdminController extends Controller
             ]);
 
             if ($result) {
-
+                // Find and assign the role to the newly created admin
                 $role = Role::where('name', $validate['role'])->first();
-
                 if ($role) {
                     $result->assignRole($role);
                 } else {
-                    // If role does not exist, throw an error
                     return response()->json([
                         'message' => 'The specified role does not exist!',
                         'status'  => 400,
@@ -126,7 +124,7 @@ class AdminController extends Controller
                 return response()->json(['message' => 'User registration failed!'], 500);
             }
         } catch (\Exception $e) {
-            Log::error('Error occurred while registering user: ' . $e->getMessage()); //----This log the error when encounter---//
+            Log::error('Error occurred while registering user: ' . $e->getMessage());
             return response()->json(['error' => 'Something went wrong. Please try again later!'], 500);
         }
     }
@@ -243,15 +241,24 @@ class AdminController extends Controller
             ], 400);
         }
 
+        // Check if the new password is the same as the current password
+        if (Hash::check($validatedData['new_password'], $admin->Password)) {
+            return response()->json([
+                'message' => 'New password cannot be the same as the current password!',
+                'status'  => 400,
+            ], 400);
+        }
+
         // Update the password
         $admin->Password = Hash::make($validatedData['new_password']);
         $admin->save();
 
         return response()->json([
-            'message' => 'Password reset successfully!',
+            'message' => 'Password change successfully!',
             'status'  => 200,
         ], 200);
     }
+
     /**
      * Remove the specified resource from storage.
      */

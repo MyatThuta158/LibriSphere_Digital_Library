@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('UserPredictionInformation', function (Blueprint $table) {
+        Schema::create('user_prediction_information', function (Blueprint $table) {
             $table->id()->primary()->autoIncrement();
             $table->string('Accuracy');
             $table->date('PredictedDate');
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('UserPredictionInformation');
+        Schema::dropIfExists('user_prediction_information');
     }
 };

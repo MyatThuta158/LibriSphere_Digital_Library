@@ -124,7 +124,7 @@ class MembershipPlanController extends Controller
         // Retrieve the existing membership plan by ID
         $membershipPlan = MembershipPlan::find($id);
         if (! $membershipPlan) {
-            return response()->json(['error' => 'Membership plan not found.'], 404);
+            return response()->json(['error' => 'Subscription plan not found.'], 404);
         }
 
         // Validate incoming data, but don't force all fields to be present
@@ -153,12 +153,12 @@ class MembershipPlanController extends Controller
 
             return response()->json([
                 'status'  => 200,
-                'message' => 'Membership plan updated successfully',
+                'message' => 'Subscription plan updated successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 500,
-                'message' => 'Error updating membership plan: ' . $e->getMessage(),
+                'message' => 'Error updating Subscription plan: ' . $e->getMessage(),
             ]);
         }
     }
@@ -166,8 +166,32 @@ class MembershipPlanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(MembershipPlan $membershipPlan)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
     {
-        //
+        // Check if the authenticated user is a 'manager' or 'librarian'
+        $user = Auth::user();
+        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage membershipPlans')) {
+            return response()->json(['error' => 'Only managers and Librarians can delete membership plans.'], 403);
+        }
+
+        try {
+            $membershipPlan = MembershipPlan::findorfail($id);
+            // Delete the membership plan
+            $membershipPlan->delete();
+
+            return response()->json([
+                'status'  => 200,
+                'message' => 'Subscription plan deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 500,
+                'message' => 'Error deleting Subscription plan: ' . $e->getMessage(),
+            ]);
+        }
     }
+
 }

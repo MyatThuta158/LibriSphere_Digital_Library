@@ -14,7 +14,7 @@ class Admin extends Authenticatable
 
     protected $table      = 'admins';
     protected $guard_name = 'api';
-    protected $fillable   = ['Name', 'Email', 'Password', 'Role', 'Gender', 'PhoneNumber', 'ProfilePicture'];
+    protected $fillable   = ['Name', 'Email', 'Password', 'role', 'Gender', 'PhoneNumber', 'ProfilePicture'];
     public $timestamps    = true;
 
     public static function store(array $data)
@@ -30,5 +30,10 @@ class Admin extends Authenticatable
     public function userPredictionInformation()
     {
         return $this->hasMany(UserPredictionInformation::class, 'AdminId');
+    }
+
+    public function announcements()
+    {
+        return $this->hasMany(Announcement::class, 'admin_id');
     }
 }

@@ -68,6 +68,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/userprediction', [App\Http\Controllers\UserPredictionInformationController::class, 'store']);
     Route::get('/userprediction/get', [App\Http\Controllers\UserPredictionInformationController::class, 'index']);
+
+    Route::post('/admin/resetpassword', [App\Http\Controllers\AdminController::class, 'resetPassword']);
+
+    Route::apiResource('/announcement', App\Http\Controllers\AnnouncementController::class);
 });
 
 Route::post('/UserRegister', [App\Http\Controllers\UserController::class, 'store']);
