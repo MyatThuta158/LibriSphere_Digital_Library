@@ -19,3 +19,7 @@ export const getMembershipPlan = (id) =>
 // -------This is for update memberships--------//
 export const updateMembershipPlan = (id, formData) =>
   apiClient.post(`/memberships/update/${id}`, formData).then((res) => res.data);
+
+// -------This is for update memberships--------//
+export const deleteMembership = (id) =>
+  apiClient.delete(`/memberships/${id}`).then((res) => res.data);

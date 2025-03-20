@@ -19,3 +19,7 @@ export const updateAdmin = (data) =>
 ////------This is for show each admin data---/////
 export const showAdmin = () =>
   apiClient.get(`/admins/show`).then((res) => res.data);
+
+//---------This is for create admin----//
+export const resetPassword = (data) =>
+  apiClient.post("/admin/resetpassword", data).then((res) => res.data);

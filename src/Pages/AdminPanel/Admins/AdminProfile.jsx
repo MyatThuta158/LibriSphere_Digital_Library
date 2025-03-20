@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { showAdmin, updateAdmin } from "../../../api/adminApi"; // Adjust the import path as needed
+import { showAdmin, updateAdmin, resetPassword } from "../../../api/adminApi"; // Adjust the import path as needed
 
 const AdminProfile = () => {
   const [adminData, setAdminData] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showResetSuccessDialog, setShowResetSuccessDialog] = useState(false);
   const [globalError, setGlobalError] = useState("");
 
-  // Errors for each input field
+  // Errors for each input field (used for both modals)
   const [errors, setErrors] = useState({});
 
   // Form state for updating profile
@@ -26,6 +27,14 @@ const AdminProfile = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [flag, setFlag] = useState(false);
 
+  // Helper: Validate that password is at least 8 characters long,
+  // has at least one letter, one number, and one special character.
+  const validatePassword = (password) => {
+    const pattern =
+      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    return pattern.test(password);
+  };
+
   // Load admin data from localStorage on mount
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem("user"));
@@ -33,20 +42,27 @@ const AdminProfile = () => {
       setAdminData(data);
       setName(data.Name);
       setEmail(data.Email);
-      setGender(data.Gender); // Pre-populate gender from local storage
+      setGender(data.Gender);
       setPhoneNumber(data.PhoneNumber);
-      // Use the stored image URL as the preview (if available)
       setProfilePicturePreview(data.ProfilePicture);
     }
   }, [flag]);
 
-  // Handle update profile form submission using async/await
+  // Helper function to clear reset password inputs
+  const clearResetPasswordFields = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setGlobalError("");
+  };
+
+  // Handle update profile form submission
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     setGlobalError("");
     setErrors({});
 
-    // Validate required fields
+    // Validate required fields locally
     const newErrors = {};
     if (!name.trim()) newErrors.name = "Name is required.";
     if (!email.trim()) newErrors.email = "Email is required.";
@@ -70,7 +86,6 @@ const AdminProfile = () => {
     }
 
     try {
-      // Call updateAdmin using async/await. Make sure updateAdmin is configured to handle FormData.
       await updateAdmin(formData);
       // After updating, fetch the updated admin data
       const updatedAdminResponse = await showAdmin();
@@ -82,24 +97,81 @@ const AdminProfile = () => {
 
       setShowUpdateModal(false);
       setFlag(true);
-      // Show success dialog when update is successful
       setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error updating admin:", error);
-      setGlobalError("Error updating profile. Please try again later.");
+      // Check if the error is due to a validation error from the backend for Email field.
+      if (
+        error.response &&
+        error.response.status === 422 &&
+        error.response.data.errors &&
+        error.response.data.errors.Email
+      ) {
+        // Set the global error to the custom "Email already existed" message.
+        setGlobalError(error.response.data.errors.Email[0]);
+      } else {
+        setGlobalError("Error updating profile. Please try again later.");
+      }
     }
   };
 
   // Handle reset password form submission
   const handleResetSubmit = async (e) => {
     e.preventDefault();
-    // Implement your reset password logic here (e.g., API call)
-    console.log("Reset Password:", {
-      currentPassword,
-      newPassword,
-      confirmNewPassword,
-    });
-    setShowResetModal(false);
+    setGlobalError("");
+
+    // Check if new password and confirm password match
+    if (newPassword !== confirmNewPassword) {
+      setGlobalError("New password and confirm password do not match.");
+      return;
+    }
+
+    // Check if new password meets the criteria
+    if (!validatePassword(newPassword)) {
+      setGlobalError(
+        "Password must be at least 8 characters long, include at least one letter, one number, and one special character."
+      );
+      return;
+    }
+
+    // Prepare data for API call
+    const data = {
+      current_password: currentPassword,
+      new_password: newPassword,
+      new_password_confirmation: confirmNewPassword,
+    };
+
+    try {
+      const response = await resetPassword(data);
+
+      // If the request is successful, show the reset success dialog and clear fields
+      if (response.status === 200) {
+        setShowResetModal(false);
+        setShowResetSuccessDialog(true);
+        clearResetPasswordFields();
+      } else {
+        // On error, display the error message from the backend and keep the modal open
+        setGlobalError(response.message || "Failed to change password.");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setGlobalError(
+        error.response?.data?.message ||
+          error.message ||
+          "An unexpected error occurred."
+      );
+    }
+  };
+
+  // Real-time validation for new password input
+  const handleNewPasswordChange = (e) => {
+    const value = e.target.value;
+    setNewPassword(value);
+
+    // Optionally clear global error if the user corrects the value
+    if (globalError && validatePassword(value)) {
+      setGlobalError("");
+    }
   };
 
   if (!adminData) {
@@ -113,7 +185,7 @@ const AdminProfile = () => {
   return (
     <div className="container my-5">
       {/* Profile Card */}
-      <div className="card mx-auto shadow" style={{ maxWidth: "600px" }}>
+      <div className="card shadow mx-auto" style={{ maxWidth: "600px" }}>
         <div className="card-header text-center">
           <h4>Admin Profile</h4>
         </div>
@@ -121,7 +193,6 @@ const AdminProfile = () => {
           <div className="d-flex align-items-center mb-3">
             <img
               src={
-                // If a new file is selected, use its preview; otherwise, use the stored URL
                 profilePicturePreview
                   ? `http://127.0.0.1:8000/storage/${profilePicturePreview}`
                   : "/Customer/pic.jpg"
@@ -147,7 +218,7 @@ const AdminProfile = () => {
             </li>
           </ul>
         </div>
-        <div className="card-footer d-flex justify-content-end">
+        <div className="d-flex card-footer justify-content-end">
           <button
             type="button"
             className="btn btn-primary me-2"
@@ -162,16 +233,19 @@ const AdminProfile = () => {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => setShowResetModal(true)}
+            onClick={() => {
+              clearResetPasswordFields();
+              setShowResetModal(true);
+            }}
           >
-            Reset Password
+            Change Password
           </button>
         </div>
       </div>
 
       {/* Update Profile Modal */}
       {showUpdateModal && (
-        <div className="modal show fade d-block" tabIndex="-1">
+        <div className="d-block modal fade show" tabIndex="-1">
           <div className="modal-dialog">
             <form onSubmit={handleUpdateSubmit}>
               <div className="modal-content">
@@ -300,19 +374,27 @@ const AdminProfile = () => {
 
       {/* Reset Password Modal */}
       {showResetModal && (
-        <div className="modal show fade d-block" tabIndex="-1">
+        <div className="d-block modal fade show" tabIndex="-1">
           <div className="modal-dialog">
             <form onSubmit={handleResetSubmit}>
               <div className="modal-content">
                 <div className="modal-header">
-                  <h5 className="modal-title">Reset Password</h5>
+                  <h5 className="modal-title">Change Password</h5>
                   <button
                     type="button"
                     className="btn-close"
-                    onClick={() => setShowResetModal(false)}
+                    onClick={() => {
+                      clearResetPasswordFields();
+                      setShowResetModal(false);
+                    }}
                   ></button>
                 </div>
                 <div className="modal-body">
+                  {globalError && (
+                    <div className="alert alert-warning" role="alert">
+                      {globalError}
+                    </div>
+                  )}
                   <div className="mb-3">
                     <label htmlFor="currentPassword" className="form-label">
                       Current Password
@@ -323,6 +405,7 @@ const AdminProfile = () => {
                       id="currentPassword"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
+                      autoComplete="new-password"
                     />
                   </div>
                   <div className="mb-3">
@@ -334,8 +417,16 @@ const AdminProfile = () => {
                       className="form-control"
                       id="newPassword"
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
+                      onChange={handleNewPasswordChange}
                     />
+                    {newPassword.length > 0 &&
+                      !validatePassword(newPassword) && (
+                        <div className="text-danger small">
+                          Password must be at least 8 characters long, include
+                          at least one letter, one number, and one special
+                          character.
+                        </div>
+                      )}
                   </div>
                   <div className="mb-3">
                     <label htmlFor="confirmNewPassword" className="form-label">
@@ -354,12 +445,15 @@ const AdminProfile = () => {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => setShowResetModal(false)}
+                    onClick={() => {
+                      clearResetPasswordFields();
+                      setShowResetModal(false);
+                    }}
                   >
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Reset Password
+                    Change Password
                   </button>
                 </div>
               </div>
@@ -368,9 +462,9 @@ const AdminProfile = () => {
         </div>
       )}
 
-      {/* Success Dialog Modal */}
+      {/* Update Success Dialog Modal */}
       {showSuccessDialog && (
-        <div className="modal show fade d-block" tabIndex="-1">
+        <div className="d-block modal fade show" tabIndex="-1">
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
@@ -389,6 +483,36 @@ const AdminProfile = () => {
                   type="button"
                   className="btn btn-primary"
                   onClick={() => setShowSuccessDialog(false)}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Success Dialog Modal */}
+      {showResetSuccessDialog && (
+        <div className="d-block modal fade show" tabIndex="-1">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Success</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowResetSuccessDialog(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Password change successfully!</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setShowResetSuccessDialog(false)}
                 >
                   OK
                 </button>
