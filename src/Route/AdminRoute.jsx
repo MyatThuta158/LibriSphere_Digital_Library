@@ -34,6 +34,9 @@ import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
 import PermissionForRoute from "../Authentication/PermissionForRoute";
 import UserPrediction from "../Pages/AdminPanel/Reports/UserPrediction";
 import AdminProfile from "../Pages/AdminPanel/Admins/AdminProfile";
+import CreateAnnouncement from "../Pages/AdminPanel/Announcements/CreateAnnouncement";
+import ShowAnnouncment from "../Pages/AdminPanel/Announcements/ShowAnnouncement";
+import DetailAnnouncement from "../Pages/AdminPanel/Announcements/DetailAnnouncement";
 
 function AdminRoute() {
   return (
@@ -119,6 +122,14 @@ function AdminRoute() {
           <Route path="/Admin/PdfReader" element={<PdfViewer />} />
 
           <Route path="/Admin/Profile" element={<AdminProfile />} />
+
+          {/* This is for announcement  */}
+          <Route path="/Admin/Announcement" element={<CreateAnnouncement />} />
+          <Route path="/Admin/ShowAnnouncement" element={<ShowAnnouncment />} />
+          <Route
+            path="/Admin/ViewAnnouncementDetail/:id"
+            element={<DetailAnnouncement />}
+          />
         </Route>
       </Route>
     </Routes>

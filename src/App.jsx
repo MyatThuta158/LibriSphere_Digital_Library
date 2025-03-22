@@ -13,6 +13,7 @@ import NotFound from "./Pages/Layouts/NotFound";
 import PermissionForUser, {
   AbilityContext,
 } from "./Authentication/PermissionForUser";
+import Menu from "./Pages/Layouts/Menu";
 
 function AppWithRolePermission() {
   const { user } = useAuth();
@@ -22,11 +23,14 @@ function AppWithRolePermission() {
     <AbilityContext.Provider value={ability}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route element={<Menu />}>
+            <Route path="/" element={<Login />} />
+          </Route>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/Admin" element={<AdminMenu />} />
           <Route path="/*" element={<AdminRoute />} />
-          <Route path="/customer/*" element={<MemberRoute />} />
+
+          <Route path="/library/*" element={<MemberRoute />} />
           <Route path="/community/*" element={<CommunityMemberRoute />} />
 
           <Route path="*" element={<NotFound />} />

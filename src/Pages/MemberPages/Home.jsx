@@ -22,8 +22,6 @@ function Home() {
         <link rel="stylesheet" href="/style/style.css" />
       </Helmet>
       <div style={{ overflow: "hidden" }}>
-        <Menu />
-
         <section id="hero" className="hero section dark-background">
           <img src="../Customer/homeBg1.jpg" alt="" data-aos="fade-in" />
 
@@ -377,10 +375,7 @@ function Home() {
             <div className="owl-carousel">
               <div className="single-testimonial-box">
                 <div className="top-portion">
-                  <img
-                    src=""
-                    alt="Testimonial Image"
-                  />
+                  <img src="" alt="Testimonial Image" />
                   <div className="user-comment">
                     <div className="arrow-left"></div>
                     <blockquote cite="#">

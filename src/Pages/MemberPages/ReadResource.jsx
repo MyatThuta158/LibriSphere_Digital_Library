@@ -18,7 +18,7 @@ function ReadResource() {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
       <div className=" w-50 mx-auto" style={{ marginTop: "10%" }}>
         <h5>Preview PDF</h5>
         <div

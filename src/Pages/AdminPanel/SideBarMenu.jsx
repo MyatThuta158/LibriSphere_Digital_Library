@@ -18,6 +18,7 @@ function SideBarMenu() {
   const [userPic, setUserpic] = useState();
   const [userName, setUsername] = useState();
   const [user, setUser] = useState({});
+  const [announcementOpen, setAnnnouncementopen] = useState(false);
 
   const ability = Ability();
 
@@ -700,6 +701,101 @@ function SideBarMenu() {
             </>
           )}
 
+          {/* /Admin/Announcement */}
+          {ability.can("manage", "announcement") && (
+            <>
+              <hr className="sidebar-divider" />
+              <div className="sidebar-heading">Announcement</div>
+              <li className="nav-item">
+                <button
+                  className="nav-link dropdown-btn"
+                  onClick={() => setAnnnouncementopen(!announcementOpen)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    className="bi bi-megaphone me-2"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-.214c-2.162-1.241-4.49-1.843-6.912-2.083l.405 2.712A1 1 0 0 1 5.51 15.1h-.548a1 1 0 0 1-.916-.599l-1.85-3.49-.202-.003A2.014 2.014 0 0 1 0 9V7a2.02 2.02 0 0 1 1.992-2.013 75 75 0 0 0 2.483-.075c3.043-.154 6.148-.849 8.525-2.199zm1 0v11a.5.5 0 0 0 1 0v-11a.5.5 0 0 0-1 0m-1 1.35c-2.344 1.205-5.209 1.842-8 2.033v4.233q.27.015.537.036c2.568.189 5.093.744 7.463 1.993zm-9 6.215v-4.13a95 95 0 0 1-1.992.052A1.02 1.02 0 0 0 1 7v2c0 .55.448 1.002 1.006 1.009A61 61 0 0 1 4 10.065m-.657.975 1.609 3.037.01.024h.548l-.002-.014-.443-2.966a68 68 0 0 0-1.722-.082z" />
+                  </svg>
+                  <span>
+                    Announcement{" "}
+                    {announcementOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-up-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi float-end me-4 bi-caret-down-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                      </svg>
+                    )}
+                  </span>
+                </button>
+                {announcementOpen && (
+                  <ul className="dropdown-container">
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/ShowAnnouncement")}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-list-stars me-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"
+                          />
+                          <path d="M2.242 2.194a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.28.28 0 0 0-.094.3l.173.569c.078.256-.213.462-.423.3l-.417-.324a.27.27 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.28.28 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.27.27 0 0 0 .259-.194zm0 4a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.28.28 0 0 0-.094.3l.173.569c.078.255-.213.462-.423.3l-.417-.324a.27.27 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.28.28 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.27.27 0 0 0 .259-.194zm0 4a.27.27 0 0 1 .516 0l.162.53c.035.115.14.194.258.194h.551c.259 0 .37.333.164.493l-.468.363a.28.28 0 0 0-.094.3l.173.569c.078.255-.213.462-.423.3l-.417-.324a.27.27 0 0 0-.328 0l-.417.323c-.21.163-.5-.043-.423-.299l.173-.57a.28.28 0 0 0-.094-.299l-.468-.363c-.206-.16-.095-.493.164-.493h.55a.27.27 0 0 0 .259-.194z" />
+                        </svg>
+                        View Announcement
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/Announcement ")}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-cloud-arrow-up-fill me-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 5.146a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0z" />
+                        </svg>
+                        Post Announcement
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </li>
+            </>
+          )}
+
           {/* ======= Report Dropdown ======= */}
 
           {ability.can("view", "reports") && (
@@ -951,6 +1047,48 @@ function SideBarMenu() {
                           />
                         </svg>
                         Profile
+                      </a>
+                    </li>
+
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        style={{ color: "black" }}
+                        onClick={() => navigate("/library/Home1")}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-door-closed me-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
+                          <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
+                        </svg>
+                        Go to Library
+                      </a>
+                    </li>
+
+                    <li>
+                      <a
+                        className="dropdown-item"
+                        style={{ color: "black" }}
+                        onClick={() => navigate("/community/posts")}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          className="bi bi-door-closed me-2"
+                          viewBox="0 0 16 16"
+                        >
+                          <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
+                          <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
+                        </svg>
+                        Go to Community
                       </a>
                     </li>
 

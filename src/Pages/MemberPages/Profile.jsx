@@ -96,7 +96,7 @@ function Profile() {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
       <div
         style={{
           display: "flex",

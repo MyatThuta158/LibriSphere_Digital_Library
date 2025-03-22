@@ -104,7 +104,7 @@ function Payment() {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
       <div className="container py-5 mt-5">
         <div className="row g-4 align-items-center">
           {/* Show payment types only if none is selected */}

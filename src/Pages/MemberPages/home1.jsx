@@ -25,8 +25,6 @@ function Home1() {
         <link rel="stylesheet" href="/style/main.css" />
       </Helmet>
       <div style={{ overflow: "hidden" }}>
-        <Menu />
-
         <section id="hero" className="hero section dark-background">
           <img src="../Customer/homeBg1.jpg" alt="" data-aos="fade-in" />
 

@@ -1,20 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
+import Resumable from "resumablejs";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import { detail, resourceUpdate } from "../../../api/resourceApi";
 import { getAuthors } from "../../../api/authorsApi";
 import { getGenres } from "../../../api/genresAPI";
+import { getType } from "../../../api/resourcetypeApi";
 
 function UpdateResources() {
   const { id } = useParams();
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm();
+
+  // States for form fields
   const [authors, setAuthors] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [resourceTypes, setResourceTypes] = useState([]);
+  const [selectedType, setSelectedType] = useState("");
   const [selectedAuthor, setSelectedAuthor] = useState({});
   const [searchAuthor, setSearchAuthor] = useState("");
   const [filterAuthors, setFilterAuthors] = useState([]);
@@ -25,38 +32,42 @@ function UpdateResources() {
   const [genreDropdown, setGenreDropdown] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState(null);
 
+  // States for resumable file upload
+  const [uploadedFilePath, setUploadedFilePath] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileChunkRef = useRef(null);
+
+  // Refs for file inputs
   const photoInputRef = useRef(null);
   const resourceFileRef = useRef(null);
 
-  // Load resource details & pre-populate form
+  // Fetch resource details and pre-populate form fields
   useEffect(() => {
     async function fetchResource() {
       try {
         const res = await detail(id);
-        console.log(res.message);
-        // Prepopulate basic fields
+        console.log("Resource detail:", res.data);
         reset({
-          code: res.message.code,
-          name: res.message.name,
-          date: res.message.publish_date, // Adjust field name if needed
-          ISBN: res.message.ISBN,
-          desc: res.message.Description,
+          code: res.data.code,
+          name: res.data.name,
+          date: res.data.publish_date,
+          ISBN: res.data.ISBN,
+          desc: res.data.Description,
         });
-        // Set existing cover photo (adjust URL as necessary)
-        if (res.message.cover_photo) {
+        if (res.data.cover_photo) {
           setPreviewPhoto(
-            `http://127.0.0.1:8000/storage/${res.message.cover_photo}`
+            `http://127.0.0.1:8000/storage/${res.data.cover_photo}`
           );
         }
-        // Set selected author if available
-        if (res.message.author) {
-          console.log(res.message.author);
-          setSelectedAuthor(res.message.author);
-          setSearchAuthor(res.message.author.name);
+        if (res.data.author) {
+          setSelectedAuthor(res.data.author);
+          setSearchAuthor(res.data.author.name);
         }
-        // Assume res.genre is an array of genre objects
-        if (res.message.genre) {
-          setSelectedGenres(res.message.genre);
+        if (res.data.genre) {
+          setSelectedGenres(res.data.genre);
+        }
+        if (res.data.resource_typeId) {
+          setSelectedType(res.data.resource_typeId);
         }
       } catch (error) {
         console.error("Error fetching resource details", error);
@@ -65,7 +76,7 @@ function UpdateResources() {
     fetchResource();
   }, [id, reset]);
 
-  // Load authors and genres for selection dropdowns
+  // Fetch authors, genres, and resource types
   useEffect(() => {
     async function fetchData() {
       try {
@@ -73,14 +84,19 @@ function UpdateResources() {
         setAuthors(authorRes.data);
         const genreRes = await getGenres();
         setGenres(genreRes.data);
+        const typeRes = await getType();
+        setResourceTypes(typeRes.data);
       } catch (error) {
-        console.error("Error fetching authors or genres", error);
+        console.error(
+          "Error fetching authors, genres or resource types",
+          error
+        );
       }
     }
     fetchData();
   }, []);
 
-  // Filter authors as user types
+  // Filter authors based on search input
   useEffect(() => {
     if (searchAuthor) {
       const filtered = authors.filter((a) =>
@@ -100,7 +116,7 @@ function UpdateResources() {
     setAuthorDropdown(false);
   };
 
-  // Filter genres based on genreInput
+  // Filter genres based on genre input
   useEffect(() => {
     if (genreInput) {
       const filtered = genres.filter((g) =>
@@ -126,33 +142,69 @@ function UpdateResources() {
     setSelectedGenres((prev) => prev.filter((g) => g.id !== genreId));
   };
 
+  // Initialize Resumable for chunked file upload of resource file
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const r = new Resumable({
+      target: "http://127.0.0.1:8000/upload-chunk",
+      chunkSize: 1 * 1024 * 1024, // 1MB chunks
+      simultaneousUploads: 3,
+      query: { token, id }, // Include the resource id here
+      headers: { Authorization: `Bearer ${token}` },
+      testChunks: false,
+      throttleProgressCallbacks: 1,
+    });
+    fileChunkRef.current = r;
+    const fileElem = document.getElementById("resumable-file-input");
+    if (fileElem) {
+      r.assignBrowse(fileElem);
+    }
+    r.on("fileAdded", (file) => {
+      console.log("File added:", file);
+      r.upload();
+    });
+    r.on("fileProgress", (file) => {
+      setUploadProgress(Math.floor(file.progress() * 100));
+    });
+    r.on("fileSuccess", (file, message) => {
+      try {
+        const res = JSON.parse(message);
+        setUploadedFilePath(res.filePath);
+        console.log("Chunked upload complete. File path:", res.filePath);
+      } catch (err) {
+        console.error("Error parsing response:", err);
+      }
+    });
+  }, []);
+
+  // Handle form submission
   const onSubmit = async (data) => {
+    // Note: If a new resource file is being uploaded, uploadedFilePath should be set via Resumable.
     const formData = new FormData();
     formData.append("code", data.code);
     formData.append("name", data.name);
     formData.append("date", data.date);
     formData.append("desc", data.desc);
     formData.append("ISBN", data.ISBN || "");
-    // Append selected author id
     if (selectedAuthor.id) {
       formData.append("author", selectedAuthor.id);
     }
-    // Append selected genres as a JSON-encoded array of ids
     formData.append("genre", JSON.stringify(selectedGenres.map((g) => g.id)));
-    // Append new cover photo if provided
+    formData.append("resourceType", selectedType);
+    // Append cover photo if provided
     if (data.Photo && data.Photo.length > 0) {
       formData.append("Photo", data.Photo[0]);
     }
-    // Append new resource file if provided
-    if (data.file && data.file.length > 0) {
-      formData.append("file", data.file[0]);
+    // Append resource file if a new file was uploaded via Resumable
+    if (uploadedFilePath) {
+      formData.append("file", uploadedFilePath);
     }
 
     try {
       const result = await resourceUpdate(id, formData);
       if (result.status === 200) {
         console.log("Resource updated successfully");
-        // You can add redirection or success notification here
+        // Optionally, add redirection or a success notification here.
       } else {
         console.error("Update failed", result);
       }
@@ -166,6 +218,7 @@ function UpdateResources() {
       <h1 className="text-center">Update Resource</h1>
       <div className="row">
         <form className="col-md-12" onSubmit={handleSubmit(onSubmit)}>
+          {/* Row for code and name */}
           <div className="d-flex justify-content-center">
             <div className="form-group col-md-6">
               <label htmlFor="code">Code</label>
@@ -189,8 +242,9 @@ function UpdateResources() {
             </div>
           </div>
 
+          {/* Row for publish date, resource type, and file upload */}
           <div className="d-flex justify-content-center">
-            <div className="form-group col-md-6">
+            <div className="form-group col-md-4">
               <label htmlFor="date">Publish Date</label>
               <input
                 type="date"
@@ -200,18 +254,38 @@ function UpdateResources() {
               />
               {errors.date && <span>{errors.date.message}</span>}
             </div>
-            <div className="form-group col-md-6">
-              <label htmlFor="file">Resource File</label>
+            <div className="form-group col-md-4">
+              <label htmlFor="resourceType">Resource Type</label>
+              <select
+                id="resourceType"
+                className="form-control"
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                required
+              >
+                <option value="">Select Resource Type</option>
+                {resourceTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.TypeName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group col-md-4">
+              <label htmlFor="resumable-file-input">Resource File</label>
               <input
                 type="file"
-                {...register("file")}
                 className="form-control"
-                id="file"
+                id="resumable-file-input"
                 ref={resourceFileRef}
               />
+              {uploadProgress > 0 && (
+                <div>Upload Progress: {uploadProgress}%</div>
+              )}
             </div>
           </div>
 
+          {/* Row for author and genre selection */}
           <div className="d-flex justify-content-center">
             {/* Author selection */}
             <div
@@ -331,8 +405,8 @@ function UpdateResources() {
             </div>
           </div>
 
+          {/* Row for cover photo and ISBN */}
           <div className="d-flex justify-content-center">
-            {/* Cover Photo */}
             <div className="form-group col-md-6">
               <label htmlFor="Photo">Cover Photo</label>
               <input
@@ -382,6 +456,7 @@ function UpdateResources() {
             </div>
           </div>
 
+          {/* Description */}
           <div className="form-group col-md-12">
             <label htmlFor="desc" className="d-block">
               Description

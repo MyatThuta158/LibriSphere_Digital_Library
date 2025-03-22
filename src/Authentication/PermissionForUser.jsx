@@ -13,6 +13,7 @@ function PermissionForUser(user) {
 
   if (user.role === "manager") {
     can("manage", "adminAll");
+    can("manage", "announcement");
     can("delete", "discussions");
     can("delete", "posts");
     cannot("update", "posts");

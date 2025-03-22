@@ -168,7 +168,7 @@ function ResourceDetail() {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
       <div className="container" style={{ marginTop: "10%" }}>
         <div className="row">
           {/* Book Cover */}

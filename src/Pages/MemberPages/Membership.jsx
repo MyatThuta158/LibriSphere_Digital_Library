@@ -40,7 +40,7 @@ const Membership = () => {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
 
       {/*--------This is to display membership plans---------*/}
       <div className="pricing8 py-2" style={{ marginTop: "12vh" }}>

@@ -1,29 +1,38 @@
 import React, { useEffect, useRef, useState } from "react";
+import Resumable from "resumablejs";
 import { getAuthors } from "../../../api/authorsApi";
 import { getGenres } from "../../../api/genresAPI";
+import { getType } from "../../../api/resourcetypeApi"; // Import your resource type API call
 import { useForm } from "react-hook-form";
 import { createResource } from "../../../api/resourceApi";
 
 function AddResources() {
-  const [author, setAuthor] = useState([]); //----This set the author value---//
-  const [img, setImg] = useState(); //----This set the image value---//
-  const fileInput = useRef(null); //----This is used to get the file input value---//
-  const [searchAuthor, setSearchAuthor] = useState(""); //----This is used to search the author---//
-  const [filterAuthor, setFilterAuthor] = useState([]); //----This is used to filter the author---//
-  const [status, setStatus] = useState(false); //---This is the value for drop down status---//
+  const [author, setAuthor] = useState([]);
+  const [img, setImg] = useState();
+  const fileInput = useRef(null);
+  const fileChunkRef = useRef(null);
+  const [uploadedFilePath, setUploadedFilePath] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [chunkedFileName, setChunkedFileName] = useState("");
+
+  // New state for resource types.
+  const [resourceTypes, setResourceTypes] = useState([]);
+  const [selectedType, setSelectedType] = useState("");
+
+  // Other states for author search, genre selection, etc.
+  const [searchAuthor, setSearchAuthor] = useState("");
+  const [filterAuthor, setFilterAuthor] = useState([]);
+  const [status, setStatus] = useState(false);
   const [selectValue, setSelectValue] = useState({});
   const [flag, setFlag] = useState(false);
   const [authorname, setAuthorname] = useState("");
-
-  ///-------This is for genre---//
-  const [genre, setGenre] = useState([]); //---This is for genre value---//
-  const [genreSelectvalue, setGenreSelectvalue] = useState([]); //-----This is for search value---//
-  const [input, setInput] = useState(); //----This is for selected genre value---//
-  const [genreFlag, setGenreflag] = useState(false); //----This is for flag value==//
+  const [genre, setGenre] = useState([]);
+  const [genreSelectvalue, setGenreSelectvalue] = useState([]);
+  const [input, setInput] = useState("");
+  const [genreFlag, setGenreflag] = useState(false);
   const [available, setAvailable] = useState(false);
   const [genreValue, setGenrevalue] = useState([]);
 
-  //--------This is for form submit process----//
   const {
     register,
     handleSubmit,
@@ -31,63 +40,94 @@ function AddResources() {
     reset,
   } = useForm();
 
+  const token = localStorage.getItem("token");
+
+  // Initialize Resumable for chunked file upload
   useEffect(() => {
-    //----This is for author data fetch---//
-    const authorData = async () => {
+    const r = new Resumable({
+      target: "http://127.0.0.1:8000/upload-chunk",
+      chunkSize: 1 * 1024 * 1024, // 1MB chunks
+      simultaneousUploads: 3,
+      query: { token },
+      headers: { Authorization: `Bearer ${token}` },
+      testChunks: false,
+      throttleProgressCallbacks: 1,
+    });
+
+    fileChunkRef.current = r;
+    const fileElem = document.getElementById("resumable-file-input");
+    if (fileElem) {
+      r.assignBrowse(fileElem);
+    }
+    r.on("fileAdded", (file) => {
+      console.log("File added:", file);
+      r.upload();
+    });
+    r.on("fileProgress", (file) => {
+      setUploadProgress(Math.floor(file.progress() * 100));
+    });
+    r.on("fileSuccess", (file, message) => {
+      try {
+        const res = JSON.parse(message);
+        setUploadedFilePath(res.filePath);
+        console.log("Chunked upload complete. File path:", res.filePath);
+      } catch (err) {
+        console.error("Error parsing response:", err);
+      }
+    });
+  }, [token]);
+
+  // Fetch authors, genres, and resource types on mount
+  useEffect(() => {
+    const fetchAuthors = async () => {
       const authorData = await getAuthors();
-      const data = authorData.data;
-      setAuthor(data);
+      setAuthor(authorData.data);
     };
 
-    //-----This is for genre data fetch----//
-    const genreData = async () => {
-      const genre = await getGenres();
-      const data = genre.data;
-      setGenre(data);
+    const fetchGenres = async () => {
+      const genreData = await getGenres();
+      setGenre(genreData.data);
     };
 
-    authorData();
-    genreData();
-    console.log(genre);
+    const fetchResourceTypes = async () => {
+      const typeData = await getType();
+
+      console.log(typeData);
+      setResourceTypes(typeData.data);
+    };
+
+    fetchAuthors();
+    fetchGenres();
+    fetchResourceTypes();
   }, []);
 
-  //-------This is to search author---//
+  // Author search effect
   useEffect(() => {
-    const searchData = async () => {
-      if (searchAuthor) {
-        const filteredData = author.filter((data) =>
-          data.name.toLowerCase().includes(searchAuthor.toLowerCase())
-        );
-
-        //console.log(filterAuthor);
-
-        if (filteredData.length > 0) {
-          setFilterAuthor(filteredData); //---This set filter data---//
-          setStatus(true);
-          setFlag(false);
-        } else {
-          setFlag(true);
-        }
-      } else {
-        setFilterAuthor([]);
-        setStatus(false); //---this set false to status for dropdown--//
+    if (searchAuthor) {
+      const filteredData = author.filter((data) =>
+        data.name.toLowerCase().includes(searchAuthor.toLowerCase())
+      );
+      if (filteredData.length > 0) {
+        setFilterAuthor(filteredData);
+        setStatus(true);
         setFlag(false);
+      } else {
+        setFlag(true);
       }
-    };
+    } else {
+      setFilterAuthor([]);
+      setStatus(false);
+      setFlag(false);
+    }
+  }, [searchAuthor, author]);
 
-    searchData();
-  }, [searchAuthor]);
-
-  //-----This is for author select process---//
   const handleSelectAuthor = (author) => {
-    console.log(author);
     setSelectValue(author);
     setAuthorname(author.name);
-    console.log(selectValue);
     setStatus(false);
   };
 
-  ////----------This is for handle selected genre----////
+  // Genre selection and filtering functions
   const handleSelectGenre = (selectValue) => {
     setGenreSelectvalue((value) => {
       if (!value.includes(selectValue)) {
@@ -95,31 +135,24 @@ function AddResources() {
         setGenreflag(false);
         return [...value, selectValue];
       }
-
       return value;
     });
-
-    //console.log(genreSelectvalue);
   };
 
-  //------This is for filter genre----//
   const filterGenre = (searchGenre) => {
     if (searchGenre) {
       try {
         const filteredData = genre.filter((data) =>
           data.name.toLowerCase().includes(searchGenre.toLowerCase())
         );
-
         if (filteredData.length > 0) {
           setGenrevalue(filteredData);
-          //console.log(genreValue);
           setGenreflag(true);
           setAvailable(false);
         } else {
           setGenreflag(false);
           setGenrevalue([]);
           setAvailable(true);
-          //console.log("no data found");
         }
       } catch (e) {
         console.log(e);
@@ -138,10 +171,13 @@ function AddResources() {
     setGenreSelectvalue((value) => value.filter((g) => g !== genre));
   };
 
-  ///--------This is for handling submit process---//
+  // Handle form submission
   const onSubmit = async (data) => {
+    if (!uploadedFilePath) {
+      alert("Please wait until the file upload completes.");
+      return;
+    }
     const formData = new FormData();
-
     formData.append("code", data.code);
     formData.append("name", data.name);
     formData.append("date", data.date);
@@ -149,21 +185,24 @@ function AddResources() {
     formData.append("author", selectValue.id);
     formData.append("genre", JSON.stringify(genreSelectvalue.map((g) => g.id)));
     formData.append("Photo", data.Photo[0]);
-    formData.append("file", data.file[0]);
-
-    // Ensure ISBN is always included, even if empty
+    formData.append("file", uploadedFilePath);
     formData.append("ISBN", data.ISBN ?? "");
+    // Append the selected resource type
+    formData.append("resourceType", selectedType);
 
     try {
       const result = await createResource(formData);
       console.log(result);
-      if (result.status == 200) {
+      if (result.status === 200) {
         console.log("Submitted successfully!");
         reset();
+        setUploadProgress(0);
         setAuthorname("");
         setGenreSelectvalue([]);
         setSelectValue({});
         setImg("");
+        setUploadedFilePath("");
+        setSelectedType("");
       } else {
         console.log("Cannot submit");
       }
@@ -200,7 +239,7 @@ function AddResources() {
             </div>
 
             <div className="d-flex justify-content-center">
-              <div className="form-group col-md-6">
+              <div className="form-group col-md-4">
                 <label htmlFor="title">Publish Date</label>
                 <input
                   type="date"
@@ -211,20 +250,65 @@ function AddResources() {
                   id="title"
                 />
               </div>
-
-              <div className="form-group col-md-6">
-                <label htmlFor="title">File</label>
-                <input
-                  type="file"
-                  {...register("file", {
-                    required: "Resource file is required!",
-                  })}
+              {/* New Resource Type selection */}
+              <div className="form-group col-md-4">
+                <label htmlFor="resourceType">Resource Type</label>
+                <select
+                  id="resourceType"
                   className="form-control"
-                  id="title"
-                />
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                  required
+                >
+                  <option value="">Select Resource Type</option>
+                  {resourceTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.TypeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Dedicated file input for chunked upload */}
+              <div className="form-group col-md-4">
+                <label htmlFor="resumable-file-input">
+                  File (Chunked Upload)
+                </label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Select file..."
+                    value={chunkedFileName}
+                    readOnly
+                  />
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("resumable-file-input").click()
+                    }
+                  >
+                    Browse
+                  </button>
+                  <input
+                    type="file"
+                    id="resumable-file-input"
+                    className="form-control"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.value;
+                      if (file) setChunkedFileName(e.target.files[0].name);
+                      console.log("file name", file);
+                    }}
+                  />
+                </div>
+                {uploadProgress > 0 && (
+                  <div>Upload Progress: {uploadProgress}%</div>
+                )}
               </div>
             </div>
 
+            {/* The rest of your form (author, genre, cover photo, ISBN, description) */}
             <div className="d-flex justify-content-center">
               <div
                 className="form-group col-md-6"
@@ -235,7 +319,6 @@ function AddResources() {
                   <input
                     type="text"
                     className="form-control"
-                    id="title"
                     {...register("author", {
                       required: "Author name is required!",
                     })}
@@ -246,8 +329,6 @@ function AddResources() {
                       setAuthorname(e.target.value);
                     }}
                   />
-
-                  {/* Cross icon */}
                   {selectValue && (
                     <span
                       style={{
@@ -260,10 +341,8 @@ function AddResources() {
                       }}
                       onClick={() => {
                         setSearchAuthor("");
-
                         setSelectValue({});
                         setAuthorname("");
-
                         setFlag(false);
                       }}
                     >
@@ -271,7 +350,6 @@ function AddResources() {
                     </span>
                   )}
                 </div>
-
                 {status && filterAuthor.length > 0 && (
                   <ul
                     className="dropdown-menu show"
@@ -295,8 +373,7 @@ function AddResources() {
                     ))}
                   </ul>
                 )}
-
-                {flag == true && filterAuthor.length <= 0 && (
+                {flag && filterAuthor.length <= 0 && (
                   <ul
                     className="dropdown-menu show"
                     style={{
@@ -323,7 +400,6 @@ function AddResources() {
                   <input
                     type="text"
                     className="form-control"
-                    id="title"
                     value={input}
                     onChange={(e) => {
                       filterGenre(e.target.value);
@@ -331,7 +407,6 @@ function AddResources() {
                     }}
                   />
                 </div>
-
                 {genreFlag && genreValue.length > 0 && (
                   <ul
                     className="dropdown-menu show"
@@ -341,7 +416,6 @@ function AddResources() {
                       left: "0",
                       width: "100%",
                       height: "130%",
-                      overflow: "hidden",
                       overflowY: "auto",
                       zIndex: 1000,
                     }}
@@ -354,7 +428,6 @@ function AddResources() {
                         style={{ cursor: "pointer" }}
                       >
                         {genre.name}
-
                         <button
                           className="px-4 text-white rounded bg-primary border-0 float-end"
                           onClick={() => handleSelectGenre(genre)}
@@ -365,14 +438,12 @@ function AddResources() {
                     ))}
                   </ul>
                 )}
-
-                {available == true && genreValue.length <= 0 && (
+                {available && genreValue.length <= 0 && (
                   <ul
                     className="dropdown-menu show"
                     style={{
                       position: "absolute",
                       top: "70%",
-
                       left: "0",
                       width: "100%",
                       zIndex: 1000,
@@ -383,37 +454,31 @@ function AddResources() {
                     </li>
                   </ul>
                 )}
-
                 {genreSelectvalue.length > 0 && (
                   <div className="d-flex" style={{ height: "100%" }}>
-                    {genreSelectvalue.map((genre, index) => {
-                      //console.log(genre);
-                      return (
+                    {genreSelectvalue.map((genre, index) => (
+                      <div
+                        key={index}
+                        className="rounded px-2 m-1 text-white d-flex bg-primary border-0"
+                      >
+                        {genre.name}
                         <div
-                          key={index}
-                          className="rounded px-2  m-1 text-white d-flex bg-primary border-0 h-25"
+                          onClick={elimateGenre(genre)}
+                          style={{ cursor: "pointer" }}
                         >
-                          {genre.name}
-
-                          <div
-                            onClick={elimateGenre(genre)}
-                            className="float-end"
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            fill="currentColor"
+                            className="bi bi-x-lg text-white"
+                            viewBox="0 0 16 16"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="bi bi-x-lg text-white float-end h-100 my-auto"
-                              viewBox="0 0 16 16"
-                              style={{ cursor: "pointer" }}
-                            >
-                              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
-                            </svg>
-                          </div>
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146-5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
+                          </svg>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -425,7 +490,6 @@ function AddResources() {
                 <input
                   type="file"
                   className="form-control"
-                  id="title"
                   ref={fileInput}
                   {...register("Photo", {
                     required: "Cover photo is required",
@@ -434,7 +498,6 @@ function AddResources() {
                     setImg(URL.createObjectURL(e.target.files[0]));
                   }}
                 />
-
                 {img && (
                   <>
                     <span
@@ -452,7 +515,7 @@ function AddResources() {
                         className="bi bi-x text-danger"
                         viewBox="0 0 16 16"
                       >
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646-2.647a.5.5 0 0 1-.708-.708L7.293 8z" />
                       </svg>
                     </span>
                     <img
@@ -463,7 +526,6 @@ function AddResources() {
                   </>
                 )}
               </div>
-
               <div className="form-group col-md-6">
                 <label htmlFor="isbn">ISBN</label>
                 <input
@@ -476,15 +538,14 @@ function AddResources() {
             </div>
 
             <div className="form-group col-md-12">
-              <label htmlFor="title" className="d-block">
+              <label className="d-block" htmlFor="desc">
                 Description
               </label>
               <textarea
-                {...register("desc", {
-                  required: "Description is required!",
-                })}
+                {...register("desc", { required: "Description is required!" })}
                 className="w-100"
                 style={{ height: "30vh" }}
+                id="desc"
               ></textarea>
             </div>
 

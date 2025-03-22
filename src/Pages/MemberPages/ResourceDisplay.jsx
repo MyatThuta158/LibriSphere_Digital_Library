@@ -56,7 +56,7 @@ function ResourceDisplay() {
 
   return (
     <div className="resource-browser">
-      <Menu />
+      {/* <Menu /> */}
 
       <section
         className="text-light"

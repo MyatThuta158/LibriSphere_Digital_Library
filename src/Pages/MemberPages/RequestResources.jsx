@@ -105,7 +105,7 @@ function RequestResources() {
 
   return (
     <div>
-      <Menu />
+      {/* <Menu /> */}
       <div className="container h-100 text-light" style={{ marginTop: "15vh" }}>
         {/* Show Message Box */}
         {message && (
