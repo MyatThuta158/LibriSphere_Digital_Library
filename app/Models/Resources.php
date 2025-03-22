@@ -7,8 +7,8 @@ use PharIo\Manifest\Author;
 
 class Resources extends Model
 {
-    protected $table    = 'resources';
-    protected $fillable = ['code', 'name', 'ISBN', 'publish_date', 'MemberViewCount', 'cover_photo', 'file', 'author_id', 'Description'];
+    protected $table    = 'electronic_resources';
+    protected $fillable = ['code', 'name', 'ISBN', 'publish_date', 'MemberViewCount', 'cover_photo', 'file', 'author_id', 'Description', 'resource_typeId'];
     public $timestamps  = false;
 
     //----This is for one to many relationship connection---//
@@ -26,5 +26,10 @@ class Resources extends Model
     public function reviews()
     {
         return $this->hasMany(Reviews::class, 'resource_id');
+    }
+
+    public function ResourceType()
+    {
+        return $this->belongsTo(ResourceType::class, 'resource_typeId', 'id');
     }
 }

@@ -11,18 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('resources', function (Blueprint $table) {
+        Schema::create('electronic_resources', function (Blueprint $table) {
             $table->bigInteger('id')->primary()->autoIncrement();
             $table->string('code');
             $table->string('name');
             $table->string('publish_date');
+            $table->unsignedBigInteger('resource_typeId');
             $table->string('ISBN')->nullable();
             $table->text('cover_photo');
             $table->text('file');
             $table->text('Description');
             $table->integer('MemberViewCount');
             $table->foreignId('author_id')->constrained('authors')->onDelete('cascade');
-
+            $table->foreign('resource_typeId')->references('id')->on('resource_file_types');
         });
     }
 
@@ -31,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('resources');
+        Schema::dropIfExists('electronic_resources');
     }
 };

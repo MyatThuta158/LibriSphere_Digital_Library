@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/genres', App\Http\Controllers\GenreController::class);
 
     Route::apiResource('/resources', App\Http\Controllers\ResourcesController::class);
+
     Route::apiResource('/memberships', App\Http\Controllers\MembershipPlanController::class);
     Route::post('/memberships/update/{id}', [App\Http\Controllers\MembershipPlanController::class, 'update']);
     Route::apiResource('/payment_types', App\Http\Controllers\PaymentTypesController::class);
@@ -72,7 +73,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/resetpassword', [App\Http\Controllers\AdminController::class, 'resetPassword']);
 
     Route::apiResource('/announcement', App\Http\Controllers\AnnouncementController::class);
+
+    Route::get('/admin/resourcetype', [App\Http\Controllers\ResourceTypeController::class, 'index']);
+
 });
+
+Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);
 
 Route::post('/UserRegister', [App\Http\Controllers\UserController::class, 'store']);
 Route::post('/Subscription/Register', [App\Http\Controllers\SubscriptionController::class, 'store']);
