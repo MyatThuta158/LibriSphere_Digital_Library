@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { detailInfoPayment } from "../../../api/subscriptionApi";
-import { changeStatus } from "../../../api/subscriptionApi";
+import { detailInfoPayment, changeStatus } from "../../../api/subscriptionApi";
 
 function DetailMemberPayment() {
   const { id } = useParams(); // Get subscription ID from URL
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,16 +17,16 @@ function DetailMemberPayment() {
     });
   }, [id]);
 
-  // Function to handle status change
-  const handleStatusChange = async (status) => {
+  // Generic function to handle status change
+  const handleStatusChange = async (status, additionalPayload = {}) => {
     setLoading(true);
+    const payload = { payment_status: status, ...additionalPayload };
     try {
-      const res = await changeStatus(id, { payment_status: status });
-
+      const res = await changeStatus(id, payload);
       console.log(res);
-      if (res.status == 200) {
-        navigate(-1);
+      if (res.status === 200) {
         alert(`Payment status updated to ${status}`);
+        navigate(-1);
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -33,6 +34,28 @@ function DetailMemberPayment() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // When Reject button is clicked, show the modal
+  const handleRejectClick = () => {
+    setShowModal(true);
+  };
+
+  // When the admin submits the modal, validate and call the API
+  const handleRejectSubmit = () => {
+    if (!rejectReason.trim()) {
+      alert("Rejection reason is required");
+      return;
+    }
+    setShowModal(false);
+    handleStatusChange("Rejected", { notification_description: rejectReason });
+    // Clear the rejection reason after submission
+    setRejectReason("");
+  };
+
+  // For Approved, directly update the status
+  const handleApproveClick = () => {
+    handleStatusChange("Approved");
   };
 
   if (!data) {
@@ -100,14 +123,14 @@ function DetailMemberPayment() {
               <div className="d-flex">
                 <button
                   className="btn btn-success me-2"
-                  onClick={() => handleStatusChange("Approved")}
+                  onClick={handleApproveClick}
                   disabled={loading}
                 >
                   {loading ? "Processing..." : "Accept"}
                 </button>
                 <button
                   className="btn btn-danger"
-                  onClick={() => handleStatusChange("Rejected")}
+                  onClick={handleRejectClick}
                   disabled={loading}
                 >
                   {loading ? "Processing..." : "Reject"}
@@ -167,6 +190,61 @@ function DetailMemberPayment() {
           </div>
         </div>
       </div>
+
+      {/* Bootstrap Modal for Rejection Reason */}
+      <div
+        className={`modal fade ${showModal ? "show" : ""}`}
+        style={{ display: showModal ? "block" : "none" }}
+        tabIndex="-1"
+        role="dialog"
+        aria-hidden={!showModal}
+      >
+        <div className="modal-dialog" role="document" style={{ zIndex: 1050 }}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Enter Rejection Reason</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setShowModal(false)}
+                aria-label="Close"
+              />
+            </div>
+            <div className="modal-body">
+              <textarea
+                className="form-control"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter reason here..."
+                rows={3}
+              />
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleRejectSubmit}
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {showModal && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ zIndex: 1040 }}
+        ></div>
+      )}
     </div>
   );
 }
