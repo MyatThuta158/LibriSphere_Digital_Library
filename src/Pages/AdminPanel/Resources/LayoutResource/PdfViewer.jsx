@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
-import { detail, fetchPdfFile } from "../../../../api/resourceApi";
+import { detail, fetchFile } from "../../../../api/resourceApi";
 
 // Set the workerSrc for pdfjs
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -20,10 +20,9 @@ const PdfViewer = ({ fileId }) => {
     // Fetch the PDF details and file when the component mounts
     const fetchPdf = async () => {
       try {
-        // Optionally, get additional file details if needed
         const fileDetail = await detail(fileId);
         console.log("File detail:", fileDetail);
-        const data = await fetchPdfFile(fileId);
+        const data = await fetchFile(fileId);
         setPdfData(data);
       } catch (error) {
         console.error("Error fetching the PDF:", error);
@@ -64,10 +63,9 @@ const PdfViewer = ({ fileId }) => {
       style={{
         height: "100vh", // Full viewport height
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
         background: "#f5f5f5",
-        padding: "20px",
+        padding: "10px",
       }}
     >
       <div
@@ -82,18 +80,20 @@ const PdfViewer = ({ fileId }) => {
           flexDirection: "column",
         }}
       >
-        {/* Toolbar with Previous and Next buttons */}
+        {/* Fixed Toolbar */}
         <div
           style={{
+            flexShrink: 0,
             padding: "10px 15px",
             borderBottom: "1px solid #ddd",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             backgroundColor: "#fafafa",
+            zIndex: 1, // ensure it stays on top
           }}
         >
-          <div>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <button
               type="button"
               disabled={pageNumber <= 1}
@@ -114,7 +114,7 @@ const PdfViewer = ({ fileId }) => {
               Next
             </button>
           </div>
-          <div>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <button onClick={zoomOut} style={{ marginRight: "10px" }}>
               -
             </button>
@@ -124,7 +124,7 @@ const PdfViewer = ({ fileId }) => {
             </button>
           </div>
         </div>
-        {/* PDF Document Container */}
+        {/* Scrollable PDF Viewer */}
         <div
           ref={containerRef}
           style={{

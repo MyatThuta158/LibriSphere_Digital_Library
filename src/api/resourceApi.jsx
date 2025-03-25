@@ -28,7 +28,7 @@ export const resourceUpdate = (id, data) =>
 export const getResources = () =>
   apiClient.get(`/getResource`).then((response) => response.data);
 
-export const fetchPdfFile = (id) =>
+export const fetchFile = (id) =>
   apiClient
     .get(`/downloadFile/${id}`, { responseType: "blob" })
     .then((res) => res.data);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import { detail, fetchPdfFile } from "../../../api/resourceApi";
+import { detail } from "../../../api/resourceApi";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import EpubViewer from "./LayoutResource/EpubViewer"; // Adjust the path as necessary
 import PdfViewer from "./LayoutResource/PdfViewer";
@@ -27,7 +27,7 @@ const ReadResource = () => {
     // Fetch the PDF when the component mounts using the api function
     const fetchPdf = async () => {
       try {
-        const file = await detail(4);
+        const file = await detail(5);
 
         const type = getFileType(file.data.file);
 
@@ -64,8 +64,8 @@ const ReadResource = () => {
             // Pass a unique identifier or fileId so that PdfViewer can fetch the correct file.
             return <PdfViewer fileId={resourceId} />;
           // Uncomment and implement this case if needed in the future
-          // case "epub":
-          //   return <EpubViewer file={resource.file} />;
+          case "epub":
+            return <EpubViewer fileId={resourceId} />;
           // Uncomment and implement these cases if needed in the future
           // case "mp3":
           // case "wav":
