@@ -6,28 +6,31 @@ const ViewMemberPayments = () => {
   const [payments, setPayments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState(""); // empty means no filter
   const navigate = useNavigate();
 
-  const fetchPayments = async (page = 1) => {
+  const fetchPayments = async (page = 1, status = statusFilter) => {
     try {
-      const response = await viewMemberpayment(page);
+      const response = await viewMemberpayment(status, page);
       if (response && response.status === 200) {
         setPayments(
           response.data.data.map((payment, index) => ({
-            id: (page - 1) * 10 + (index + 1),
+            id: (page - 1) * 3 + (index + 1),
             sid: payment.sid,
             date: payment.payment_date || "N/A",
             name: payment.name,
             email: payment.email || "N/A",
             serviceType: payment.payment_type || "N/A",
-            status: payment.status || "Pending",
+            status: payment.status || "pending",
             image: payment.memberpic || "/Customer/pic.jpg",
             statusClass:
-              payment.status === "Pending"
+              payment.status === "pending"
                 ? "bg-yellow-200 text-yellow-800"
-                : payment.status === "Completed"
+                : payment.status === "Approved"
                 ? "bg-green-200 text-green-800"
-                : "bg-red-200 text-red-800",
+                : payment.status === "Rejected"
+                ? "bg-red-200 text-red-800"
+                : "bg-gray-200 text-gray-800",
           }))
         );
         setCurrentPage(response.data.current_page);
@@ -39,17 +42,37 @@ const ViewMemberPayments = () => {
   };
 
   useEffect(() => {
-    fetchPayments(currentPage);
-  }, [currentPage]);
+    fetchPayments(currentPage, statusFilter);
+  }, [currentPage, statusFilter]);
+
+  const handleFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4 text-center">Invoices</h2>
-      <p className="text-gray-500 mb-6 w-75 ">Payment History</p>
+      <p className="text-gray-500 mb-6 w-75">Payment History</p>
+
+      {/* Filter Drop-down */}
+      <div className="mb-4">
+        <label className="me-2 font-medium">Filter by status:</label>
+        <select
+          className="form-select w-auto d-inline-block"
+          value={statusFilter}
+          onChange={handleFilterChange}
+        >
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full w-100 px-5  mx-auto bg-white border border-gray-200 rounded-lg">
-          <thead className="bg-gray-100 mx-5">
+        <table className="min-w-full w-100 px-5 mx-auto bg-white border border-gray-200 rounded-lg">
+          <thead className="bg-gray-100">
             <tr>
               <th className="px-4 py-2 text-left">ID Invoice</th>
               <th className="px-4 py-2 text-left">Date</th>
@@ -81,7 +104,7 @@ const ViewMemberPayments = () => {
                 <td className="px-4 py-3">
                   <span
                     className={`px-3 py-1 badge rounded-full text-sm ${
-                      payment.status === "Pending"
+                      payment.status === "pending"
                         ? "text-bg-warning"
                         : payment.status === "Approved"
                         ? "text-bg-success"
@@ -93,15 +116,35 @@ const ViewMemberPayments = () => {
                     {payment.status}
                   </span>
                 </td>
-                <td className="">
-                  <button
-                    className="btn btn-primary px-4"
-                    onClick={() =>
-                      navigate(`/Admin/DetailPayments/${payment.sid}`)
-                    }
-                  >
-                    Detail
-                  </button>
+                <td className="px-4 py-3">
+                  {payment.status === "Rejected" ? (
+                    <button
+                      className="btn btn-danger px-4"
+                      onClick={() =>
+                        navigate(`/Admin/RejectDetailPayments/${payment.sid}`)
+                      }
+                    >
+                      Reject Detail
+                    </button>
+                  ) : payment.status === "Approved" ? (
+                    <button
+                      className="btn btn-success px-4"
+                      onClick={() =>
+                        navigate(`/Admin/AcceptDetailPayments/${payment.sid}`)
+                      }
+                    >
+                      Accept Detail
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-primary px-4"
+                      onClick={() =>
+                        navigate(`/Admin/DetailPayments/${payment.sid}`)
+                      }
+                    >
+                      Detail
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -111,7 +154,7 @@ const ViewMemberPayments = () => {
 
       {/* Pagination Controls */}
       <div
-        className="flex mx-auto justify-content-center mt-4"
+        className="flex mx-auto justify-center mt-4"
         style={{ width: "30%" }}
       >
         <button

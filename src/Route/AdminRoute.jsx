@@ -27,7 +27,8 @@ import UpdatePayment_Type from "../Pages/AdminPanel/Payment_Types/UpdatePayment_
 import AllPayment_Types from "../Pages/AdminPanel/Payment_Types/AllPayment_Types";
 import AllMembershipPlan from "../Pages/AdminPanel/MembershipPlan/AllMembershipPlan";
 import UpdateMembershipPlan from "../Pages/AdminPanel/MembershipPlan/UpdateMembershipPlan";
-import PdfViewer from "../Pages/AdminPanel/Resources/test";
+import PdfViewer from "../Pages/AdminPanel/Resources/ResourceRead";
+import ResourceRead from "../Pages/AdminPanel/Resources/ResourceRead";
 import ResourceAll from "../Pages/AdminPanel/Resources/ResourceAll";
 import ReadResource from "../Pages/MemberPages/ReadResource";
 import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
@@ -119,7 +120,7 @@ function AdminRoute() {
           <Route path="/Admin/MembershipRevenue" element={<RevenueReport />} />
           <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />
 
-          <Route path="/Admin/PdfReader" element={<PdfViewer />} />
+          <Route path="/Admin/ReadResource" element={<ResourceRead />} />
 
           <Route path="/Admin/Profile" element={<AdminProfile />} />
 

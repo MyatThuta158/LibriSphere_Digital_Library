@@ -19,7 +19,7 @@ function ShowAnnouncment() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5; // Updated to show 5 rows per page
 
   // Function to fetch all announcements
   const getAllData = async () => {

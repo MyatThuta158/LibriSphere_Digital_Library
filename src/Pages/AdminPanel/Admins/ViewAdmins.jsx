@@ -13,6 +13,13 @@ function ViewAdmins() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
+  // Example: Retrieve the logged in admin id from localStorage
+  // Adjust this part based on how your app stores authentication info.
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const loggedInAdminId = parseInt(user.id);
+  console.log(loggedInAdminId);
+
   // Fetch data for both managers and librarians
   useEffect(() => {
     const fetchData = async () => {
@@ -88,15 +95,18 @@ function ViewAdmins() {
                   </span>
                 </td>
                 <td>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => {
-                      setAdminid(admin.id);
-                      setConfirmDelete(true);
-                    }}
-                  >
-                    Delete
-                  </button>
+                  {/* Show delete button only if the admin id doesn't match the logged in admin's id */}
+                  {admin.id !== loggedInAdminId && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => {
+                        setAdminid(admin.id);
+                        setConfirmDelete(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -178,15 +188,18 @@ function ViewAdmins() {
                   </span>
                 </td>
                 <td>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => {
-                      setAdminid(admin.id);
-                      setConfirmDelete(true);
-                    }}
-                  >
-                    Delete
-                  </button>
+                  {/* Show delete button only if the admin id doesn't match the logged in admin's id */}
+                  {admin.id !== loggedInAdminId && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => {
+                        setAdminid(admin.id);
+                        setConfirmDelete(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

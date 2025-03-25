@@ -1,6 +1,6 @@
 import React from 'react'
 
-function ReadResource() {
+function RejectDetail() {
   return (
     <div>
       
@@ -8,4 +8,4 @@ function ReadResource() {
   )
 }
 
-export default ReadResource
+export default RejectDetail

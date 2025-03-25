@@ -7,8 +7,10 @@ function DetailMemberPayment() {
   const { id } = useParams(); // Get subscription ID from URL
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,29 +27,28 @@ function DetailMemberPayment() {
       const res = await changeStatus(id, payload);
       console.log(res);
       if (res.status === 200) {
-        alert(`Payment status updated to ${status}`);
-        navigate(-1);
+        setSuccessMessage(`Payment status updated to ${status}`);
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Failed to update status.");
+      setErrorMessage("Failed to update status.");
     } finally {
       setLoading(false);
     }
   };
 
-  // When Reject button is clicked, show the modal
+  // When Reject button is clicked, show the reject modal
   const handleRejectClick = () => {
-    setShowModal(true);
+    setShowRejectModal(true);
   };
 
-  // When the admin submits the modal, validate and call the API
+  // When the admin submits the reject modal, validate and call the API
   const handleRejectSubmit = () => {
     if (!rejectReason.trim()) {
       alert("Rejection reason is required");
       return;
     }
-    setShowModal(false);
+    setShowRejectModal(false);
     handleStatusChange("Rejected", { notification_description: rejectReason });
     // Clear the rejection reason after submission
     setRejectReason("");
@@ -56,6 +57,17 @@ function DetailMemberPayment() {
   // For Approved, directly update the status
   const handleApproveClick = () => {
     handleStatusChange("Approved");
+  };
+
+  // Close success modal and navigate back
+  const closeSuccessModal = () => {
+    setSuccessMessage("");
+    navigate(-1);
+  };
+
+  // Close error modal
+  const closeErrorModal = () => {
+    setErrorMessage("");
   };
 
   if (!data) {
@@ -193,11 +205,11 @@ function DetailMemberPayment() {
 
       {/* Bootstrap Modal for Rejection Reason */}
       <div
-        className={`modal fade ${showModal ? "show" : ""}`}
-        style={{ display: showModal ? "block" : "none" }}
+        className={`modal fade ${showRejectModal ? "show" : ""}`}
+        style={{ display: showRejectModal ? "block" : "none" }}
         tabIndex="-1"
         role="dialog"
-        aria-hidden={!showModal}
+        aria-hidden={!showRejectModal}
       >
         <div className="modal-dialog" role="document" style={{ zIndex: 1050 }}>
           <div className="modal-content">
@@ -206,7 +218,7 @@ function DetailMemberPayment() {
               <button
                 type="button"
                 className="btn-close"
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowRejectModal(false)}
                 aria-label="Close"
               />
             </div>
@@ -223,7 +235,7 @@ function DetailMemberPayment() {
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowRejectModal(false)}
               >
                 Cancel
               </button>
@@ -239,11 +251,97 @@ function DetailMemberPayment() {
           </div>
         </div>
       </div>
-      {showModal && (
+      {showRejectModal && (
         <div
           className="modal-backdrop fade show"
           style={{ zIndex: 1040 }}
         ></div>
+      )}
+
+      {/* Success Message Modal */}
+      {successMessage && (
+        <>
+          <div
+            className="modal fade show"
+            style={{ display: "block" }}
+            tabIndex="-1"
+            role="dialog"
+            aria-hidden="false"
+          >
+            <div className="modal-dialog" style={{ zIndex: 1050 }}>
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Success</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={closeSuccessModal}
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p>{successMessage}</p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={closeSuccessModal}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1040 }}
+          ></div>
+        </>
+      )}
+
+      {/* Error Message Modal */}
+      {errorMessage && (
+        <>
+          <div
+            className="modal fade show"
+            style={{ display: "block" }}
+            tabIndex="-1"
+            role="dialog"
+            aria-hidden="false"
+          >
+            <div className="modal-dialog" style={{ zIndex: 1050 }}>
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Error</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={closeErrorModal}
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p>{errorMessage}</p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={closeErrorModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1040 }}
+          ></div>
+        </>
       )}
     </div>
   );
