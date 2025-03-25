@@ -36,8 +36,6 @@ class SubscriptionController extends Controller
         ob_clean();
         $user = Auth::user();
 
-        //dd($user);
-
         // Validate the request (removed MemberstartDate and MemberEndDate)
         try {
             $validate = $request->validate([
@@ -106,17 +104,7 @@ class SubscriptionController extends Controller
                 // If an active subscription exists, update its status to 'inactive'
                 if ($activeSubscription) {
                     $activeSubscription->update(['SubscriptionStatus' => 'inactive']);
-                    $notificationMsg = "Your subscription plan is extend and the expired date is " . $memberEndDate->toDateString();
-                } else {
-                    $notificationMsg = "Your subscription expired date is " . $memberEndDate->toDateString();
                 }
-
-                // Create the notification for the subscription
-                SubscriptionNotification::create([
-                    'SubscriptionId' => $subscription->id,
-                    'Description'    => $notificationMsg,
-                    'WatchStatus'    => 'unwatch',
-                ]);
 
                 return response()->json([
                     'status'  => 200,
@@ -186,6 +174,56 @@ class SubscriptionController extends Controller
         ]);
     }
 
+    public function showReject($id)
+    {
+        $subscription = Subscription::with([
+            'user',
+            'paymentType',
+            'subscriptionNotifications', // Eager-load notifications
+        ])->find($id);
+
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Get the most recent notification (if any)
+        $notification = $subscription->subscriptionNotifications()->latest()->first();
+
+        return response()->json([
+            'status' => 200,
+            'data'   => [
+                'subscription_id'    => $subscription->id,
+                'user'               => [
+                    'id'           => $subscription->user->id ?? null,
+                    'name'         => $subscription->user->name ?? null,
+                    'email'        => $subscription->user->email ?? null,
+                    'phone_number' => $subscription->user->phone_number ?? null,
+                    'profile_pic'  => $subscription->user->ProfilePic ?? null,
+                ],
+                'membership_plan_id' => $subscription->membership_plans_id,
+                'payment'            => [
+                    'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
+                    'payment_screenshot'     => $subscription->PaymentScreenShot,
+                    'payment_account_name'   => $subscription->PaymentAccountName,
+                    'payment_account_number' => $subscription->PaymentAccountNumber,
+                    'payment_date'           => $subscription->PaymentDate,
+                    'payment_status'         => $subscription->PaymentStatus,
+                ],
+                'member_start_date'  => $subscription->MemberstartDate,
+                'member_end_date'    => $subscription->MemberEndDate,
+                'admin_id'           => $subscription->admin_id,
+                // Include notification details if available
+                'notification'       => $notification ? [
+                    'description'  => $notification->Description,
+                    'watch_status' => $notification->WatchStatus,
+                ] : null,
+            ],
+        ]);
+    }
+
     /**
      * Show the form for editing the specified resource.
      */
@@ -211,16 +249,29 @@ class SubscriptionController extends Controller
     }
 
     //--------This is to return payment show----///
-    public function getSubscriptionDetails()
+    public function getSubscriptionDetails(Request $request)
     {
-        $subscriptions = Subscription::with(['user:id,name,email,ProfilePic', 'paymentType:id,PaymentTypeName'])
-            ->select('users_id', 'payment_types_id', 'id', 'PaymentDate', 'PaymentStatus')
-            ->paginate(3)                        // Paginate with 10 records per page
-            ->through(function ($subscription) { // Use `through` instead of `map()` for pagination
+        // Retrieve status from request, if provided
+        $status = $request->input('status');
+
+        // Start building the query with eager-loading
+        $query = Subscription::with([
+            'user:id,name,email,ProfilePic',
+            'paymentType:id,PaymentTypeName',
+        ])->select('users_id', 'payment_types_id', 'id', 'PaymentDate', 'PaymentStatus');
+
+        // Check if status is provided and is one of the allowed values
+        if ($status && in_array($status, ['pending', 'Rejected', 'Approved'])) {
+            $query->where('PaymentStatus', $status);
+        }
+
+        // Paginate the result (3 records per page) and transform each subscription
+        $subscriptions = $query->paginate(3)
+            ->through(function ($subscription) {
                 return [
                     'sid'          => $subscription->id,
                     'email'        => $subscription->user->email ?? null,
-                    'name'         => $subscription->user->name ?? null, // Fetch customer name
+                    'name'         => $subscription->user->name ?? null,
                     'memberpic'    => $subscription->user->ProfilePic ?? null,
                     'payment_date' => $subscription->PaymentDate,
                     'payment_type' => $subscription->paymentType->PaymentTypeName ?? null,
@@ -230,15 +281,16 @@ class SubscriptionController extends Controller
 
         return response()->json([
             'status' => 200,
-            'data'   => $subscriptions, // Laravel pagination returns metadata like links, current page, etc.
+            'data'   => $subscriptions,
         ]);
     }
 
     public function updateStatus(Request $request, $id)
     {
-        // Validate request
+        // Validate request. 'notification_description' is required when payment_status is Rejected.
         $request->validate([
-            'payment_status' => 'required|string|in:Pending,Approved,Rejected',
+            'payment_status'           => 'required|string|in:Pending,Approved,Rejected',
+            'notification_description' => 'required_if:payment_status,Rejected',
         ]);
 
         // Find the subscription
@@ -274,6 +326,23 @@ class SubscriptionController extends Controller
                     'error'   => $e->getMessage(),
                 ], 500);
             }
+        }
+
+        //dd($request->payment_status);
+        // Prepare notification description based on the payment status
+        if ($request->payment_status === "Approved") {
+            $description = "Your subscription expired date is " . $subscription->MemberEndDate;
+        } elseif ($request->payment_status === "Rejected") {
+            $description = $request->notification_description;
+        }
+
+        // Create a notification if the payment status is either Approved or Rejected
+        if (in_array($request->payment_status, ['Approved', 'Rejected'])) {
+            SubscriptionNotification::create([
+                'SubscriptionId' => $subscription->id,
+                'Description'    => $description,
+                'WatchStatus'    => 'unwatch',
+            ]);
         }
 
         return response()->json([

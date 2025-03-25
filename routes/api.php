@@ -30,8 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/updateAdminComments/{id}', [App\Http\Controllers\RequestResourcesController::class, 'updateAdminComment']);
     Route::put('/updateNotiStatus/{id}', [App\Http\Controllers\RequestResourcesController::class, 'updateNotificationStatus']);
     Route::get('/AllPayments', [App\Http\Controllers\SubscriptionController::class, 'getSubscriptionDetails']);
-    Route::put('/subscriptions/status/{id}', [App\Http\Controllers\SubscriptionController::class, 'updateStatus']);
-    Route::put('/subscriptions/status/{id}', [App\Http\Controllers\SubscriptionController::class, 'updateStatus']);
+    Route::get('/RejectPayment/{id}', [App\Http\Controllers\SubscriptionController::class, 'showReject']);
+    Route::post('/subscriptions/status/{id}', [App\Http\Controllers\SubscriptionController::class, 'updateStatus']);
+    // Route::put('/subscriptions/status/{id}', [App\Http\Controllers\SubscriptionController::class, 'updateStatus']);
 
     Route::get('/NewMemberReport', [App\Http\Controllers\ReportController::class, 'getNewMembersReport']);
     Route::get('/MembershipPlanReport', [App\Http\Controllers\ReportController::class, 'membershipPlanReport']);
