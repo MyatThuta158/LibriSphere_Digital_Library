@@ -16,6 +16,7 @@ class Discussion extends Model
         'UserId',
         'ForumPostId',
         'Content',
+        'NotiStatus',
     ];
 
     /**

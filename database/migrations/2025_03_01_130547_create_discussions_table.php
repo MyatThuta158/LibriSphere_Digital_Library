@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedInteger('UserId');
             $table->unsignedInteger('ForumPostId');
             $table->text('Content');
+            $table->enum('NotiStatus', ['watched', 'unwatched'])->default('unwatched');
             $table->timestamps();
             $table->foreign('UserId')
                 ->references('id')

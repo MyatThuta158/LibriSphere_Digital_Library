@@ -6,7 +6,6 @@ use App\Models\Subscription;
 use App\Models\SubscriptionNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -34,7 +33,7 @@ class SubscriptionController extends Controller
     public function store(Request $request)
     {
         ob_clean();
-        $user = Auth::user();
+        // $user = Auth::user();
 
         // Validate the request (removed MemberstartDate and MemberEndDate)
         try {
@@ -46,6 +45,7 @@ class SubscriptionController extends Controller
                 'PaymentAccountName'   => 'required|string|max:255',
                 'PaymentAccountNumber' => 'required|string|max:255',
                 'PaymentDate'          => 'required|date',
+                'users_id'             => 'required|exists:users,id',
             ]);
         } catch (ValidationException $e) {
             return response()->json(['message' => $e->errors()], 500);
@@ -58,7 +58,7 @@ class SubscriptionController extends Controller
                 $paymentScreenshotPath = $paymentScreenshotFile->store('subscriptions', 'public');
 
                 // Check for an active subscription for this user
-                $activeSubscription = Subscription::where('users_id', $user->id)
+                $activeSubscription = Subscription::where('users_id', $validate['users_id'], )
                     ->where('SubscriptionStatus', 'active')
                     ->first();
 
@@ -90,7 +90,7 @@ class SubscriptionController extends Controller
                     'admin_id'             => $validate['admin_id'] ?? null,
                     'membership_plans_id'  => $validate['membership_plans_id'],
                     'payment_types_id'     => $validate['payment_types_id'],
-                    'users_id'             => $user->id,
+                    'users_id'             => $validate['users_id'],
                     'PaymentScreenShot'    => $paymentScreenshotPath,
                     'PaymentAccountName'   => $validate['PaymentAccountName'],
                     'PaymentAccountNumber' => $validate['PaymentAccountNumber'],

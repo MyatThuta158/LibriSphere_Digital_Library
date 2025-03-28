@@ -77,10 +77,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/admin/resourcetype', [App\Http\Controllers\ResourceTypeController::class, 'index']);
 
+    Route::get('/notification', [App\Http\Controllers\NotificationController::class, 'index']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);
-
+Route::get('/streamVideo/{id}', [App\Http\Controllers\FileController::class, 'stream']);
 Route::post('/UserRegister', [App\Http\Controllers\UserController::class, 'store']);
 Route::post('/Subscription/Register', [App\Http\Controllers\SubscriptionController::class, 'store']);
 Route::get('/Memberships/show', [App\Http\Controllers\MembershipPlanController::class, 'index']);

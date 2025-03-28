@@ -16,15 +16,23 @@ return [
     */
 
     // 'paths' => ['*'],
-    'paths'                    => ['api/*', 'sanctum/csrf-cookie', '*', 'file/*'],
+    'paths'                    => ['api/*', 'sanctum/csrf-cookie', '*', 'file/*', 'streamVideo/*'],
     //'paths' => ['*', 'sanctum/csrf-cookie'],
     'allowed_methods'          => ['*'],
-    'allowed_origins'          => [env('FONTEND_URL', 'http://localhost:5173')],
+    'allowed_origins'          => ['http://localhost:5173'],
     'allowed_origins_patterns' => [],
     'allowed_headers'          => ['*'],
-    'exposed_headers'          => [],
+    'exposed_headers'          => ['Content-Range', 'Accept-Ranges', 'Content-Length'],
     'max_age'                  => 3600,
     'supports_credentials'     => true,
+
+    // 'paths'                    => ['api/*', 'streamVideo/*'],
+    // 'allowed_origins'          => ['http://localhost:5173'],
+    // 'allowed_methods'          => ['*'],
+    // 'allowed_headers'          => ['*'],
+    // 'exposed_headers'          => ['Content-Range', 'Accept-Ranges', 'Content-Length'],
+    // 'max_age'                  => 0,
+    // 'supports_credentials'     => false,
 
 //     'paths' => ['api/*', 'sanctum/csrf-cookie', 'file/*'], // Add your paths
 // 'allowed_origins' => [env('FONTEND_URL')], // Or use '*' for testing

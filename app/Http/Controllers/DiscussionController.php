@@ -31,6 +31,7 @@ class DiscussionController extends Controller
      */
     public function store(Request $request)
     {
+
         // Ensure the user is authenticated.
         if (! auth()->check()) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -45,12 +46,14 @@ class DiscussionController extends Controller
         // Merge the authenticated user's ID with the validated data.
         $validatedData['UserId'] = auth()->id();
 
+        // Set the NotiStatus field to 'uwatched'
+        $validatedData['NotiStatus'] = 'unwatched';
+
         // Create the discussion.
         $discussion = Discussion::create($validatedData);
 
         return response()->json([
             'message' => 'Discussion created successfully',
-
         ], 201);
     }
 

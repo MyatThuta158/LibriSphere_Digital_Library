@@ -25,17 +25,19 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        ob_clean();
+
         try {
+            // Add custom error messages for validation rules.
             $validate = $request->validate([
-                'name'         => 'string|required',
+                'name'         => 'required|string',
                 'email'        => 'required|email|string|unique:users,email|max:255',
                 'password'     => 'required|string|min:8',
                 'phone_number' => 'required|string',
                 'DateOfBirth'  => 'required|string',
                 'gender'       => 'required|string|in:male,female',
                 'role'         => 'required|string|in:member,community_member',
-                'ProfilePic'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ], [
+                'email.unique' => 'Email already exists.',
             ]);
         } catch (ValidationException $e) {
             Log::error('Validation failed', [
@@ -50,13 +52,6 @@ class UserController extends Controller
         }
 
         try {
-            // Handle file upload
-            $photoPath = null;
-            if ($request->hasFile('ProfilePic')) {
-                $photo     = $request->file('ProfilePic');
-                $photoPath = $photo->store('users', 'public');
-            }
-
             // Insert user data into the database
             $user = User::create([
                 'name'         => $validate['name'],
@@ -66,11 +61,13 @@ class UserController extends Controller
                 'phone_number' => $validate['phone_number'],
                 'DateOfBirth'  => $validate['DateOfBirth'],
                 'role'         => $validate['role'],
-                'ProfilePic'   => $photoPath,
             ]);
 
             if (! $user) {
-                return response()->json(['message' => 'User registration failed!', 'status' => 500], 500);
+                return response()->json([
+                    'message' => 'User registration failed!',
+                    'status'  => 500,
+                ], 500);
             }
 
             // Assign role to user
@@ -97,7 +94,9 @@ class UserController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error occurred while registering user: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong. Please try again later!'], 500);
+            return response()->json([
+                'error' => 'Something went wrong. Please try again later!',
+            ], 500);
         }
     }
 
