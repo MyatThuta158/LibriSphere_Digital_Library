@@ -13,8 +13,24 @@ class ResourcesController extends Controller
      */
     public function index()
     {
-        $resources = Resources::paginate(8);
-        return response()->json(['data' => $resources], 200);
+        // Get all resources with their related genres, resource types, and authors
+        $resources = Resources::with([
+            'Genre:id,name',
+            'ResourceType:id,TypeName',
+            'author:id,name',
+        ])->get();
+
+        // Fetch all genres (only id and name)
+        $genres = \App\Models\Genre::select('id', 'name')->get();
+
+        // Fetch all resource types (only id and type name)
+        $resourceTypes = \App\Models\ResourceType::select('id', 'TypeName')->get();
+
+        return response()->json([
+            'resources'     => $resources,
+            'genres'        => $genres,
+            'resourceTypes' => $resourceTypes,
+        ], 200);
     }
 
     public function getResource()

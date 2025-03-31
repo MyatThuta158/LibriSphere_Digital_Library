@@ -78,6 +78,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/resourcetype', [App\Http\Controllers\ResourceTypeController::class, 'index']);
 
     Route::get('/notification', [App\Http\Controllers\NotificationController::class, 'index']);
+
+    Route::post('/subscription/resubmit/{id}', [App\Http\Controllers\SubscriptionController::class, 'update']);
+    Route::get('/subscription/resubmit/show/{id}', [App\Http\Controllers\SubscriptionController::class, 'showResubmit']);
+
+    Route::put('/changeall/noti', [App\Http\Controllers\NotificationController::class, 'markAllNotificationsAsWatched']);
+
+    Route::get('/noti/totalcount', [App\Http\Controllers\NotificationController::class, 'totalCount']);
+    Route::get('/subscription/resubmit/{id}', [App\Http\Controllers\SubscriptionController::class, 'showSubscriptionDetailWithLatestNotification']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);

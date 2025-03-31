@@ -163,6 +163,7 @@ class SubscriptionController extends Controller
                     'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
                     'payment_screenshot'     => $subscription->PaymentScreenShot,
                     'payment_account_name'   => $subscription->PaymentAccountName,
+
                     'payment_account_number' => $subscription->PaymentAccountNumber,
                     'payment_date'           => $subscription->PaymentDate,
                     'payment_status'         => $subscription->PaymentStatus,
@@ -170,7 +171,114 @@ class SubscriptionController extends Controller
                 'member_start_date'  => $subscription->MemberstartDate,
                 'member_end_date'    => $subscription->MemberEndDate,
                 'admin_id'           => $subscription->admin_id,
+
             ],
+        ]);
+    }
+
+    public function showResubmit($id)
+    {
+        // Retrieve the subscription along with user, paymentType, and latest notification
+        $subscription = Subscription::with([
+            'user',
+            'paymentType',
+            'membershipPlan',
+            'subscriptionNotifications' => function ($query) {
+                $query->latest()->limit(1);
+            },
+        ])->find($id);
+
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Retrieve the latest notification (if it exists)
+        $latestNotification = $subscription->subscriptionNotifications->first();
+
+        return response()->json([
+            'status' => 200,
+            'data'   => [
+                'subscription_id'     => $subscription->id,
+                'user'                => [
+                    'id'           => $subscription->user->id ?? null,
+                    'name'         => $subscription->user->name ?? null,
+                    'email'        => $subscription->user->email ?? null,
+                    'phone_number' => $subscription->user->phone_number ?? null,
+                    'profile_pic'  => $subscription->user->ProfilePic ?? null,
+                ],
+                'membership'          => $subscription->membershipPlan,
+                'payment'             => [
+                    // Payment type information from the related paymentType model
+                    'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
+                    // Subscription's own payment details
+                    'payment_screenshot'     => $subscription->PaymentScreenShot,
+                    'payment_account_name'   => $subscription->PaymentAccountName,
+                    'payment_account_number' => $subscription->PaymentAccountNumber,
+                    'payment_date'           => $subscription->PaymentDate,
+                    'payment_status'         => $subscription->PaymentStatus,
+                ],
+
+                'payment_type'        => $subscription->paymentType,
+                'membership_plan_id'  => $subscription->membership_plans_id,
+                'member_start_date'   => $subscription->MemberstartDate,
+                'member_end_date'     => $subscription->MemberEndDate,
+                'admin_id'            => $subscription->admin_id,
+                'latest_notification' => $latestNotification ? [
+                    'description'  => $latestNotification->Description,
+                    'watch_status' => $latestNotification->WatchStatus,
+                ] : null,
+            ],
+        ]);
+    }
+
+    ///------------This is for subscription update if reject-----//
+    public function update(Request $request, $id)
+    {
+        ob_clean();
+        // Find the subscription by its id
+        $subscription = Subscription::find($id);
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Validate only the fields that need to be updated
+        $validatedData = $request->validate([
+            'PaymentScreenShot'    => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'PaymentAccountName'   => 'nullable|string|max:255',
+            'PaymentAccountNumber' => 'nullable|string|max:255',
+            'PaymentDate'          => 'nullable|date',
+
+        ]);
+
+        $validatedData['PaymentStatus'] = 'Resubmit';
+
+        // Handle file upload for PaymentScreenShot if provided
+        if ($request->hasFile('PaymentScreenShot')) {
+            $paymentScreenshotFile              = $request->file('PaymentScreenShot');
+            $paymentScreenshotPath              = $paymentScreenshotFile->store('subscriptions', 'public');
+            $validatedData['PaymentScreenShot'] = $paymentScreenshotPath;
+        }
+
+        // Update only the provided fields
+        $subscription->update($validatedData);
+
+        // Save notification information after the payment is updated
+        SubscriptionNotification::create([
+            'SubscriptionId' => $subscription->id,
+            'Description'    => 'You cannot access the digital library until the admin accept the payment. This process can take 24 hours and please wait',
+            'WatchStatus'    => 'unwatch',
+        ]);
+
+        return response()->json([
+            'status'  => 200,
+            'message' => 'Subscription updated successfully',
+            'data'    => $subscription,
         ]);
     }
 
@@ -235,17 +343,62 @@ class SubscriptionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Subscription $subscription)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Subscription $subscription)
+    public function showSubscriptionDetailWithLatestNotification($id)
     {
-        //
+        // Retrieve the subscription with related user, paymentType, membershipPlan,
+        // and only the latest subscription notification.
+        $subscription = Subscription::with([
+            'user',
+            'paymentType',
+            'membershipPlan',
+            'subscriptionNotifications' => function ($query) {
+                $query->latest()->limit(1);
+            },
+        ])->find($id);
+
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Get the latest notification from the collection (if any)
+        $latestNotification = $subscription->subscriptionNotifications->first();
+
+        return response()->json([
+            'status' => 200,
+            'data'   => [
+                'subscription_id'     => $subscription->id,
+                'user'                => [
+                    'id'           => $subscription->user->id ?? null,
+                    'name'         => $subscription->user->name ?? null,
+                    'email'        => $subscription->user->email ?? null,
+                    'phone_number' => $subscription->user->phone_number ?? null,
+                    'profile_pic'  => $subscription->user->ProfilePic ?? null,
+                ],
+                'membership_plan'     => $subscription->membershipPlan,
+                'payment'             => [
+                    'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
+                    'payment_screenshot'     => $subscription->PaymentScreenShot,
+                    'payment_account_name'   => $subscription->PaymentAccountName,
+                    'payment_account_number' => $subscription->PaymentAccountNumber,
+                    'payment_date'           => $subscription->PaymentDate,
+                    'payment_status'         => $subscription->PaymentStatus,
+                ],
+                'member_start_date'   => $subscription->MemberstartDate,
+                'member_end_date'     => $subscription->MemberEndDate,
+                'admin_id'            => $subscription->admin_id,
+                'latest_notification' => $latestNotification ? [
+                    'description'  => $latestNotification->Description,
+                    'watch_status' => $latestNotification->WatchStatus,
+                ] : null,
+            ],
+        ]);
     }
 
     //--------This is to return payment show----///
@@ -261,7 +414,7 @@ class SubscriptionController extends Controller
         ])->select('users_id', 'payment_types_id', 'id', 'PaymentDate', 'PaymentStatus');
 
         // Check if status is provided and is one of the allowed values
-        if ($status && in_array($status, ['pending', 'Rejected', 'Approved'])) {
+        if ($status && in_array($status, ['pending', 'Rejected', 'Approved', "Resubmit"])) {
             $query->where('PaymentStatus', $status);
         }
 
@@ -289,7 +442,7 @@ class SubscriptionController extends Controller
     {
         // Validate request. 'notification_description' is required when payment_status is Rejected.
         $request->validate([
-            'payment_status'           => 'required|string|in:Pending,Approved,Rejected',
+            'payment_status'           => 'required|string|in:pending,Approved,Rejected,Resubmit',
             'notification_description' => 'required_if:payment_status,Rejected',
         ]);
 
@@ -305,6 +458,13 @@ class SubscriptionController extends Controller
 
         // Update the payment status
         $subscription->PaymentStatus = $request->payment_status;
+
+        // When payment is approved, also update SubscriptionStatus to active
+        if ($request->payment_status === "Approved") {
+            $subscription->SubscriptionStatus = 'active';
+            $subscription->PaymentStatus      = 'Approved';
+        }
+
         $subscription->save();
 
         // Get the associated user
@@ -319,6 +479,7 @@ class SubscriptionController extends Controller
                     $user->update(['role' => 'community_member']);
                     $user->syncRoles('community_member');
                 }
+                // For Resubmit, we don't change the user role.
             } catch (\Exception $e) {
                 return response()->json([
                     'status'  => 500,
@@ -328,16 +489,17 @@ class SubscriptionController extends Controller
             }
         }
 
-        //dd($request->payment_status);
         // Prepare notification description based on the payment status
         if ($request->payment_status === "Approved") {
             $description = "Your subscription expired date is " . $subscription->MemberEndDate;
         } elseif ($request->payment_status === "Rejected") {
             $description = $request->notification_description;
+        } elseif ($request->payment_status === "Resubmit") {
+            $description = "Your payment has been resubmitted. Please wait for admin to review your payment.";
         }
 
-        // Create a notification if the payment status is either Approved or Rejected
-        if (in_array($request->payment_status, ['Approved', 'Rejected'])) {
+        // Create a notification if the payment status is one of Approved, Rejected, or Resubmit
+        if (in_array($request->payment_status, ['Approved', 'Rejected', 'Resubmit'])) {
             SubscriptionNotification::create([
                 'SubscriptionId' => $subscription->id,
                 'Description'    => $description,
