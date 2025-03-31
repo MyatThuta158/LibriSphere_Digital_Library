@@ -35,7 +35,8 @@ function MemberRegister() {
     try {
       const response = await createMember(memberData);
 
-      console.log(response);
+      //console.log(response);
+      //const {user,status,token,}
       // If response status is 200, registration is successful.
       if (response.status === 200) {
         // Log in the user and store data in context and localStorage
@@ -43,8 +44,8 @@ function MemberRegister() {
         setUserid(response.id);
 
         // Save user information in localStorage
-        localStorage.setItem("user", JSON.stringify(response.user));
-        localStorage.setItem("token", response.token);
+        // localStorage.setItem("user", JSON.stringify(response.user));
+        // localStorage.setItem("token", response.token);
 
         setRegistrationSuccess(true);
         setMessage(

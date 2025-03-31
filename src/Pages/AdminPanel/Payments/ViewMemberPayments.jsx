@@ -146,6 +146,17 @@ const ViewMemberPayments = () => {
                       >
                         Accept Detail
                       </button>
+                    ) : payment.status === "Resubmit" ? (
+                      <button
+                        className="btn btn-info px-4"
+                        onClick={() =>
+                          navigate(
+                            `/Admin/Subscription/Resubmit/${payment.sid}`
+                          )
+                        }
+                      >
+                        Resubmit Detail
+                      </button>
                     ) : (
                       <button
                         className="btn btn-primary px-4"

@@ -21,6 +21,9 @@ export const changeStatus = (id, status) =>
 export const resubmitSubscription = (id, data) =>
   apiClient.post(`/subscription/resubmit/${id}`, data).then((res) => res.data);
 
+export const resubmitSubShow = (id) =>
+  apiClient.get(`/subscription/resubmit/${id}`).then((res) => res.data);
+
 //------This is to show subscription resubmit detail-----//
 export const getResubmit = (id) =>
   apiClient.get(`/subscription/resubmit/show/${id}`).then((res) => res.data);

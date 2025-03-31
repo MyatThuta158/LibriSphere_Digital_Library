@@ -38,6 +38,7 @@ import AdminProfile from "../Pages/AdminPanel/Admins/AdminProfile";
 import CreateAnnouncement from "../Pages/AdminPanel/Announcements/CreateAnnouncement";
 import ShowAnnouncment from "../Pages/AdminPanel/Announcements/ShowAnnouncement";
 import DetailAnnouncement from "../Pages/AdminPanel/Announcements/DetailAnnouncement";
+import ResubmitPayment from "../Pages/AdminPanel/Payments/ResubmitPayment";
 
 function AdminRoute() {
   return (
@@ -123,6 +124,11 @@ function AdminRoute() {
           <Route path="/Admin/ReadResource" element={<ResourceRead />} />
 
           <Route path="/Admin/Profile" element={<AdminProfile />} />
+
+          <Route
+            path="/Admin/Subscription/Resubmit/:id"
+            element={<ResubmitPayment />}
+          />
 
           {/* This is for announcement  */}
           <Route path="/Admin/Announcement" element={<CreateAnnouncement />} />

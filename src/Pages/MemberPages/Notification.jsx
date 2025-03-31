@@ -26,6 +26,7 @@ function Notification() {
     const fetchNotifications = async () => {
       try {
         const data = await getNoti();
+        console.log(data);
         setNotifications(data);
       } catch (err) {
         setError(err);
@@ -43,7 +44,6 @@ function Notification() {
 
   const handleRetryPayment = (subscriptionId) => {
     // Handle payment retry action here.
-    // For example, redirect to a payment page or open a modal.
     console.log("Retry payment for subscription:", subscriptionId);
     navigate(`/Community/PaymentResubmit/${subscriptionId}`);
   };
@@ -84,7 +84,7 @@ function Notification() {
                       (notification) => (
                         <ListGroup.Item
                           key={notification.id}
-                          className=" text-white"
+                          className="text-white"
                           style={{ background: "#4e73df" }}
                         >
                           <div className="d-flex justify-content-between align-items-center">
@@ -98,12 +98,31 @@ function Notification() {
                                   notification.created_at
                                 ).toLocaleString()}
                               </small>
-                              {/* Check if payment status is "Rejected" */}
-                              <div className="badge d-block mt-2 w-50 bg-danger text-white">
-                                Payment Rejected
-                              </div>
+                              {/* Conditionally render the badge based on PaymentStatus */}
+                              {notification.subscription &&
+                              notification.subscription.PaymentStatus ===
+                                "Rejected" ? (
+                                <div
+                                  className="badge d-block mt-2 bg-danger text-white"
+                                  style={{ width: "10vw" }}
+                                >
+                                  Payment Rejected
+                                </div>
+                              ) : notification.subscription &&
+                                notification.subscription.PaymentStatus ===
+                                  "Resubmit" ? (
+                                <div className="badge d-block mt-2 w-50 bg-warning text-white">
+                                  Payment Resubmitted
+                                </div>
+                              ) : notification.subscription &&
+                                notification.subscription.PaymentStatus ===
+                                  "pending" ? (
+                                <div className="badge d-block mt-2 w-50 bg-secondary text-white">
+                                  Payment Pending
+                                </div>
+                              ) : null}
                             </div>
-                            <span className="badge ">
+                            <span className="badge">
                               {notification.subscription &&
                                 notification.subscription.PaymentStatus ===
                                   "Rejected" && (
