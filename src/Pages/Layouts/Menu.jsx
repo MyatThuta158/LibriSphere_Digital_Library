@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import "../../main.css";
 import { Ability } from "../../Authentication/PermissionForUser";
+// Import API functions (adjust the paths as necessary)
+import {
+  changeDiscussionNoti,
+  getNotification,
+} from "../../api/notificationApi";
 
 function Menu() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user")) || {};
-  const userName = user.name || "User Name";
-  const userRole = user.role || "Admin";
-  const userPic = user.profilePhoto;
-  const isMember = user !== null;
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userName = user ? user.name : "User Name";
+  const userRole = user ? user.role : "Admin";
+  const userPic = user ? user.profilePhoto : null;
+  const isMember = Boolean(user);
   const ability = Ability();
+  const [state, setState] = useState(false);
+
+  // State for notification count
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  // Fetch the total notification count when the component mounts
+  useEffect(() => {
+    getNotification()
+      .then((data) => {
+        setNotificationCount(data.total_notifications);
+      })
+      .catch((error) => {
+        console.error("Error fetching notifications:", error);
+      });
+  }, [state]);
+
+  console.log("user", user);
 
   return (
     <div>
@@ -23,7 +46,7 @@ function Menu() {
           <div
             className="d-flex align-items-center"
             style={{ cursor: "pointer" }}
-            onClick={() => navigate("/")} // Example: go home on logo click
+            onClick={() => navigate("/")}
           >
             <img
               src="/logo.png"
@@ -58,7 +81,7 @@ function Menu() {
             id="navbarNavDropdown"
           >
             <ul className="navbar-nav">
-              {/* Example links; update them as you need */}
+              {/* Example links; update them as needed */}
               <li className="nav-item">
                 <a
                   className="nav-link text-white"
@@ -104,133 +127,148 @@ function Menu() {
                     </a>
                   </li>
 
+                  {/* User dropdown menu */}
                   <li>
-                    {" "}
                     <div className="flex-grow-1 d-flex flex-column">
-                      {/* TOP NAVBAR */}
-
-                      {/* Expand to fill space if needed */}
-                      <div className="d-flex w-100 justify-content-end align-items-center me-2">
-                        <div className="dropdown">
-                          <button
-                            className="btn dropdown-toggle d-flex align-items-center"
-                            type="button"
-                            id="userDropdown"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                            style={{
-                              background: "transparent",
-                              border: "none",
-                            }}
-                          >
-                            <img
-                              src={
-                                userPic
-                                  ? `http://127.0.0.1:8000/storage/${userPic}`
-                                  : "/Customer/pic.jpg"
-                              }
-                              alt="User"
-                              className="img-fluid"
+                      {user && (
+                        <div className="d-flex w-100 justify-content-end align-items-center me-2">
+                          <div className="dropdown">
+                            <button
+                              className="btn dropdown-toggle d-flex align-items-center"
+                              type="button"
+                              id="userDropdown"
+                              data-bs-toggle="dropdown"
+                              aria-expanded="false"
                               style={{
-                                borderRadius: "30px",
-                                border: "1px solid black",
-
-                                height: "40px",
-                                objectFit: "cover",
+                                background: "transparent",
+                                border: "none",
                               }}
-                            />
-                            <div className="ms-2 bg-none text-start">
-                              <div
-                                style={{ fontSize: "14px" }}
-                                className="text-white"
-                              >
-                                {userName}
-                              </div>
-                              <div
-                                className="fw-bold text-white"
-                                style={{ fontSize: "12px" }}
-                              >
-                                {userRole}
-                              </div>
-                            </div>
-                          </button>
-
-                          {/* Dropdown menu */}
-                          <ul
-                            className="dropdown-menu dropdown-menu-end text-white"
-                            aria-labelledby="userDropdown"
-                            style={{ background: "#4e73df" }}
-                          >
-                            <li>
-                              <button
-                                className="dropdown-item text-white"
-                                style={{ background: "#4e73df" }}
-                                onClick={() => navigate("/Admin/Profile")}
-                              >
-                                <i className="bi bi-person-circle me-2"></i>
-                                Profile
-                              </button>
-                            </li>
-                            <li>
-                              <hr className="dropdown-divider" />
-                            </li>
-
-                            {/* <li>
-                              <a
-                                className="dropdown-item"
-                                style={{ color: "black" }}
-                                onClick={() => navigate("/library/Home1")}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  fill="currentColor"
-                                  className="bi bi-door-closed me-2"
-                                  viewBox="0 0 16 16"
+                            >
+                              <img
+                                src={
+                                  userPic
+                                    ? `http://127.0.0.1:8000/storage/${userPic}`
+                                    : "/Customer/pic.jpg"
+                                }
+                                alt="User"
+                                className="img-fluid"
+                                style={{
+                                  borderRadius: "30px",
+                                  border: "1px solid black",
+                                  height: "40px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <div className="ms-2 bg-none text-start">
+                                <div
+                                  style={{ fontSize: "14px" }}
+                                  className="text-white"
                                 >
-                                  <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
-                                  <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
-                                </svg>
-                                Go to Library
-                              </a>
-                            </li> */}
-
-                            <li>
-                              <a
-                                className="dropdown-item text-white"
-                                style={{ color: "black" }}
-                                onClick={() => navigate("/community/posts")}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="16"
-                                  height="16"
-                                  fill="currentColor"
-                                  className="bi bi-door-closed me-2"
-                                  viewBox="0 0 16 16"
+                                  {userName}
+                                </div>
+                                <div
+                                  className="fw-bold text-white"
+                                  style={{ fontSize: "12px" }}
                                 >
-                                  <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
-                                  <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
-                                </svg>
-                                Go to Community
-                              </a>
-                            </li>
-                            <li>
-                              <hr className="dropdown-divider" />
-                            </li>
-                            <li>
-                              <button
-                                className="dropdown-item text-white"
-                                style={{ background: "#4e73df" }}
-                              >
-                                Log Out
-                                <i className="bi bi-box-arrow-right ms-2"></i>
-                              </button>
-                            </li>
-                          </ul>
+                                  {userRole}
+                                </div>
+                              </div>
+                            </button>
+
+                            {/* Dropdown menu */}
+                            <ul
+                              className="dropdown-menu dropdown-menu-end text-white"
+                              aria-labelledby="userDropdown"
+                              style={{ background: "#4e73df" }}
+                            >
+                              <li>
+                                <button
+                                  className="dropdown-item text-white"
+                                  style={{ background: "#4e73df" }}
+                                  onClick={() => navigate("/Admin/Profile")}
+                                >
+                                  <i className="bi bi-person-circle me-2"></i>
+                                  Profile
+                                </button>
+                              </li>
+                              <li>
+                                <hr className="dropdown-divider" />
+                              </li>
+                              {(userRole === "member" ||
+                                userRole === "community_member") && (
+                                <>
+                                  <li>
+                                    <button
+                                      className="dropdown-item text-white"
+                                      style={{ background: "#4e73df" }}
+                                      onClick={() => {
+                                        changeDiscussionNoti()
+                                          .then((data) => {
+                                            console.log(
+                                              "Notification changed:",
+                                              data
+                                            );
+                                          })
+                                          .catch((error) => {
+                                            console.error(
+                                              "Error changing notification:",
+                                              error
+                                            );
+                                          });
+                                        navigate("/community/notification");
+                                        setState(!state);
+                                      }}
+                                    >
+                                      <i className="bi bi-bell me-2"></i>
+                                      Notifications{" "}
+                                      {notificationCount > 0 && (
+                                        <span className="badge bg-danger ms-1">
+                                          {notificationCount}
+                                        </span>
+                                      )}
+                                    </button>
+                                  </li>
+                                  <li>
+                                    <hr className="dropdown-divider" />
+                                  </li>
+                                </>
+                              )}
+                              <li>
+                                <a
+                                  className="dropdown-item text-white"
+                                  style={{ color: "black" }}
+                                  onClick={() => navigate("/community/posts")}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    className="bi bi-door-closed me-2"
+                                    viewBox="0 0 16 16"
+                                  >
+                                    <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
+                                    <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
+                                  </svg>
+                                  Go to Community
+                                </a>
+                              </li>
+                              <li>
+                                <hr className="dropdown-divider" />
+                              </li>
+                              <li>
+                                <button
+                                  className="dropdown-item text-white"
+                                  style={{ background: "#4e73df" }}
+                                >
+                                  Log Out
+                                  <i className="bi bi-box-arrow-right ms-2"></i>
+                                </button>
+                              </li>
+                            </ul>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </li>
                 </>

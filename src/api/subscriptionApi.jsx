@@ -15,3 +15,12 @@ export const detailInfoPayment = (id) =>
 
 export const changeStatus = (id, status) =>
   apiClient.post(`/subscriptions/status/${id}`, status).then((res) => res.data);
+
+//------This is for subscription resubmit----///
+
+export const resubmitSubscription = (id, data) =>
+  apiClient.post(`/subscription/resubmit/${id}`, data).then((res) => res.data);
+
+//------This is to show subscription resubmit detail-----//
+export const getResubmit = (id) =>
+  apiClient.get(`/subscription/resubmit/show/${id}`).then((res) => res.data);

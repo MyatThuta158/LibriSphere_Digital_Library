@@ -35,33 +35,6 @@ function MemberRoute() {
           <Route path="Home1" element={<Home1 />} />
           <Route path="Resource" element={<ResourceDisplay />} />
 
-          {/* Wrap only the necessary routes with MembershipProvider */}
-          <Route
-            path="MemberRegister"
-            element={
-              <MembershipProvider>
-                <MemberRegister />
-              </MembershipProvider>
-            }
-          />
-          <Route
-            path="Membership"
-            element={
-              <MembershipProvider>
-                <Membership />
-              </MembershipProvider>
-            }
-          />
-
-          <Route
-            path="Payment"
-            element={
-              <MembershipProvider>
-                <Payment />
-              </MembershipProvider>
-            }
-          />
-
           <Route path="resource/:id" element={<ResourceDetail />} />
           <Route path="readResource" element={<ReadResource />} />
           <Route element={<PermissionForRoute role={["member"]} />}>

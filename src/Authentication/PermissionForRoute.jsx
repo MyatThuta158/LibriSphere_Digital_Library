@@ -4,7 +4,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./Auth";
 
 function PermissionForRoute({ role }) {
-  const { user } = useAuth();
+  // const { user } = useAuth();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   console.log(user);
 

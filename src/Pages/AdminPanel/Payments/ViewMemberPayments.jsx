@@ -30,6 +30,8 @@ const ViewMemberPayments = () => {
                 ? "bg-green-200 text-green-800"
                 : payment.status === "Rejected"
                 ? "bg-red-200 text-red-800"
+                : payment.status === "Resubmit"
+                ? "bg-blue-200 text-blue-800"
                 : "bg-gray-200 text-gray-800",
           }))
         );
@@ -67,90 +69,100 @@ const ViewMemberPayments = () => {
           <option value="pending">Pending</option>
           <option value="Approved">Approved</option>
           <option value="Rejected">Rejected</option>
+          <option value="Resubmit">Resubmit</option>
         </select>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full w-100 px-5 mx-auto bg-white border border-gray-200 rounded-lg">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="px-4 py-2 text-left">ID Invoice</th>
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2 text-left">Member</th>
-              <th className="px-4 py-2 text-left">Email</th>
-              <th className="px-4 py-2 text-left">Payment Type</th>
-              <th className="px-4 py-2 text-left">Status</th>
-              <th className="px-4 py-2 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment) => (
-              <tr key={payment.id} className="border-b border-gray-200">
-                <td className="px-4 py-3">{`#${payment.id}`}</td>
-                <td className="px-4 py-3">{payment.date}</td>
-                <td className="px-4 py-3 flex items-center">
-                  <img
-                    src={payment.image}
-                    alt="Profile"
-                    style={{ width: "5vw", height: "10vh" }}
-                    className="rounded-full mr-3"
-                  />
-                  <div>
-                    <p className="font-medium text-center">{payment.name}</p>
-                  </div>
-                </td>
-                <td className="px-4 py-3">{payment.email}</td>
-                <td className="px-4 py-3">{payment.serviceType}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-3 py-1 badge rounded-full text-sm ${
-                      payment.status === "pending"
-                        ? "text-bg-warning"
-                        : payment.status === "Approved"
-                        ? "text-bg-success"
-                        : payment.status === "Rejected"
-                        ? "text-bg-danger"
-                        : "text-bg-secondary"
-                    }`}
-                  >
-                    {payment.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {payment.status === "Rejected" ? (
-                    <button
-                      className="btn btn-danger px-4"
-                      onClick={() =>
-                        navigate(`/Admin/RejectDetailPayments/${payment.sid}`)
-                      }
-                    >
-                      Reject Detail
-                    </button>
-                  ) : payment.status === "Approved" ? (
-                    <button
-                      className="btn btn-success px-4"
-                      onClick={() =>
-                        navigate(`/Admin/AcceptDetailPayments/${payment.sid}`)
-                      }
-                    >
-                      Accept Detail
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-primary px-4"
-                      onClick={() =>
-                        navigate(`/Admin/DetailPayments/${payment.sid}`)
-                      }
-                    >
-                      Detail
-                    </button>
-                  )}
-                </td>
+      {/* Display message when Resubmit filter is applied but no payments are found */}
+      {statusFilter === "Resubmit" && payments.length === 0 ? (
+        <div className="text-center text-gray-500 py-4">
+          There are no resubmit subscription currently
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full w-100 px-5 mx-auto bg-white border border-gray-200 rounded-lg">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-2 text-left">ID Invoice</th>
+                <th className="px-4 py-2 text-left">Date</th>
+                <th className="px-4 py-2 text-left">Member</th>
+                <th className="px-4 py-2 text-left">Email</th>
+                <th className="px-4 py-2 text-left">Payment Type</th>
+                <th className="px-4 py-2 text-left">Status</th>
+                <th className="px-4 py-2 text-left">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {payments.map((payment) => (
+                <tr key={payment.id} className="border-b border-gray-200">
+                  <td className="px-4 py-3">{`#${payment.id}`}</td>
+                  <td className="px-4 py-3">{payment.date}</td>
+                  <td className="px-4 py-3 flex items-center">
+                    <img
+                      src={payment.image}
+                      alt="Profile"
+                      style={{ width: "5vw", height: "10vh" }}
+                      className="rounded-full mr-3"
+                    />
+                    <div>
+                      <p className="font-medium text-center">{payment.name}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{payment.email}</td>
+                  <td className="px-4 py-3">{payment.serviceType}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`px-3 py-1 badge rounded-full text-sm ${
+                        payment.status === "pending"
+                          ? "text-bg-warning"
+                          : payment.status === "Approved"
+                          ? "text-bg-success"
+                          : payment.status === "Rejected"
+                          ? "text-bg-danger"
+                          : payment.status === "Resubmit"
+                          ? "text-bg-info"
+                          : "text-bg-secondary"
+                      }`}
+                    >
+                      {payment.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {payment.status === "Rejected" ? (
+                      <button
+                        className="btn btn-danger px-4"
+                        onClick={() =>
+                          navigate(`/Admin/RejectDetailPayments/${payment.sid}`)
+                        }
+                      >
+                        Reject Detail
+                      </button>
+                    ) : payment.status === "Approved" ? (
+                      <button
+                        className="btn btn-success px-4"
+                        onClick={() =>
+                          navigate(`/Admin/AcceptDetailPayments/${payment.sid}`)
+                        }
+                      >
+                        Accept Detail
+                      </button>
+                    ) : (
+                      <button
+                        className="btn btn-primary px-4"
+                        onClick={() =>
+                          navigate(`/Admin/DetailPayments/${payment.sid}`)
+                        }
+                      >
+                        Detail
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Pagination Controls */}
       <div

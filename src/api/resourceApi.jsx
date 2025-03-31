@@ -32,3 +32,9 @@ export const fetchFile = (id) =>
   apiClient
     .get(`/downloadFile/${id}`, { responseType: "blob" })
     .then((res) => res.data);
+
+export const streamVideo = (id) =>
+  apiClient.get(`/streamVideo/${id}`, { responseType: "blob" }).then((res) => {
+    // Create a URL from the blob
+    return URL.createObjectURL(res.data);
+  });

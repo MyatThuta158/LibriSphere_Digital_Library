@@ -14,6 +14,13 @@ import PermissionForUser, {
   AbilityContext,
 } from "./Authentication/PermissionForUser";
 import Menu from "./Pages/Layouts/Menu";
+import {
+  MembershipContext,
+  MembershipProvider,
+} from "./Pages/MemberPages/Context/MembershipContext"; // Replace with the correct path
+import MemberRegister from "./Pages/MemberPages/MemberRegister"; // Replace with the correct path
+import Payment from "./Pages/MemberPages/Payment"; // Replace with the correct path
+import Membership from "./Pages/MemberPages/Membership";
 
 function AppWithRolePermission() {
   const { user } = useAuth();
@@ -34,6 +41,33 @@ function AppWithRolePermission() {
           <Route path="/community/*" element={<CommunityMemberRoute />} />
 
           <Route path="*" element={<NotFound />} />
+
+          <Route
+            path="/UserRegister"
+            element={
+              <MembershipProvider>
+                <MemberRegister />
+              </MembershipProvider>
+            }
+          />
+
+          <Route
+            path="Payment"
+            element={
+              <MembershipProvider>
+                <Payment />
+              </MembershipProvider>
+            }
+          />
+
+          <Route
+            path="Membership"
+            element={
+              <MembershipProvider>
+                <Membership />
+              </MembershipProvider>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AbilityContext.Provider>

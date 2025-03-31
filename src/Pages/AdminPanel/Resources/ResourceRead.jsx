@@ -5,6 +5,7 @@ import { detail } from "../../../api/resourceApi";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import EpubViewer from "./LayoutResource/EpubViewer"; // Adjust the path as necessary
 import PdfViewer from "./LayoutResource/PdfViewer";
+import VideoViewer from "./LayoutResource/VideoViewer";
 
 // Set the workerSrc for pdfjs
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -27,7 +28,7 @@ const ReadResource = () => {
     // Fetch the PDF when the component mounts using the api function
     const fetchPdf = async () => {
       try {
-        const file = await detail(5);
+        const file = await detail(4);
 
         const type = getFileType(file.data.file);
 
@@ -70,9 +71,9 @@ const ReadResource = () => {
           // case "mp3":
           // case "wav":
           //   return <AudioPlayer file={resource.file} />;
-          // case "mp4":
-          // case "webm":
-          //   return <VideoPlayer file={resource.file} />;
+          case "mp4":
+          case "webm":
+            return <VideoViewer fileId={resourceId} />;
           default:
             return <p>Unsupported file type: {fileType}</p>;
         }

@@ -6,7 +6,6 @@ import { getPayment } from "../../api/paymenttypeApi";
 import { changeRole, createMember } from "../../api/memberApi";
 import { createSubscription } from "../../api/subscriptionApi";
 import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
 import IsSystemUser from "../../CustomHook/IsSystemUser";
 import { Modal, Button } from "react-bootstrap";
 
@@ -15,7 +14,7 @@ function Payment() {
   const [selectedPaymentType, setSelectedPaymentType] = useState(null);
   const baseUrl = import.meta.env.VITE_API_URL;
   const { userId, membershipPlan } = useContext(MembershipContext);
-  const [message, setMessage] = useState();
+  const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
   const {
@@ -32,12 +31,6 @@ function Payment() {
       .catch((error) => {
         console.error("Error fetching payment types:", error);
       });
-
-    const { isMember } = IsSystemUser();
-
-    if (!isMember) {
-      navigate("/Customer/MemberRegister");
-    }
   }, []);
 
   const onSelectPayment = (paymentType) => {
@@ -45,7 +38,12 @@ function Payment() {
   };
 
   const onCancel = () => {
-    setSelectedPaymentType(null); // Reset selected payment type
+    setSelectedPaymentType(null);
+  };
+
+  const handleModalOk = () => {
+    setMessage(null);
+    navigate("/library/home1");
   };
 
   const onSubmit = (data) => {
@@ -65,9 +63,10 @@ function Payment() {
       endDate.setMonth(endDate.getMonth() + parseInt(membershipPlan.duration));
       const formattedEndDate = endDate.toISOString().split("T")[0];
 
+      subscription.append("users_id", idMember);
       subscription.append("membership_plans_id", membershipPlan.id);
       subscription.append("payment_types_id", selectedPaymentType.id);
-      subscription.append("users_id", memberId); // Hardcoded for now
+      subscription.append("users_id", memberId);
       subscription.append("PaymentScreenShot", data.PaymentScreenShot[0]); // File input
       subscription.append("PaymentAccountName", data.PaymentAccountName);
       subscription.append("PaymentAccountNumber", data.PaymentAccountNumber);
@@ -77,26 +76,18 @@ function Payment() {
 
       const res = await createSubscription(subscription);
 
-      if (res.status == 200) {
-        const updateMember = {
-          role: "member",
-          userId: memberId,
-        };
+      if (res.status === 200) {
+        // Update local storage with new role "member"
+        const localUser = JSON.parse(localStorage.getItem("user"));
+        localUser.role = "member";
+        localStorage.setItem("user", JSON.stringify(localUser));
 
-        // Update User's Role after successful payment
-        const updateRoleRes = await changeRole(updateMember);
-
-        if (updateRoleRes.status === 200) {
-          setMessage("Account Register and subscription successfully!");
-          console.log("User role updated successfully!");
-          navigate("/Customer/Home");
-        } else {
-          console.error("Failed to update user role");
-        }
+        // Show success modal
+        setMessage("Account registered and subscription successful!");
+        console.log("User role updated successfully!");
+      } else {
+        console.error("Failed to update user role");
       }
-
-      console.log(res);
-      console.log(res.status);
     };
 
     memberRegister();
@@ -104,42 +95,56 @@ function Payment() {
 
   return (
     <div>
-      {/* <Menu /> */}
-      <div className="container py-5 mt-5">
-        <div className="row g-4 align-items-center">
-          {/* Show payment types only if none is selected */}
-          {!selectedPaymentType &&
-            paymentTypes.map((paymentType, index) => (
+      <Menu />
+      <div className="container py-5">
+        {/* Payment Type Cards */}
+        {!selectedPaymentType && (
+          <div className="row">
+            {paymentTypes.map((paymentType, index) => (
               <div
                 key={index}
-                className="col-md-4 col-12"
+                className="col-12 col-sm-6 col-md-4 mb-4"
                 onClick={() => onSelectPayment(paymentType)}
               >
                 <div
-                  className={`payment-card card text-center ${
-                    selectedPaymentType?.id === paymentType.id
-                      ? "border border-warning"
-                      : ""
-                  }`}
-                  style={{ height: "20vh", cursor: "pointer" }}
+                  className="card h-100 shadow-sm border-0"
+                  style={{ cursor: "pointer", background: "#4e73df" }}
                 >
-                  <div className="card-body d-flex align-items-center justify-content-center">
-                    <h5 className="card-title">
+                  <div className="card-body text-center">
+                    {paymentType.BankLogo && (
+                      <img
+                        src={`${baseUrl}storage/${paymentType.BankLogo}`}
+                        alt="Bank Logo"
+                        className="img-fluid mb-3 border border-white"
+                        style={{
+                          height: "8vh",
+                          width: "9vw",
+                          objectFit: "cover",
+                        }}
+                      />
+                    )}
+                    <h5 className="card-title text-white fw-bold">
                       {paymentType.PaymentTypeName}
                     </h5>
                   </div>
                 </div>
               </div>
             ))}
-        </div>
+          </div>
+        )}
 
-        {/* Payment Details (Only show if selected) */}
+        {/* Payment Details */}
         {selectedPaymentType && (
-          <div className="mt-5">
-            <div className="row justify-content-center">
-              <div className="col-md-6 col-12">
-                <div className="card p-3">
-                  <h3 className="text-center">Payment Details</h3>
+          <div className="row">
+            <div className="col-12 col-md-8 offset-md-2">
+              <div
+                className="card p-4 mb-4 border border-white text-white"
+                style={{ background: "#4e73df" }}
+              >
+                <div className="card-body">
+                  <h3 className="text-center text-white fw-bold">
+                    Payment Details
+                  </h3>
                   <p>
                     <strong>Account Name:</strong>{" "}
                     {selectedPaymentType.AccountName}
@@ -164,7 +169,6 @@ function Payment() {
                       />
                     </div>
                   )}
-                  {/* Cancel Button */}
                   <div className="text-center mt-3">
                     <button className="btn btn-danger" onClick={onCancel}>
                       Cancel
@@ -176,85 +180,87 @@ function Payment() {
           </div>
         )}
 
-        {/* Form will only be shown after selecting a payment type */}
+        {/* Payment Submission Form */}
         {selectedPaymentType && (
-          <div className="mt-3">
-            <h3>Submit Your Payment</h3>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="mb-3">
-                <label htmlFor="PaymentScreenShot" className="form-label">
-                  Payment Screenshot
-                </label>
-                <input
-                  type="file"
-                  className="form-control"
-                  id="PaymentScreenShot"
-                  {...register("PaymentScreenShot", {
-                    required: "Screenshot is required",
-                  })}
-                />
-                {errors.PaymentScreenShot && (
-                  <span className="text-danger">
-                    {errors.PaymentScreenShot.message}
-                  </span>
-                )}
-              </div>
+          <div className="row">
+            <div className="col-12 col-md-8 offset-md-2">
+              <h3 className="mb-4">Submit Your Payment</h3>
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <div className="mb-3">
+                  <label htmlFor="PaymentScreenShot" className="form-label">
+                    Payment Screenshot
+                  </label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    id="PaymentScreenShot"
+                    {...register("PaymentScreenShot", {
+                      required: "Screenshot is required",
+                    })}
+                  />
+                  {errors.PaymentScreenShot && (
+                    <span className="text-danger">
+                      {errors.PaymentScreenShot.message}
+                    </span>
+                  )}
+                </div>
 
-              <div className="mb-3">
-                <label htmlFor="PaymentAccountName" className="form-label">
-                  Account Name
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="PaymentAccountName"
-                  {...register("PaymentAccountName", {
-                    required: "Account Name is required",
-                  })}
-                />
-                {errors.PaymentAccountName && (
-                  <span className="text-danger">
-                    {errors.PaymentAccountName.message}
-                  </span>
-                )}
-              </div>
+                <div className="mb-3">
+                  <label htmlFor="PaymentAccountName" className="form-label">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="PaymentAccountName"
+                    {...register("PaymentAccountName", {
+                      required: "Account Name is required",
+                    })}
+                  />
+                  {errors.PaymentAccountName && (
+                    <span className="text-danger">
+                      {errors.PaymentAccountName.message}
+                    </span>
+                  )}
+                </div>
 
-              <div className="mb-3">
-                <label htmlFor="PaymentAccountNumber" className="form-label">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="PaymentAccountNumber"
-                  {...register("PaymentAccountNumber", {
-                    required: "Account Number is required",
-                  })}
-                />
-                {errors.PaymentAccountNumber && (
-                  <span className="text-danger">
-                    {errors.PaymentAccountNumber.message}
-                  </span>
-                )}
-              </div>
+                <div className="mb-3">
+                  <label htmlFor="PaymentAccountNumber" className="form-label">
+                    Account Number
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="PaymentAccountNumber"
+                    {...register("PaymentAccountNumber", {
+                      required: "Account Number is required",
+                    })}
+                  />
+                  {errors.PaymentAccountNumber && (
+                    <span className="text-danger">
+                      {errors.PaymentAccountNumber.message}
+                    </span>
+                  )}
+                </div>
 
-              <button type="submit" className="btn btn-primary">
-                Submit Payment
-              </button>
-            </form>
+                <button type="submit" className="btn btn-primary">
+                  Submit Payment
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
         {/* Success Message Modal */}
         {message && (
-          <Modal show={true} onHide={() => setMessage(null)}>
+          <Modal show={true} onHide={handleModalOk} centered>
             <Modal.Header closeButton>
               <Modal.Title>Payment Successful</Modal.Title>
             </Modal.Header>
             <Modal.Body>{message}</Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={() => setMessage(null)}>
-                Close
+              <Button variant="primary" onClick={handleModalOk}>
+                OK
               </Button>
             </Modal.Footer>
           </Modal>
