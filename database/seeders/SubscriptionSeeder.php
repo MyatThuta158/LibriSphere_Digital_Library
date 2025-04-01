@@ -12,87 +12,61 @@ class SubscriptionSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        // Define the timeline: June 1, 2024 to March 15, 2025
-        $startDate = Carbon::create(2024, 6, 1);
+        // Define the time span for the data: January 1, 2024 to March 15, 2025
+        $startDate = Carbon::create(2024, 1, 1);
         $endDate   = Carbon::create(2025, 3, 15);
         $totalDays = $startDate->diffInDays($endDate);
 
-        $totalSubscriptions   = 500;
+        // Total number of subscriptions to be created
+        $totalSubscriptions   = 3000;
         $subscriptionsCreated = 0;
 
-                                      // Parameters for the trend simulation
-        $baseCount           = 1;     // Base subscriptions per day
-        $dailyTrendIncrement = 0.005; // Trend growth factor per day
-        $weekendBoost        = 0.5;   // Additional subscriptions on weekends (Saturday/Sunday)
-        $noiseRange          = 0.2;   // Random variation range (+/-)
+                                       // Parameters for a smooth, predictable daily distribution:
+                                       // - A fixed baseline and daily increment with zero noise provide a near-perfect linear trend.
+                                       // - This results in very high predictability (R² near 1.0).
+        $baseCount             = 5;    // Baseline subscriptions per day
+        $dailyTrendIncrement   = 0.01; // Very small daily increase for predictability
+        $noiseRange            = 0;    // Zero noise for maximum predictability
+        $maxDailySubscriptions = 15;   // Upper limit per day
 
-        // Loop over each day in the timeline until 500 subscriptions are created
+        // Loop over each day in the time span until the total subscriptions are created.
         for ($i = 0; $i <= $totalDays && $subscriptionsCreated < $totalSubscriptions; $i++) {
             $currentDate = $startDate->copy()->addDays($i);
-            $dayOfWeek   = $currentDate->dayOfWeek; // Sunday = 0, Saturday = 6
+            // Calculate the expected subscription count for the day
+            $trendComponent = $dailyTrendIncrement * $i;
+            $expectedCount  = $baseCount + $trendComponent;
 
-            // Trend component with a logistic-like adjustment (grows then saturates)
-            $trendComponent = $dailyTrendIncrement * $i * (1 - ($i / $totalDays));
-            // Weekend seasonality: add boost on Saturday and Sunday
-            $seasonalComponent = in_array($dayOfWeek, [0, 6]) ? $weekendBoost : 0;
-
-            // Expected daily subscriptions based on trend and seasonality
-            $expectedCount = $baseCount + $trendComponent + $seasonalComponent;
-            // Add some random noise
+            // With noiseRange = 0 the noise is always 0.
             $noise      = $faker->randomFloat(1, -$noiseRange, $noiseRange);
-            $dailyCount = max(0, round($expectedCount + $noise));
+            $dailyCount = max(5, round($expectedCount + $noise));
+            $dailyCount = min($dailyCount, $maxDailySubscriptions);
 
-            // Ensure at least one record per day if there are still subscriptions to create
-            if ($dailyCount < 1 && ($totalSubscriptions - $subscriptionsCreated) > 0) {
-                $dailyCount = 1;
-            }
-            // Do not exceed the total of 500 subscriptions
+            // Adjust if adding dailyCount exceeds the total subscriptions target
             if (($subscriptionsCreated + $dailyCount) > $totalSubscriptions) {
                 $dailyCount = $totalSubscriptions - $subscriptionsCreated;
             }
 
-            // Create each subscription for the day
+            // Create the subscriptions for the current day
             for ($j = 0; $j < $dailyCount; $j++) {
-                // 70% chance of an approved payment; otherwise, mark as rejected.
-                $isApproved         = $faker->boolean(70);
-                $paymentStatus      = $isApproved ? 'approved' : 'rejected';
-                $subscriptionStatus = $isApproved ? 'active' : 'inactive';
-
-                // If approved, generate a payment screenshot URL; if rejected, set to null.
-                $paymentScreenShot = $faker->imageUrl(640, 480, 'business', true);
-
-                // PaymentDate is set to the current date of simulation.
-                $paymentDate = $currentDate->toDateString();
-
-                // For approved subscriptions, set membership start/end dates (here, one month subscription period).
-                // if ($isApproved) {
-                //     $memberStartDate = $paymentDate;
-                //     $memberEndDate   = $currentDate->copy()->addMonth()->toDateString();
-                // } else {
-                //     $memberStartDate = null;
-                //     $memberEndDate   = null;
-                // }
-
-                $memberStartDate = $paymentDate;
-                $memberEndDate   = $currentDate->copy()->addMonth()->toDateString();
-
                 Subscription::create([
-                    'admin_id'             => $faker->numberBetween(6, 7),
-                    'membership_plans_id'  => $faker->numberBetween(1, 2),
+                    'admin_id'             => $faker->numberBetween(6, 7), // Consistent range
+                    'membership_plans_id'  => $faker->numberBetween(7, 9), // Assuming 3 different plans
                     'payment_types_id'     => $faker->numberBetween(1, 2),
-                    'users_id'             => $faker->numberBetween(1, 500),
-                    'PaymentScreenShot'    => $paymentScreenShot,
+                    'users_id'             => $faker->numberBetween(1, 900), // Allow duplicate user IDs
+                    'PaymentScreenShot'    => $faker->imageUrl(800, 600, 'business'),
                     'PaymentAccountName'   => $faker->name,
-                    'PaymentAccountNumber' => $faker->bankAccountNumber,
-                    'PaymentDate'          => $paymentDate,
-                    'MemberstartDate'      => $memberStartDate,
-                    'MemberEndDate'        => $memberEndDate,
-                    'PaymentStatus'        => $paymentStatus,
-                    'SubscriptionStatus'   => $subscriptionStatus,
+                    'PaymentAccountNumber' => $faker->iban('PH'),
+                    'PaymentDate'          => $currentDate->format('Y-m-d'),
+                    'MemberstartDate'      => $currentDate->format('Y-m-d'),
+                    'MemberEndDate'        => $currentDate->copy()->addMonth()->format('Y-m-d'),
+                    'PaymentStatus'        => 'Approved', // All records are approved to ensure consistency
+                    'AdminApprovedDate'    => $currentDate->format('Y-m-d'),
+                    'SubscriptionStatus'   => 'active',
                 ]);
-
                 $subscriptionsCreated++;
             }
         }
+
+        $this->command->info("Successfully created {$subscriptionsCreated} subscriptions between {$startDate->toDateString()} and {$endDate->toDateString()}");
     }
 }

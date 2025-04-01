@@ -21,6 +21,7 @@ class Subscription extends Model
         'MemberEndDate',
         'PaymentStatus',
         'SubscriptionStatus',
+        'AdminApprovedDate',
     ];
 
     public $timestamps = false;

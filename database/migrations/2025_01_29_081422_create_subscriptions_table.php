@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('MemberstartDate');
             $table->string('MemberEndDate');
             $table->string('PaymentStatus');
+            $table->date('AdminApprovedDate');
             $table->enum("SubscriptionStatus", ["inactive", "active", "expired"]);
         });
     }
