@@ -4,6 +4,7 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { getPosts, uploadPost } from "../../api/forumpostApi";
 import { useNavigate } from "react-router-dom";
+import Menu from "../Layouts/Menu";
 
 function PostsFeed() {
   const [posts, setPosts] = useState([]);
@@ -366,214 +367,221 @@ function PostsFeed() {
 
   return (
     <HelmetProvider>
-      
-      <section style={styles.pageSection}>
-        <SideBar />
-        <div style={styles.mainContent} className="main-content">
-          <div style={styles.container} className="container">
-            {/* Facebook-style Create Post Box */}
-            <div style={styles.createPostButton} onClick={openModal}>
-              <img
-                src={
-                  currentUser.ProfilePic
-                    ? `${baseStorageUrl}/${currentUser.ProfilePic}`
-                    : "/Customer/pic.jpg"
-                }
-                alt="User Avatar"
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  marginRight: "10px",
-                  objectFit: "cover",
-                }}
-              />
-              What's on your mind, {currentUser.name}?
-            </div>
+      <div>
+        <Menu />
+        <section style={styles.pageSection}>
+          {/* <SideBar /> */}
 
-            {/* Modal for Creating a Post */}
-            {showModal && (
-              <div style={styles.modalOverlay}>
-                <div style={styles.modalContainer}>
-                  <div style={styles.modalHeader}>
-                    <span style={styles.modalHeaderTitle}>Create Post</span>
-                    <button
-                      style={styles.modalCloseButton}
-                      onClick={closeModal}
-                    >
-                      &times;
-                    </button>
-                  </div>
-                  <div style={styles.modalBody}>
-                    <div style={styles.modalUserSection}>
-                      <img
-                        src={
-                          currentUser.ProfilePic
-                            ? `${baseStorageUrl}/${currentUser.ProfilePic}`
-                            : "/Customer/pic.jpg"
-                        }
-                        alt="User Avatar"
-                        style={styles.modalUserAvatar}
-                      />
-                      <textarea
-                        style={styles.modalTextArea}
-                        placeholder={`What's on your mind, ${currentUser.name}?`}
-                        name="Description"
-                        value={postForm.Description}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    {/* Optional Title Input */}
-                    <div style={{ marginBottom: "16px" }}>
-                      <input
-                        type="text"
-                        placeholder="Title (optional)"
-                        name="Title"
-                        value={postForm.Title}
-                        onChange={handleInputChange}
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          border: "1px solid #ddd",
-                          borderRadius: "6px",
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-                    {/* File inputs */}
-                    <div style={styles.fileInputGroup}>
-                      <label style={styles.fileInputLabel}>
-                        Upload Photo 1
-                      </label>
-                      <input
-                        type="file"
-                        name="Photo1"
-                        accept="image/*"
-                        style={styles.fileInput}
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                    <div style={styles.fileInputGroup}>
-                      <label style={styles.fileInputLabel}>
-                        Upload Photo 2
-                      </label>
-                      <input
-                        type="file"
-                        name="Photo2"
-                        accept="image/*"
-                        style={styles.fileInput}
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                    <div style={styles.fileInputGroup}>
-                      <label style={styles.fileInputLabel}>
-                        Upload Photo 3
-                      </label>
-                      <input
-                        type="file"
-                        name="Photo3"
-                        accept="image/*"
-                        style={styles.fileInput}
-                        onChange={handleFileChange}
-                      />
-                    </div>
-                    {/* Display messages */}
-                    {uploadMessage && (
-                      <div style={styles.messageSuccess}>{uploadMessage}</div>
-                    )}
-                    {uploadError && (
-                      <div style={styles.messageError}>{uploadError}</div>
-                    )}
-                    <div style={styles.modalFooter}>
+          <div style={styles.mainContent} className="main-content">
+            <div style={styles.container} className="container">
+              {/* Facebook-style Create Post Box */}
+              <div style={styles.createPostButton} onClick={openModal}>
+                <img
+                  src={
+                    currentUser.ProfilePic
+                      ? `${baseStorageUrl}/${currentUser.ProfilePic}`
+                      : "/Customer/pic.jpg"
+                  }
+                  alt="User Avatar"
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    marginRight: "10px",
+                    objectFit: "cover",
+                  }}
+                />
+                What's on your mind, {currentUser.name}?
+              </div>
+
+              {/* Modal for Creating a Post */}
+              {showModal && (
+                <div style={styles.modalOverlay}>
+                  <div style={styles.modalContainer}>
+                    <div style={styles.modalHeader}>
+                      <span style={styles.modalHeaderTitle}>Create Post</span>
                       <button
-                        style={styles.modalFooterButton}
-                        onClick={handleFormSubmit}
+                        style={styles.modalCloseButton}
+                        onClick={closeModal}
                       >
-                        Post
+                        &times;
                       </button>
+                    </div>
+                    <div style={styles.modalBody}>
+                      <div style={styles.modalUserSection}>
+                        <img
+                          src={
+                            currentUser.ProfilePic
+                              ? `${baseStorageUrl}/${currentUser.ProfilePic}`
+                              : "/Customer/pic.jpg"
+                          }
+                          alt="User Avatar"
+                          style={styles.modalUserAvatar}
+                        />
+                        <textarea
+                          style={styles.modalTextArea}
+                          placeholder={`What's on your mind, ${currentUser.name}?`}
+                          name="Description"
+                          value={postForm.Description}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      {/* Optional Title Input */}
+                      <div style={{ marginBottom: "16px" }}>
+                        <input
+                          type="text"
+                          placeholder="Title (optional)"
+                          name="Title"
+                          value={postForm.Title}
+                          onChange={handleInputChange}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            border: "1px solid #ddd",
+                            borderRadius: "6px",
+                            fontSize: "1rem",
+                          }}
+                        />
+                      </div>
+                      {/* File inputs */}
+                      <div style={styles.fileInputGroup}>
+                        <label style={styles.fileInputLabel}>
+                          Upload Photo 1
+                        </label>
+                        <input
+                          type="file"
+                          name="Photo1"
+                          accept="image/*"
+                          style={styles.fileInput}
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                      <div style={styles.fileInputGroup}>
+                        <label style={styles.fileInputLabel}>
+                          Upload Photo 2
+                        </label>
+                        <input
+                          type="file"
+                          name="Photo2"
+                          accept="image/*"
+                          style={styles.fileInput}
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                      <div style={styles.fileInputGroup}>
+                        <label style={styles.fileInputLabel}>
+                          Upload Photo 3
+                        </label>
+                        <input
+                          type="file"
+                          name="Photo3"
+                          accept="image/*"
+                          style={styles.fileInput}
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                      {/* Display messages */}
+                      {uploadMessage && (
+                        <div style={styles.messageSuccess}>{uploadMessage}</div>
+                      )}
+                      {uploadError && (
+                        <div style={styles.messageError}>{uploadError}</div>
+                      )}
+                      <div style={styles.modalFooter}>
+                        <button
+                          style={styles.modalFooterButton}
+                          onClick={handleFormSubmit}
+                        >
+                          Post
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <InfiniteScroll
-              dataLength={posts.length}
-              next={fetchPosts}
-              hasMore={hasMore}
-              loader={<h4>Loading...</h4>}
-              endMessage={
-                <p style={{ textAlign: "center" }}>
-                  <b>No more posts</b>
-                </p>
-              }
-            >
-              {posts.map((post, index) => {
-                const postImage = post.Photo1
-                  ? `${baseStorageUrl}/${post.Photo1}`
-                  : "https://via.placeholder.com/800x300/cccccc/000000?text=No+Image";
-                return (
-                  <div
-                    key={`${post.ForumPostId}-${index}`}
-                    style={styles.postCard}
-                  >
-                    <div style={styles.postHeader}>
-                      <img
-                        src={
-                          post.user.ProfilePic
-                            ? `${baseStorageUrl}/${post.user.ProfilePic}`
-                            : "/Customer/pic.jpg"
-                        }
-                        alt="User Avatar"
-                        style={styles.avatar}
-                      />
-                      <div style={styles.userInfo}>
-                        <div style={styles.userName}>
-                          {post.user.name || "Anonymous"}
-                        </div>
-                        <div style={styles.date}>
-                          {new Date(post.created_at).toLocaleDateString()}
+              <InfiniteScroll
+                dataLength={posts.length}
+                next={fetchPosts}
+                hasMore={hasMore}
+                loader={<h4>Loading...</h4>}
+                endMessage={
+                  <p style={{ textAlign: "center" }}>
+                    <b>No more posts</b>
+                  </p>
+                }
+              >
+                {posts.map((post, index) => {
+                  const postImage = post.Photo1
+                    ? `${baseStorageUrl}/${post.Photo1}`
+                    : "https://via.placeholder.com/800x300/cccccc/000000?text=No+Image";
+                  return (
+                    <div
+                      key={`${post.ForumPostId}-${index}`}
+                      style={styles.postCard}
+                    >
+                      <div style={styles.postHeader}>
+                        <img
+                          src={
+                            post.user.ProfilePic
+                              ? `${baseStorageUrl}/${post.user.ProfilePic}`
+                              : "/Customer/pic.jpg"
+                          }
+                          alt="User Avatar"
+                          style={styles.avatar}
+                        />
+                        <div style={styles.userInfo}>
+                          <div style={styles.userName}>
+                            {post.user.name || "Anonymous"}
+                          </div>
+                          <div style={styles.date}>
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
+                      <img
+                        src={postImage}
+                        alt={post.Title}
+                        style={styles.bannerImage}
+                      />
+                      <div style={styles.postContent}>
+                        <h2
+                          style={styles.postTitle}
+                          onClick={() =>
+                            navigate(
+                              `/community/postdetail/${post.ForumPostId}`
+                            )
+                          }
+                        >
+                          {post.Title}
+                        </h2>
+                        <p style={styles.postDescription}>
+                          {truncateDescription(
+                            post.Description,
+                            post.ForumPostId
+                          )}
+                        </p>
+                      </div>
+                      <div style={{ padding: "0 16px 16px" }}>
+                        <span
+                          style={styles.readMore}
+                          onClick={() =>
+                            navigate(
+                              `/community/postdetail/${post.ForumPostId}`
+                            )
+                          }
+                        >
+                          Read More →
+                        </span>
+                      </div>
                     </div>
-                    <img
-                      src={postImage}
-                      alt={post.Title}
-                      style={styles.bannerImage}
-                    />
-                    <div style={styles.postContent}>
-                      <h2
-                        style={styles.postTitle}
-                        onClick={() =>
-                          navigate(`/community/postdetail/${post.ForumPostId}`)
-                        }
-                      >
-                        {post.Title}
-                      </h2>
-                      <p style={styles.postDescription}>
-                        {truncateDescription(
-                          post.Description,
-                          post.ForumPostId
-                        )}
-                      </p>
-                    </div>
-                    <div style={{ padding: "0 16px 16px" }}>
-                      <span
-                        style={styles.readMore}
-                        onClick={() =>
-                          navigate(`/community/postdetail/${post.ForumPostId}`)
-                        }
-                      >
-                        Read More →
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </InfiniteScroll>
+                  );
+                })}
+              </InfiniteScroll>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </HelmetProvider>
   );
 }
