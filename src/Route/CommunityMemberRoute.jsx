@@ -27,10 +27,7 @@ function CommunityMemberRoute() {
           <Route path="/notification" element={<Notification />} />
 
           <Route path="/PaymentResubmit/:id" element={<ResubmitPayment />} />
-
-          <Route path="/posts" element={<SideBar />}>
-            <Route path="/posts/postengagement" element={<PostEngagement />} />
-          </Route>
+          <Route path="/posts/postengagement" element={<PostEngagement />} />
         </Route>
       </Routes>
     </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -6,14 +6,21 @@ import { getPosts, uploadPost } from "../../api/forumpostApi";
 import { useNavigate } from "react-router-dom";
 import Menu from "../Layouts/Menu";
 
-function PostsFeed() {
-  const [posts, setPosts] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const limit = 10;
-  const navigate = useNavigate();
+// Helper component to conditionally render an image.
+// If src is missing or the image fails to load, nothing is rendered.
+function ImageWithFallback({ src, alt, style }) {
+  const [hasError, setHasError] = useState(false);
+  if (!src || hasError) return null;
+  return (
+    <img src={src} alt={alt} style={style} onError={() => setHasError(true)} />
+  );
+}
 
-  // Use a refresh counter to trigger a re-fetch when a new post is created
+function PostsFeed() {
+  // allPosts holds all posts fetched from the backend
+  const [allPosts, setAllPosts] = useState([]);
+  // displayedPosts holds the posts currently rendered in the infinite scroll
+  const [displayedPosts, setDisplayedPosts] = useState([]);
   const [refreshCount, setRefreshCount] = useState(0);
 
   // Modal state for creating a post
@@ -30,39 +37,61 @@ function PostsFeed() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
 
+  const navigate = useNavigate();
+  // We'll use a ref to track our current index in allPosts
+  const currentIndexRef = useRef(0);
+  // Define the number of posts to load per batch
+  const batchSize = 10;
+
   // Simulated current user; replace with actual auth data as needed
   const currentUser = {
     name: "John Doe",
     ProfilePic: null,
   };
 
-  // When refreshCount changes, reset posts & pagination and fetch posts
+  // Forbidden keywords list
+  const forbiddenKeywords = ["$", "sales", "cash on delivery", "COD", "price"];
+
+  // Helper function to check if text contains forbidden keywords (case-insensitive)
+  const containsForbiddenKeywords = (text) => {
+    if (!text) return false;
+    return forbiddenKeywords.some((keyword) =>
+      text.toLowerCase().includes(keyword.toLowerCase())
+    );
+  };
+
+  // Fetch posts from the backend when the component mounts or refreshCount changes
   useEffect(() => {
-    setPosts([]);
-    setPage(1);
-    setHasMore(true);
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshCount]);
 
   const fetchPosts = async () => {
     try {
-      const response = await getPosts({ page, limit });
+      const response = await getPosts();
       if (response.success) {
-        const paginatedData = response.data;
-        const newPosts = paginatedData.data.filter((post) => post.user); // Filter out posts without a user
-
-        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-
-        if (paginatedData.current_page < paginatedData.last_page) {
-          setPage(paginatedData.current_page + 1);
-        } else {
-          setHasMore(true);
-        }
+        setAllPosts(response.data);
+        // Set initial batch of posts from the beginning of the list
+        const initialPosts = response.data.slice(0, batchSize);
+        setDisplayedPosts(initialPosts);
+        // Update our pointer using modulo (in case there are fewer posts than batchSize)
+        currentIndexRef.current = batchSize % response.data.length;
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
+  };
+
+  // Function to load more posts (cycling through allPosts)
+  const loadMorePosts = () => {
+    if (allPosts.length === 0) return;
+    let newPosts = [];
+    for (let i = 0; i < batchSize; i++) {
+      newPosts.push(allPosts[currentIndexRef.current]);
+      // Cycle the index using modulo arithmetic
+      currentIndexRef.current = (currentIndexRef.current + 1) % allPosts.length;
+    }
+    setDisplayedPosts((prevPosts) => [...prevPosts, ...newPosts]);
   };
 
   // Modal handlers
@@ -88,10 +117,18 @@ function PostsFeed() {
   const userId = user.id;
 
   const handleFormSubmit = async (e) => {
-    setRefreshCount(0);
     e.preventDefault();
     setUploadMessage("");
     setUploadError("");
+
+    // Check for forbidden keywords in Title and Description
+    if (
+      containsForbiddenKeywords(postForm.Title) ||
+      containsForbiddenKeywords(postForm.Description)
+    ) {
+      setUploadError("Your post does not match our community standard");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("UserId", userId);
@@ -103,10 +140,9 @@ function PostsFeed() {
 
     try {
       const response = await uploadPost(formData);
-      console.log(response);
       if (response.success) {
-        // Increment the refresh counter to trigger the useEffect to re-fetch posts
-        setRefreshCount(1);
+        // Reset posts and pointer by triggering a refresh to fetch posts from the beginning
+        setRefreshCount(refreshCount + 1);
         setUploadMessage("Post uploaded successfully!");
 
         // Reset form state
@@ -149,7 +185,7 @@ function PostsFeed() {
       maxWidth: "800px",
       margin: "0 auto",
     },
-    // Facebook-style Create Post Box
+    // Create Post Button
     createPostButton: {
       width: "100%",
       padding: "14px 20px",
@@ -165,7 +201,7 @@ function PostsFeed() {
       display: "flex",
       alignItems: "center",
     },
-    // Modal overlay
+    // Modal styles
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -228,7 +264,6 @@ function PostsFeed() {
       fontSize: "1rem",
       outline: "none",
     },
-    // Additional file inputs styling
     fileInputGroup: {
       marginBottom: "16px",
     },
@@ -261,18 +296,7 @@ function PostsFeed() {
       cursor: "pointer",
       fontWeight: "bold",
     },
-    // Photo upload label style
-    photoUploadLabel: {
-      display: "flex",
-      alignItems: "center",
-      cursor: "pointer",
-      color: "#1877f2",
-      fontSize: "0.9rem",
-    },
-    photoUploadInput: {
-      display: "none",
-    },
-    // Styles for post cards (existing feed)
+    // Post card styles
     postCard: {
       backgroundColor: "#fff",
       borderRadius: "8px",
@@ -333,7 +357,6 @@ function PostsFeed() {
       textDecoration: "none",
       fontWeight: "bold",
     },
-    // Message styles
     messageSuccess: {
       color: "green",
       marginBottom: "16px",
@@ -368,13 +391,11 @@ function PostsFeed() {
   return (
     <HelmetProvider>
       <div>
-        <Menu />
+        {/* <Menu /> */}
         <section style={styles.pageSection}>
-          {/* <SideBar /> */}
-
           <div style={styles.mainContent} className="main-content">
             <div style={styles.container} className="container">
-              {/* Facebook-style Create Post Box */}
+              {/* Create Post Button */}
               <div style={styles.createPostButton} onClick={openModal}>
                 <img
                   src={
@@ -443,7 +464,7 @@ function PostsFeed() {
                           }}
                         />
                       </div>
-                      {/* File inputs */}
+                      {/* File Inputs */}
                       <div style={styles.fileInputGroup}>
                         <label style={styles.fileInputLabel}>
                           Upload Photo 1
@@ -480,7 +501,7 @@ function PostsFeed() {
                           onChange={handleFileChange}
                         />
                       </div>
-                      {/* Display messages */}
+                      {/* Display Messages */}
                       {uploadMessage && (
                         <div style={styles.messageSuccess}>{uploadMessage}</div>
                       )}
@@ -500,83 +521,73 @@ function PostsFeed() {
                 </div>
               )}
 
+              {/* Infinite Scroll: Loop through posts indefinitely */}
               <InfiniteScroll
-                dataLength={posts.length}
-                next={fetchPosts}
-                hasMore={hasMore}
+                dataLength={displayedPosts.length}
+                next={loadMorePosts}
+                hasMore={true} // Always true so it loops endlessly
                 loader={<h4>Loading...</h4>}
-                endMessage={
-                  <p style={{ textAlign: "center" }}>
-                    <b>No more posts</b>
-                  </p>
-                }
               >
-                {posts.map((post, index) => {
-                  const postImage = post.Photo1
-                    ? `${baseStorageUrl}/${post.Photo1}`
-                    : "https://via.placeholder.com/800x300/cccccc/000000?text=No+Image";
-                  return (
-                    <div
-                      key={`${post.ForumPostId}-${index}`}
-                      style={styles.postCard}
-                    >
-                      <div style={styles.postHeader}>
-                        <img
-                          src={
-                            post.user.ProfilePic
-                              ? `${baseStorageUrl}/${post.user.ProfilePic}`
-                              : "/Customer/pic.jpg"
-                          }
-                          alt="User Avatar"
-                          style={styles.avatar}
-                        />
-                        <div style={styles.userInfo}>
-                          <div style={styles.userName}>
-                            {post.user.name || "Anonymous"}
-                          </div>
-                          <div style={styles.date}>
-                            {new Date(post.created_at).toLocaleDateString()}
-                          </div>
+                {displayedPosts.map((post, index) => (
+                  <div
+                    key={`${post.ForumPostId}-${index}`}
+                    style={styles.postCard}
+                  >
+                    <div style={styles.postHeader}>
+                      <img
+                        src={
+                          post.user.ProfilePic
+                            ? `${baseStorageUrl}/${post.user.ProfilePic}`
+                            : "/Customer/pic.jpg"
+                        }
+                        alt="User Avatar"
+                        style={styles.avatar}
+                      />
+                      <div style={styles.userInfo}>
+                        <div style={styles.userName}>
+                          {post.user.name || "Anonymous"}
+                        </div>
+                        <div style={styles.date}>
+                          {new Date(post.created_at).toLocaleDateString()}
                         </div>
                       </div>
-                      <img
-                        src={postImage}
+                    </div>
+                    {/* Render post image only if it exists and loads successfully */}
+                    {post.Photo1 && (
+                      <ImageWithFallback
+                        src={`${baseStorageUrl}/${post.Photo1}`}
                         alt={post.Title}
                         style={styles.bannerImage}
                       />
-                      <div style={styles.postContent}>
-                        <h2
-                          style={styles.postTitle}
-                          onClick={() =>
-                            navigate(
-                              `/community/postdetail/${post.ForumPostId}`
-                            )
-                          }
-                        >
-                          {post.Title}
-                        </h2>
-                        <p style={styles.postDescription}>
-                          {truncateDescription(
-                            post.Description,
-                            post.ForumPostId
-                          )}
-                        </p>
-                      </div>
-                      <div style={{ padding: "0 16px 16px" }}>
-                        <span
-                          style={styles.readMore}
-                          onClick={() =>
-                            navigate(
-                              `/community/postdetail/${post.ForumPostId}`
-                            )
-                          }
-                        >
-                          Read More →
-                        </span>
-                      </div>
+                    )}
+                    <div style={styles.postContent}>
+                      <h2
+                        style={styles.postTitle}
+                        onClick={() =>
+                          navigate(`/community/postdetail/${post.ForumPostId}`)
+                        }
+                      >
+                        {post.Title}
+                      </h2>
+                      <p style={styles.postDescription}>
+                        {truncateDescription(
+                          post.Description,
+                          post.ForumPostId
+                        )}
+                      </p>
                     </div>
-                  );
-                })}
+                    <div style={{ padding: "0 16px 16px" }}>
+                      <span
+                        style={styles.readMore}
+                        onClick={() =>
+                          navigate(`/community/postdetail/${post.ForumPostId}`)
+                        }
+                      >
+                        Read More →
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </InfiniteScroll>
             </div>
           </div>

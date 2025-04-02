@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom"; // Ensure you have react-router-dom installed
 import { showUseruploadedPost } from "../../api/forumpostApi"; // Adjust the import path as needed
-import SideBar from "./Layout/SideBar";
 
 function UserPostsDisplay() {
   const [userPosts, setUserPosts] = useState([]);
@@ -29,12 +28,10 @@ function UserPostsDisplay() {
         // Retrieve user from local storage and get the user id
         const user = JSON.parse(localStorage.getItem("user"));
         const userId = user.id;
-        console.log(userId);
         if (!userId) throw new Error("User id not found in local storage");
 
         // Await the API call and store the result in a variable
         const data = await showUseruploadedPost(userId);
-        console.log(data);
         if (data.success) {
           const posts = data.data;
           setUserPosts(posts);
@@ -69,7 +66,7 @@ function UserPostsDisplay() {
   return (
     <div>
       <div className="d-flex">
-        <SideBar />
+        {/* <SideBar /> */}
         <div className="container mt-5">
           {userInfo && (
             <div className="card w-50 mx-auto p-5 mb-4">
@@ -127,15 +124,28 @@ function UserPostsDisplay() {
                     <div>
                       <span className="me-3">
                         <i className="fas fa-thumbs-up"></i> Upvotes:{" "}
-                        {post.UpvoteCount || 0}
+                        {
+                          post.votes.filter(
+                            (vote) =>
+                              vote.vote_type &&
+                              vote.vote_type.VoteType.toLowerCase() === "upvote"
+                          ).length
+                        }
                       </span>
                       <span className="me-3">
                         <i className="fas fa-thumbs-down"></i> Downvotes:{" "}
-                        {post.DownvoteCount || 0}
+                        {
+                          post.votes.filter(
+                            (vote) =>
+                              vote.vote_type &&
+                              vote.vote_type.VoteType.toLowerCase() ===
+                                "downvote"
+                          ).length
+                        }
                       </span>
                       <span className="me-3">
-                        <i className="fas fa-comments"></i> Comments:{" "}
-                        {post.CommentsCount || 0}
+                        <i className="fas fa-comments"></i> Discussions:{" "}
+                        {post.discussions_count || 0}
                       </span>
                     </div>
                     <div className="text-end">

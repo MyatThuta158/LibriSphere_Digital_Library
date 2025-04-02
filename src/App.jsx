@@ -32,13 +32,12 @@ function AppWithRolePermission() {
         <Routes>
           <Route element={<Menu />}>
             <Route path="/" element={<Login />} />
+            <Route path="/library/*" element={<MemberRoute />} />
+            <Route path="/community/*" element={<CommunityMemberRoute />} />
           </Route>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/Admin" element={<AdminMenu />} />
           <Route path="/*" element={<AdminRoute />} />
-
-          <Route path="/library/*" element={<MemberRoute />} />
-          <Route path="/community/*" element={<CommunityMemberRoute />} />
 
           <Route path="*" element={<NotFound />} />
 
