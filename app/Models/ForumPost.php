@@ -26,11 +26,14 @@ class ForumPost extends Model
 
     public function discussions()
     {
-        return $this->hasMany(Discussion::class, 'UserId', 'id');
+        // Explicitly set the foreign key on the discussions table and the local key from forum_posts.
+        return $this->hasMany(Discussion::class, 'ForumPostId', 'ForumPostId');
     }
 
     public function votes()
     {
-        return $this->hasMany(Votes::class);
+        // Explicitly set the foreign key on the votes table and the local key from forum_posts.
+        return $this->hasMany(Votes::class, 'ForumPostId', 'ForumPostId');
     }
+
 }

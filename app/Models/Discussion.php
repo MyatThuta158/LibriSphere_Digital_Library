@@ -34,4 +34,5 @@ class Discussion extends Model
     {
         return $this->belongsTo(ForumPost::class, 'ForumPostId', 'ForumPostId');
     }
+
 }

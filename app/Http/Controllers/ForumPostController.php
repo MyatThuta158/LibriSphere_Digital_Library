@@ -15,11 +15,8 @@ class ForumPostController extends Controller
     public function index(Request $request)
     {
         try {
-            // Define the number of posts per page (default is 10)
-            $limit = $request->input('limit', 10);
-
-            // Retrieve posts ordered by creation date (latest first) with pagination
-            $posts = ForumPost::with('User')->orderBy('created_at', 'desc')->paginate($limit);
+            // Retrieve all posts ordered by creation date (latest first)
+            $posts = ForumPost::with('User')->orderBy('created_at', 'desc')->get();
 
             return response()->json([
                 'success' => true,
@@ -197,7 +194,6 @@ class ForumPostController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
     public function userPosts($id)
     {
         try {
@@ -206,15 +202,17 @@ class ForumPostController extends Controller
                 return response()->json(['success' => false, 'error' => 'Invalid user ID.'], 400);
             }
 
-            // Retrieve posts that belong to the given user ID, ordered by creation date
+            // Retrieve posts that belong to the given user ID, including vote type details,
+            // and order by creation date
             $posts = ForumPost::with('user')
+                ->withCount('discussions') // count of comments
+                ->with('votes.voteType')   // load votes along with vote type details
                 ->where('UserId', $id)
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            // Check if the user has any posts
             if ($posts->isEmpty()) {
-                return Response::json(['success' => false, 'message' => 'No posts found for this user.'], 404);
+                return response()->json(['success' => false, 'message' => 'No posts found for this user.'], 404);
             }
 
             return response()->json(['success' => true, 'data' => $posts], 200);
@@ -224,13 +222,13 @@ class ForumPostController extends Controller
     }
 
     //-----------This is the report section-----//
-    public function multiIntervalReport(Request $request)
+    public function multiIntervalReport($id)
     {
         try {
             // Optional filter: allow filtering by user id.
-            $userId = $request->input('user_id');
+            // $userId = $request->input('user_id');
 
-            // Define the intervals in days. Replace 90 with 60.
+            // Define the intervals in days.
             $intervals = [7, 14, 28, 60];
             $reports   = [];
 
@@ -241,13 +239,13 @@ class ForumPostController extends Controller
 
                 // Build the query with optional user filter and date range.
                 $query = ForumPost::query();
-                if ($userId) {
-                    $query->where('UserId', $userId);
+                if ($id) {
+                    $query->where('UserId', $id);
                 }
                 $query->whereBetween('created_at', [$startDate, $endDate]);
 
-                // Aggregate total views per day using quoted column name.
-                $result = $query->selectRaw('DATE(created_at) as date, SUM("PostViews") as total_views')
+                // Use fully qualified column name to preserve the case
+                $result = $query->selectRaw('DATE(created_at) as date, SUM("forum_posts"."PostViews") as total_views')
                     ->groupBy('date')
                     ->orderBy('date')
                     ->get();
@@ -284,11 +282,11 @@ class ForumPostController extends Controller
     }
 
     //-----------This is the sum of total user engagement report----///
-    public function totalUserEngagement(Request $request)
+    public function totalUserEngagement($id)
     {
         try {
             // Optional: filter by a specific user ID.
-            $userId = $request->input('user_id');
+            // $userId = $request->input('user_id');
 
             // Define the intervals in days.
             $intervals = [7, 14, 28, 60];
@@ -301,12 +299,12 @@ class ForumPostController extends Controller
 
                 // Build the query with an optional user filter.
                 $query = ForumPost::query();
-                if ($userId) {
-                    $query->where('UserId', $userId);
+                if ($id) {
+                    $query->where('UserId', $id);
                 }
                 $query->whereBetween('created_at', [$startDate, $endDate]);
 
-                // Aggregate the total views and count total posts.
+                // Corrected aggregate query without quotes around PostViews.
                 $aggregates = $query->selectRaw('SUM("PostViews") as total_views, COUNT(*) as total_posts')->first();
 
                 $results["{$days}_days"] = [
@@ -326,4 +324,5 @@ class ForumPostController extends Controller
             ], 500);
         }
     }
+
 }

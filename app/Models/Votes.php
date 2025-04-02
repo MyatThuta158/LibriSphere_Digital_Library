@@ -26,9 +26,9 @@ class Votes extends Model
     /**
      * Get the post that was voted on.
      */
-    public function ForumPost()
+    public function forumPost()
     {
-        return $this->belongsTo(ForumPost::class);
+        return $this->belongsTo(ForumPost::class, 'ForumPostId', 'ForumPostId');
     }
 
     /**
