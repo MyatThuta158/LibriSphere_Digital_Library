@@ -29,25 +29,26 @@ function MemberRoute() {
           <PermissionForRoute role={["manager", "librarian", "member"]} />
         }
       >
-        <Route path="" element={<Menu />}>
-          <Route path="/Home" element={<Home />} />
+        {/* <Route path="" element={<Menu />}> */}
+        {/* <Route path="/Home" element={<Home />} /> */}
 
-          <Route path="Home1" element={<Home1 />} />
-          <Route path="Resource" element={<ResourceDisplay />} />
+        {/* <Route path="Resource" element={<ResourceDisplay />} /> */}
 
-          <Route path="resource/:id" element={<ResourceDetail />} />
-          <Route path="readResource" element={<ReadResource />} />
-          <Route element={<PermissionForRoute role={["member"]} />}>
-            <Route path="ResourceRequest" element={<RequestResources />} />
-          </Route>
-          {/* This is for request resource route */}
-
-          <Route path="DetailRequest/:id" element={<ViewDetailRequest />} />
-
-          {/* This is for profile route */}
-          <Route path="Profile" element={<Profile />} />
+        <Route path="resource/:id" element={<ResourceDetail />} />
+        <Route path="readResource" element={<ReadResource />} />
+        <Route element={<PermissionForRoute role={["member"]} />}>
+          <Route path="ResourceRequest" element={<RequestResources />} />
         </Route>
+        {/* This is for request resource route */}
+
+        <Route path="DetailRequest/:id" element={<ViewDetailRequest />} />
+
+        {/* This is for profile route */}
+        <Route path="Profile" element={<Profile />} />
       </Route>
+      <Route path="Home" element={<Home1 />} />
+      {/* </Route> */}
+      <Route path="Resource" element={<ResourceDisplay />} />
     </Routes>
   );
 }

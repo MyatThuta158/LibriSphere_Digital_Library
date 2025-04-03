@@ -6,24 +6,13 @@ import { getPosts, uploadPost } from "../../api/forumpostApi";
 import { useNavigate } from "react-router-dom";
 import Menu from "../Layouts/Menu";
 
-// Helper component to conditionally render an image.
-// If src is missing or the image fails to load, nothing is rendered.
-function ImageWithFallback({ src, alt, style }) {
-  const [hasError, setHasError] = useState(false);
-  if (!src || hasError) return null;
-  return (
-    <img src={src} alt={alt} style={style} onError={() => setHasError(true)} />
-  );
-}
-
 function PostsFeed() {
-  // allPosts holds all posts fetched from the backend
+  // All posts fetched from the backend.
   const [allPosts, setAllPosts] = useState([]);
-  // displayedPosts holds the posts currently rendered in the infinite scroll
+  // Posts currently rendered in infinite scroll.
   const [displayedPosts, setDisplayedPosts] = useState([]);
   const [refreshCount, setRefreshCount] = useState(0);
-
-  // Modal state for creating a post
+  // Modal state for creating a post.
   const [showModal, setShowModal] = useState(false);
   const [postForm, setPostForm] = useState({
     Title: "",
@@ -32,27 +21,33 @@ function PostsFeed() {
     Photo2: null,
     Photo3: null,
   });
-
-  // Upload status messages
+  // Upload status messages.
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
 
+  // Error states for text inputs.
+  const [titleError, setTitleError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
+
+  // New state for the search query.
+  const [searchQuery, setSearchQuery] = useState("");
+
   const navigate = useNavigate();
-  // We'll use a ref to track our current index in allPosts
+  // We'll use a ref to track our current index in allPosts.
   const currentIndexRef = useRef(0);
-  // Define the number of posts to load per batch
+  // Define the number of posts to load per batch.
   const batchSize = 10;
 
-  // Simulated current user; replace with actual auth data as needed
+  // Simulated current user; replace with actual auth data as needed.
   const currentUser = {
     name: "John Doe",
     ProfilePic: null,
   };
 
-  // Forbidden keywords list
+  // Forbidden keywords list.
   const forbiddenKeywords = ["$", "sales", "cash on delivery", "COD", "price"];
 
-  // Helper function to check if text contains forbidden keywords (case-insensitive)
+  // Helper function to check if text contains forbidden keywords (case-insensitive).
   const containsForbiddenKeywords = (text) => {
     if (!text) return false;
     return forbiddenKeywords.some((keyword) =>
@@ -60,7 +55,7 @@ function PostsFeed() {
     );
   };
 
-  // Fetch posts from the backend when the component mounts or refreshCount changes
+  // Fetch posts from the backend when the component mounts or refreshCount changes.
   useEffect(() => {
     fetchPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,10 +66,10 @@ function PostsFeed() {
       const response = await getPosts();
       if (response.success) {
         setAllPosts(response.data);
-        // Set initial batch of posts from the beginning of the list
+        // Set initial batch of posts from the beginning of the list.
         const initialPosts = response.data.slice(0, batchSize);
         setDisplayedPosts(initialPosts);
-        // Update our pointer using modulo (in case there are fewer posts than batchSize)
+        // Update our pointer using modulo (in case there are fewer posts than batchSize).
         currentIndexRef.current = batchSize % response.data.length;
       }
     } catch (error) {
@@ -82,22 +77,24 @@ function PostsFeed() {
     }
   };
 
-  // Function to load more posts (cycling through allPosts)
+  // Function to load more posts (cycling through allPosts).
   const loadMorePosts = () => {
     if (allPosts.length === 0) return;
     let newPosts = [];
     for (let i = 0; i < batchSize; i++) {
       newPosts.push(allPosts[currentIndexRef.current]);
-      // Cycle the index using modulo arithmetic
+      // Cycle the index using modulo arithmetic.
       currentIndexRef.current = (currentIndexRef.current + 1) % allPosts.length;
     }
     setDisplayedPosts((prevPosts) => [...prevPosts, ...newPosts]);
   };
 
-  // Modal handlers
+  // Modal handlers.
   const openModal = () => {
     setUploadMessage("");
     setUploadError("");
+    setTitleError("");
+    setDescriptionError("");
     setShowModal(true);
   };
   const closeModal = () => setShowModal(false);
@@ -105,6 +102,13 @@ function PostsFeed() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setPostForm((prev) => ({ ...prev, [name]: value }));
+    // Clear error messages as the user enters text
+    if (name === "Title" && value.trim()) {
+      setTitleError("");
+    }
+    if (name === "Description" && value.trim()) {
+      setDescriptionError("");
+    }
   };
 
   const handleFileChange = (e) => {
@@ -112,16 +116,32 @@ function PostsFeed() {
     setPostForm((prev) => ({ ...prev, [name]: files[0] }));
   };
 
-  // Retrieve user info from local storage
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user.id;
+  // Retrieve user info from local storage (if needed).
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user.id || 1; // Fallback to 1 if user not in local storage
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setUploadMessage("");
     setUploadError("");
 
-    // Check for forbidden keywords in Title and Description
+    // Validate empty fields and set error messages under the related inputs.
+    let valid = true;
+    if (!postForm.Title.trim()) {
+      setTitleError("Please enter information");
+      valid = false;
+    } else {
+      setTitleError("");
+    }
+    if (!postForm.Description.trim()) {
+      setDescriptionError("Please enter information");
+      valid = false;
+    } else {
+      setDescriptionError("");
+    }
+    if (!valid) return;
+
+    // Check for forbidden keywords in Title and Description.
     if (
       containsForbiddenKeywords(postForm.Title) ||
       containsForbiddenKeywords(postForm.Description)
@@ -141,11 +161,11 @@ function PostsFeed() {
     try {
       const response = await uploadPost(formData);
       if (response.success) {
-        // Reset posts and pointer by triggering a refresh to fetch posts from the beginning
+        // Reset posts and pointer by triggering a refresh to fetch posts from the beginning.
         setRefreshCount(refreshCount + 1);
         setUploadMessage("Post uploaded successfully!");
 
-        // Reset form state
+        // Reset form state.
         setPostForm({
           Title: "",
           Description: "",
@@ -154,7 +174,7 @@ function PostsFeed() {
           Photo3: null,
         });
 
-        // Optionally close the modal after a short delay
+        // Optionally close the modal after a short delay.
         setTimeout(() => {
           closeModal();
           setUploadMessage("");
@@ -185,7 +205,7 @@ function PostsFeed() {
       maxWidth: "800px",
       margin: "0 auto",
     },
-    // Create Post Button
+    // Create Post Button.
     createPostButton: {
       width: "100%",
       padding: "14px 20px",
@@ -201,7 +221,7 @@ function PostsFeed() {
       display: "flex",
       alignItems: "center",
     },
-    // Modal styles
+    // Modal styles.
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -296,7 +316,7 @@ function PostsFeed() {
       cursor: "pointer",
       fontWeight: "bold",
     },
-    // Post card styles
+    // Post card styles.
     postCard: {
       backgroundColor: "#fff",
       borderRadius: "8px",
@@ -333,7 +353,8 @@ function PostsFeed() {
     bannerImage: {
       width: "100%",
       height: "300px",
-      objectFit: "cover",
+      objectFit: "contain", // Ensures the full image is visible
+      backgroundColor: "#f0f0f0",
     },
     postContent: {
       padding: "16px",
@@ -367,9 +388,130 @@ function PostsFeed() {
       marginBottom: "16px",
       fontWeight: "bold",
     },
+    // Styles for the search bar.
+    searchBarContainer: {
+      marginBottom: "20px",
+      display: "flex",
+      alignItems: "center",
+    },
+    searchInput: {
+      padding: "10px",
+      flex: "1",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+    },
+    clearButton: {
+      marginLeft: "10px",
+      padding: "10px",
+      borderRadius: "4px",
+      border: "none",
+      background: "#1877f2",
+      color: "#fff",
+      cursor: "pointer",
+    },
+    sliderContainer: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+      marginBottom: "10px",
+    },
+    sliderButton: {
+      position: "absolute",
+      background: "#1877f2",
+      color: "#fff",
+      border: "none",
+      padding: "8px 12px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      top: "50%",
+      transform: "translateY(-50%)",
+    },
+    sliderButtonLeft: {
+      left: "0",
+    },
+    sliderButtonRight: {
+      right: "0",
+    },
   };
 
-  // Function to truncate post descriptions
+  // Inline component for image slider functionality.
+  const ImageSlider = ({ post }) => {
+    // Build an array of images that are not null/undefined.
+    const initialImages = [];
+    if (post.Photo1) initialImages.push(`${baseStorageUrl}/${post.Photo1}`);
+    if (post.Photo2) initialImages.push(`${baseStorageUrl}/${post.Photo2}`);
+    if (post.Photo3) initialImages.push(`${baseStorageUrl}/${post.Photo3}`);
+
+    const [validImages, setValidImages] = useState(initialImages);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Handle image load errors by removing the failed image from the array.
+    const handleImageError = (index) => {
+      setValidImages((prevImages) => {
+        const updated = [...prevImages];
+        updated.splice(index, 1);
+        return updated;
+      });
+      // Reset current index to 0 (or you could do some logic to keep it in range).
+      setCurrentIndex(0);
+    };
+
+    // If no valid images remain, return null.
+    if (validImages.length === 0) return null;
+
+    // If only one valid image, display it without Prev/Next.
+    if (validImages.length === 1) {
+      return (
+        <img
+          src={validImages[0]}
+          alt={post.Title}
+          style={styles.bannerImage}
+          onError={() => handleImageError(0)}
+        />
+      );
+    }
+
+    // Otherwise, display slider with Prev/Next buttons.
+    return (
+      <div style={styles.sliderContainer}>
+        {/* Show Prev button only if multiple images remain */}
+        {validImages.length > 1 && (
+          <button
+            onClick={() =>
+              setCurrentIndex(
+                (prev) => (prev - 1 + validImages.length) % validImages.length
+              )
+            }
+            style={{ ...styles.sliderButton, ...styles.sliderButtonLeft }}
+          >
+            &#10094; {/* Left arrow icon */}
+          </button>
+        )}
+
+        <img
+          src={validImages[currentIndex]}
+          alt={post.Title}
+          style={styles.bannerImage}
+          onError={() => handleImageError(currentIndex)}
+        />
+
+        {/* Show Next button only if multiple images remain */}
+        {validImages.length > 1 && (
+          <button
+            onClick={() =>
+              setCurrentIndex((prev) => (prev + 1) % validImages.length)
+            }
+            style={{ ...styles.sliderButton, ...styles.sliderButtonRight }}
+          >
+            &#10095; {/* Right arrow icon */}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Function to truncate post descriptions.
   const truncateDescription = (description, postId) => {
     const words = description.split(" ");
     if (words.length > 20) {
@@ -388,13 +530,39 @@ function PostsFeed() {
     return description;
   };
 
+  // Compute filtered posts based on the search query.
+  const filteredPosts = searchQuery
+    ? allPosts.filter((post) =>
+        post.Title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : null;
+
   return (
     <HelmetProvider>
       <div>
-        {/* <Menu /> */}
+        {/* <Menu /> can be uncommented if needed */}
         <section style={styles.pageSection}>
           <div style={styles.mainContent} className="main-content">
             <div style={styles.container} className="container">
+              {/* Search Bar */}
+              <div style={styles.searchBarContainer}>
+                <input
+                  type="text"
+                  placeholder="Search posts by title..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    style={styles.clearButton}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
               {/* Create Post Button */}
               <div style={styles.createPostButton} onClick={openModal}>
                 <img
@@ -447,7 +615,19 @@ function PostsFeed() {
                           onChange={handleInputChange}
                         />
                       </div>
-                      {/* Optional Title Input */}
+                      {/* Display Description Error */}
+                      {descriptionError && (
+                        <div
+                          style={{
+                            color: "red",
+                            fontSize: "0.8rem",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {descriptionError}
+                        </div>
+                      )}
+                      {/* Title Input */}
                       <div style={{ marginBottom: "16px" }}>
                         <input
                           type="text"
@@ -463,6 +643,18 @@ function PostsFeed() {
                             fontSize: "1rem",
                           }}
                         />
+                        {/* Display Title Error */}
+                        {titleError && (
+                          <div
+                            style={{
+                              color: "red",
+                              fontSize: "0.8rem",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {titleError}
+                          </div>
+                        )}
                       </div>
                       {/* File Inputs */}
                       <div style={styles.fileInputGroup}>
@@ -501,7 +693,7 @@ function PostsFeed() {
                           onChange={handleFileChange}
                         />
                       </div>
-                      {/* Display Messages */}
+                      {/* Display Upload Status Messages */}
                       {uploadMessage && (
                         <div style={styles.messageSuccess}>{uploadMessage}</div>
                       )}
@@ -521,14 +713,11 @@ function PostsFeed() {
                 </div>
               )}
 
-              {/* Infinite Scroll: Loop through posts indefinitely */}
-              <InfiniteScroll
-                dataLength={displayedPosts.length}
-                next={loadMorePosts}
-                hasMore={true} // Always true so it loops endlessly
-                loader={<h4>Loading...</h4>}
-              >
-                {displayedPosts.map((post, index) => (
+              {/* Display posts:
+                  If there is a search query, show filtered posts.
+                  Otherwise, use infinite scroll to display posts. */}
+              {searchQuery ? (
+                filteredPosts.map((post, index) => (
                   <div
                     key={`${post.ForumPostId}-${index}`}
                     style={styles.postCard}
@@ -552,14 +741,8 @@ function PostsFeed() {
                         </div>
                       </div>
                     </div>
-                    {/* Render post image only if it exists and loads successfully */}
-                    {post.Photo1 && (
-                      <ImageWithFallback
-                        src={`${baseStorageUrl}/${post.Photo1}`}
-                        alt={post.Title}
-                        style={styles.bannerImage}
-                      />
-                    )}
+                    {/* Inline image slider */}
+                    <ImageSlider post={post} />
                     <div style={styles.postContent}>
                       <h2
                         style={styles.postTitle}
@@ -587,8 +770,74 @@ function PostsFeed() {
                       </span>
                     </div>
                   </div>
-                ))}
-              </InfiniteScroll>
+                ))
+              ) : (
+                <InfiniteScroll
+                  dataLength={displayedPosts.length}
+                  next={loadMorePosts}
+                  hasMore={true} // Always true so it loops endlessly.
+                  loader={<h4>Loading...</h4>}
+                >
+                  {displayedPosts.map((post, index) => (
+                    <div
+                      key={`${post.ForumPostId}-${index}`}
+                      style={styles.postCard}
+                    >
+                      <div style={styles.postHeader}>
+                        <img
+                          src={
+                            post.user.ProfilePic
+                              ? `${baseStorageUrl}/${post.user.ProfilePic}`
+                              : "/Customer/pic.jpg"
+                          }
+                          alt="User Avatar"
+                          style={styles.avatar}
+                        />
+                        <div style={styles.userInfo}>
+                          <div style={styles.userName}>
+                            {post.user.name || "Anonymous"}
+                          </div>
+                          <div style={styles.date}>
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Inline image slider */}
+                      <ImageSlider post={post} />
+                      <div style={styles.postContent}>
+                        <h2
+                          style={styles.postTitle}
+                          onClick={() =>
+                            navigate(
+                              `/community/postdetail/${post.ForumPostId}`
+                            )
+                          }
+                        >
+                          {post.Title}
+                        </h2>
+                        <p style={styles.postDescription}>
+                          {truncateDescription(
+                            post.Description,
+                            post.ForumPostId
+                          )}
+                        </p>
+                      </div>
+                      <div style={{ padding: "0 16px 16px" }}>
+                        <span
+                          style={styles.readMore}
+                          onClick={() =>
+                            navigate(
+                              `/community/postdetail/${post.ForumPostId}`
+                            )
+                          }
+                        >
+                          Read More →
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </InfiniteScroll>
+              )}
             </div>
           </div>
         </section>

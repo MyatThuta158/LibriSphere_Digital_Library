@@ -32,12 +32,14 @@ function Login() {
       auth.loginUser(user, token);
 
       // console.log(response.data);
-      // console.log(role);
+      console.log("login role", role);
 
       if (role == "admin") {
         Navigate("/Admin/ViewAuthors", true);
+      } else if (role == "community_member") {
+        Navigate("/community/posts", true);
       } else {
-        Navigate("/Customer/Home");
+        Navigate("/library/home", true);
       }
     } catch (error) {
       console.error(error.response?.data || error.message);
