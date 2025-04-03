@@ -39,6 +39,7 @@ import CreateAnnouncement from "../Pages/AdminPanel/Announcements/CreateAnnounce
 import ShowAnnouncment from "../Pages/AdminPanel/Announcements/ShowAnnouncement";
 import DetailAnnouncement from "../Pages/AdminPanel/Announcements/DetailAnnouncement";
 import ResubmitPayment from "../Pages/AdminPanel/Payments/ResubmitPayment";
+import SubscriberPrediction from "../Pages/AdminPanel/Reports/SubscriberPrediction";
 
 function AdminRoute() {
   return (
@@ -117,6 +118,10 @@ function AdminRoute() {
           />
 
           <Route path="/Admin/UserPredict" element={<UserPrediction />} />
+          <Route
+            path="/Admin/SubscriberPrediction"
+            element={<SubscriberPrediction />}
+          />
 
           <Route path="/Admin/MembershipRevenue" element={<RevenueReport />} />
           <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />

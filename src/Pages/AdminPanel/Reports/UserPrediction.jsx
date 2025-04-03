@@ -96,6 +96,8 @@ function UserPrediction() {
       // Automatically store the new prediction in the database.
       const admin = JSON.parse(localStorage.getItem("user"));
       const adminId = admin && admin.id;
+
+      console.log("adminid", adminId);
       if (!adminId) {
         alert("Admin ID not found in local storage.");
         return;
