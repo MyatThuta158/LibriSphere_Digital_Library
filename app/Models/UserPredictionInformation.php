@@ -9,7 +9,7 @@ class UserPredictionInformation extends Model
     use HasFactory;
 
     // Specify the table name since it doesn't follow Laravel's convention
-    protected $table = 'UserPredictionInformation';
+    protected $table = 'user_prediction_information';
 
     // Define the primary key if different from the default
     protected $primaryKey = 'id';

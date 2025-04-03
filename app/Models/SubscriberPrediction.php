@@ -25,10 +25,13 @@ class SubscriberPrediction extends Model
         'AdminId',
     ];
 
-    // Optional: Cast PredictedDate to a date instance
+    // Cast PredictedDate to a date instance
     protected $casts = [
         'PredictedDate' => 'date',
     ];
+
+    // Set the date format for serialization (e.g., to JSON)
+    protected $dateFormat = 'Y-m-d';
 
     // Define the relationship to the Admin model
     public function admin()

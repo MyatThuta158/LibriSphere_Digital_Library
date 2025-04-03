@@ -10,7 +10,6 @@ class SubscriberPredictionController extends Controller
     public function storePredictions(Request $request)
     {
         // Assuming the JSON data is sent as a "data" field in the request body.
-        // Adjust the key if the data is sent differently.
         $predictionsData = $request->input('data');
 
         if (! $predictionsData || ! is_array($predictionsData)) {
@@ -21,19 +20,18 @@ class SubscriberPredictionController extends Controller
         }
 
         // Retrieve the AdminId.
-        // If you're using authentication, you can use $request->user()->id.
-        // Otherwise, you can pass it in the request, for example as "AdminId".
         $adminId = $request->user() ? $request->user()->id : $request->input('AdminId', null);
 
         // Loop through each subscription plan and store its prediction data.
-        foreach ($predictionsData as $planName => $planData) {
+        foreach ($predictionsData as $planData) {
             SubscriberPrediction::create([
-                'SubscriptionPlanName' => $planName,
-                'Accuracy'             => $planData['metrics']['accuracy'] ?? null,
-                'PredictedDate'        => $planData['last_training_date'] ?? null,
-                '7DaysReport'          => $planData['predictions']['next_7_days'] ?? null,
-                '14DaysReport'         => $planData['predictions']['next_14_days'] ?? null,
-                '28DaysReport'         => $planData['predictions']['next_28_days'] ?? null,
+                'SubscriptionPlanName' => $planData['SubscriptionPlanName'] ?? null,
+                'Accuracy'             => $planData['Accuracy'] ?? null,
+                // Always store the current date in YYYY-MM-DD format.
+                'PredictedDate'        => date('Y-m-d'),
+                '7DaysReport'          => $planData['7DaysReport'] ?? null,
+                '14DaysReport'         => $planData['14DaysReport'] ?? null,
+                '28DaysReport'         => $planData['28DaysReport'] ?? null,
                 'AdminId'              => $adminId,
             ]);
         }
@@ -41,6 +39,29 @@ class SubscriberPredictionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Predictions stored successfully.',
+        ]);
+    }
+
+    public function getLatestPredictions()
+    {
+        // Retrieve the latest (maximum) predicted date from the database.
+        $latestDate = SubscriberPrediction::max('PredictedDate');
+
+        // If no records exist, return an appropriate response.
+        if (! $latestDate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No predictions found.',
+            ], 404);
+        }
+
+        // Retrieve all predictions that have the latest date.
+        $predictions = SubscriberPrediction::where('PredictedDate', $latestDate)->get();
+
+        return response()->json([
+            'success'     => true,
+            'latest_date' => $latestDate,
+            'data'        => $predictions,
         ]);
     }
 
