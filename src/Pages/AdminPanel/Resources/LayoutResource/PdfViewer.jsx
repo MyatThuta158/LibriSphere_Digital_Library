@@ -65,7 +65,6 @@ const PdfViewer = ({ fileId }) => {
         display: "flex",
         justifyContent: "center",
         background: "#f5f5f5",
-        padding: "10px",
       }}
     >
       <div

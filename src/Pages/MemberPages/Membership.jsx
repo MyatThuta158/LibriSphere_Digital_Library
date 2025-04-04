@@ -65,8 +65,6 @@ const Membership = () => {
 
   return (
     <div>
-      <Menu />
-
       {/* Pricing Section */}
       <div className="pricing8 py-2" style={{ marginTop: "4vh" }}>
         <div className="container">
@@ -183,8 +181,7 @@ const Membership = () => {
               </div>
               <div className="modal-body">
                 <p>
-                  You need to be logged in to choose a plan. Do you want to
-                  login now?
+                  You need to be logged in or registered first to choose a plan.
                 </p>
               </div>
               <div className="modal-footer">
@@ -198,7 +195,7 @@ const Membership = () => {
                   className="btn btn-primary"
                   onClick={() => {
                     setShowLoginModal(false);
-                    navigate("/UserRegister");
+                    navigate("/");
                   }}
                 >
                   Login

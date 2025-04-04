@@ -13,7 +13,7 @@ function RequestResources() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [requestResource, setRequestresource] = useState({});
+  const [requestResource, setRequestresource] = useState([]);
   const baseUrl = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
@@ -29,40 +29,25 @@ function RequestResources() {
   };
 
   const user = JSON.parse(localStorage.getItem("user"));
-  // console.log(user);
   const memberId = user.id;
-  // console.log(memberId);
 
-  ///This retrieve request from database based on Id----//
-  useEffect(() => {
-    const getRequest = async () => {
+  // Function to fetch request resources
+  const fetchRequestResources = async () => {
+    try {
       const requestLists = await viewRequests(memberId);
+      setRequestresource(requestLists.data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+    }
+  };
 
-      setRequestresource(requestLists.data); //----This set the request resource---//
-
-      //  console.log(requestLists.data);
-    };
-
-    getRequest();
-  }, []);
-
-  // console.log(
-  //   `${baseUrl}${requestResource.Resource_Photo || "default-cover.jpg"}`
-  // );
-
-  // console.log(requestResource.Resource_Photo);
-
-  Array.isArray(requestResource) &&
-    requestResource.map((res) =>
-      console.log(`${baseUrl}${res.Resource_Photo}`)
-    );
+  // Fetch requests when component mounts
+  useEffect(() => {
+    fetchRequestResources();
+  }, [memberId]);
 
   const onSubmit = async (data) => {
     const formData = new FormData();
-
-    const member = JSON.parse(localStorage.getItem("user"));
-    const memberId = member.id;
-
     formData.append("user_id", memberId);
     formData.append("Title", data.Title);
     formData.append("ISBN", data.ISBN || "");
@@ -77,14 +62,14 @@ function RequestResources() {
     try {
       let res = await createRequest(formData);
 
-      console.log(res);
-
       if (res.status === 200) {
         setMessage("Book request submitted successfully!");
         setMessageType("success");
         reset();
         setSelectedFile(null);
         setShowModal(false);
+        // Re-fetch the list of requests after a successful submission
+        fetchRequestResources();
       } else {
         setMessage("Failed to submit book request.");
         setMessageType("error");
@@ -92,14 +77,13 @@ function RequestResources() {
     } catch (error) {
       console.log(error);
       setMessage("An error occurred. Please try again.");
-      setMessageType("error", error);
+      setMessageType("error");
     }
   };
 
   const changeStatus = async (id) => {
     const status = { NotificationStatus: "Watched" };
     const res = await changeNotiStatus(id, status);
-
     console.log(res.message);
   };
 
@@ -107,7 +91,6 @@ function RequestResources() {
     <div>
       {/* <Menu /> */}
       <div className="container h-100 text-light" style={{ marginTop: "15vh" }}>
-        {/* Show Message Box */}
         {message && (
           <div
             className={`alert ${
@@ -151,29 +134,24 @@ function RequestResources() {
           </ul>
         </div>
 
-        <div className=" p-3 mt-2 rounded">
-          {/* <p className="mb-2">
-            No books for tracking.{" "}
-            <a
-              href="#"
-              className="text-info"
-              onClick={() => setShowModal(true)}
-            >
-              create a new request
-            </a>
-            .
-          </p> */}
-
+        <div className="p-3 mt-2 rounded">
           <div className="space-y">
             {requestResource && requestResource.length > 0 ? (
               requestResource.map((request) => (
                 <div
                   key={request.id}
-                  className="d-flex bg-primary  text-white p-3  rounded-lg shadow-lg align-items-center"
-                  style={{ width: "80%" }}
+                  className="d-flex my-2 text-white p-3 rounded-lg shadow-lg align-items-center"
+                  style={{
+                    width: "100%",
+                    backgroundColor: "#4e73df",
+                  }}
                 >
                   <img
-                    src={`http://127.0.0.1:8000/storage/${request.Resource_Photo}`}
+                    src={
+                      request.Resource_Photo
+                        ? `http://127.0.0.1:8000/storage/${request.Resource_Photo}`
+                        : "/Customer/bookrequest.jpg"
+                    }
                     alt="Book Cover"
                     className="rounded-lg shadow-lg"
                     style={{
@@ -194,13 +172,10 @@ function RequestResources() {
                           <span className="text-white">{request.Language}</span>
                         </p>
                       </div>
-
                       <div className="d-flex">
-                        <div className="d-flex">
-                          {request.AdminComment && (
-                            <span className=" badge h-25 bg-danger">New</span>
-                          )}
-                        </div>
+                        {request.AdminComment && (
+                          <span className="badge h-25 bg-danger">New</span>
+                        )}
                       </div>
                     </div>
                     <div
@@ -223,7 +198,6 @@ function RequestResources() {
                             </button>
                           )}
                         </div>
-
                         <div className="d-flex">
                           <span className="text-right text-white me-2">
                             Date:
@@ -279,7 +253,6 @@ function RequestResources() {
                       <p className="text-danger">{errors.Title.message}</p>
                     )}
                   </div>
-
                   <div className="mb-3">
                     <label>Enter ISBN (10 or 13 numbers)</label>
                     <input
@@ -288,25 +261,32 @@ function RequestResources() {
                       {...register("ISBN")}
                     />
                   </div>
-
                   <div className="mb-3">
                     <label>Author</label>
                     <input
                       type="text"
                       className="form-control"
-                      {...register("Author")}
+                      {...register("Author", {
+                        required: "Author is required",
+                      })}
                     />
+                    {errors.Author && (
+                      <p className="text-danger">{errors.Author.message}</p>
+                    )}
                   </div>
-
                   <div className="mb-3">
                     <label>Language</label>
                     <input
                       type="text"
                       className="form-control"
-                      {...register("Language")}
+                      {...register("Language", {
+                        required: "Language is required",
+                      })}
                     />
+                    {errors.Language && (
+                      <p className="text-danger">{errors.Language.message}</p>
+                    )}
                   </div>
-
                   <div className="mb-3">
                     <label>Year (optional)</label>
                     <input
@@ -315,7 +295,6 @@ function RequestResources() {
                       {...register("PublishYear")}
                     />
                   </div>
-
                   <div className="mb-3">
                     <label>Upload Book Cover (optional)</label>
                     <input
@@ -330,7 +309,6 @@ function RequestResources() {
                       </p>
                     )}
                   </div>
-
                   <div className="modal-footer">
                     <button
                       className="btn btn-secondary"

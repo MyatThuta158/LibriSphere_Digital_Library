@@ -43,7 +43,7 @@ function Payment() {
 
   const handleModalOk = () => {
     setMessage(null);
-    navigate("/library/home1");
+    navigate("/library/home");
   };
 
   const onSubmit = (data) => {
@@ -76,11 +76,15 @@ function Payment() {
 
       const res = await createSubscription(subscription);
 
+      console.log("payment res", res.error);
+
       if (res.status === 200) {
         // Update local storage with new role "member"
         const localUser = JSON.parse(localStorage.getItem("user"));
         localUser.role = "member";
         localStorage.setItem("user", JSON.stringify(localUser));
+
+        console.log("payment user".localUser);
 
         // Show success modal
         setMessage("Account registered and subscription successful!");
@@ -95,7 +99,6 @@ function Payment() {
 
   return (
     <div>
-      <Menu />
       <div className="container py-5">
         {/* Payment Type Cards */}
         {!selectedPaymentType && (

@@ -337,7 +337,7 @@ function ResourceDisplay() {
                         <h5 className="card-title">{resource.name}</h5>
                         <p className="card-text">{resource.Description}</p>
                         <Link
-                          to={`/Customer/resource/${resource.id}`}
+                          to={`/library/resource/${resource.id}`}
                           className="btn btn-outline-primary mt-auto"
                         >
                           Details <i className="bi bi-arrow-right ms-2"></i>

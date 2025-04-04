@@ -148,6 +148,14 @@ function ResourceDetail() {
                 </svg>
               </div>
             </div>
+
+            <button
+              className="mt-3 btn btn-primary  text-white p-3"
+              style={{ borderRadius: "10px" }}
+              onClick={() => navigate(`/Admin/ReadResource/${id}`)}
+            >
+              View Resource
+            </button>
           </div>
         </div>
       </div>

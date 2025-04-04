@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { addComments, viewRequests } from "../../../api/requestresourceApi";
+import { useParams, useNavigate } from "react-router-dom";
+import { addComments, adminRequests } from "../../../api/requestresourceApi";
 
 function Detaildata() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [adminComment, setAdminComment] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await viewRequests(id);
+        const response = await adminRequests(id);
         if (response.data.length > 0) {
           setData(response.data[0]);
           setAdminComment(response.data[0].Admin_Comment || "");
@@ -30,11 +32,17 @@ function Detaildata() {
     try {
       const res = await addComments(id, { Admin_Comment: adminComment });
       console.log(res.message);
-      alert("Comment saved successfully!");
+      // Show modal on successful save
+      setShowModal(true);
     } catch (error) {
       console.error("Error saving comment:", error);
       alert("Failed to save comment.");
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate(-1); // Navigate back to previous page
   };
 
   if (!data) {
@@ -98,6 +106,50 @@ function Detaildata() {
           </div>
         </div>
       </div>
+
+      {/* Modal Section */}
+      {showModal && (
+        <>
+          {/* Backdrop rendered first */}
+          <div className="modal-backdrop fade show"></div>
+          <div
+            className="modal fade show d-block"
+            tabIndex="-1"
+            role="dialog"
+            style={{ zIndex: 1050 }}
+          >
+            <div
+              className="modal-dialog modal-dialog-centered"
+              role="document"
+              style={{ pointerEvents: "auto" }}
+            >
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Success</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={handleCloseModal}
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p>Comment saved successfully!</p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleCloseModal}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

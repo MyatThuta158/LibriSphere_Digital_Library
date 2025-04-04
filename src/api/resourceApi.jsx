@@ -5,8 +5,8 @@ export const createResource = (data) =>
   apiClient.post("/resources", data).then((res) => res.data);
 
 //-------This is to retrieve all digital reosurces from database--//
-export const fetchResource = (page) =>
-  apiClient.get(`/resources?page=${page}`).then((res) => res.data);
+export const fetchResource = () =>
+  apiClient.get(`/resources`).then((res) => res.data);
 
 ///----This is to retrieve detail information for digital resources---////
 export const detailResource = (id) =>

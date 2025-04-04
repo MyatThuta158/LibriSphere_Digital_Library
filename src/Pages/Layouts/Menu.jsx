@@ -7,6 +7,7 @@ import {
   changeDiscussionNoti,
   getNotification,
 } from "../../api/notificationApi";
+import { useAuth } from "../../Authentication/Auth";
 
 function Menu() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ function Menu() {
   const isMember = Boolean(user);
   const ability = Ability();
   const [state, setState] = useState(false);
+
+  const { logoutUser } = useAuth();
 
   // State for notification count
   const [notificationCount, setNotificationCount] = useState(0);
@@ -101,7 +104,8 @@ function Menu() {
                   <li className="nav-item">
                     <a
                       className="nav-link text-white"
-                      onClick={() => navigate("/Resources")}
+                      onClick={() => navigate("/library/Resource")}
+                      style={{ cursor: "pointer" }}
                     >
                       RESOURCES
                     </a>
@@ -110,7 +114,8 @@ function Menu() {
                     <li className="nav-item">
                       <a
                         className="nav-link text-white"
-                        onClick={() => navigate("/ResourceRequest")}
+                        onClick={() => navigate("/library/ResourceRequest")}
+                        style={{ cursor: "pointer" }}
                       >
                         RESOURCE REQUEST
                       </a>
@@ -121,13 +126,27 @@ function Menu() {
                     <li className="nav-item">
                       <a
                         className="nav-link text-white"
-                        style={{ background: "#4e73df" }}
+                        style={{ background: "#4e73df", cursor: "pointer" }}
                         onClick={() => navigate("/Membership")}
                       >
                         Subscription plans
                       </a>
                     </li>
                   )}
+
+                  {userRole === "member" ||
+                    userRole === "librarian" ||
+                    (userRole === "manager" && (
+                      <li className="nav-item">
+                        <a
+                          onClick={() => navigate("/announcement")}
+                          className="text-white nav-link"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Announcements
+                        </a>
+                      </li>
+                    ))}
 
                   {/* Community routes dropdown menu */}
                   {(userRole === "community_member" ||
@@ -153,7 +172,7 @@ function Menu() {
                             style={{ background: "#4e73df" }}
                             onClick={() => navigate("/community/posts")}
                           >
-                            All
+                            Post Feed
                           </button>
                         </li>
                         <li>
@@ -329,6 +348,7 @@ function Menu() {
                                 <button
                                   className="dropdown-item text-white"
                                   style={{ background: "#4e73df" }}
+                                  onClick={() => logoutUser()}
                                 >
                                   Log Out
                                   <i className="bi bi-box-arrow-right ms-2"></i>
@@ -346,14 +366,19 @@ function Menu() {
                 <>
                   <li className="nav-item">
                     <a
+                      style={{ cursor: "pointer" }}
                       className="nav-link"
-                      onClick={() => navigate("/MemberRegister")}
+                      onClick={() => navigate("/UserRegister")}
                     >
                       REGISTER
                     </a>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" onClick={() => navigate("/")}>
+                    <a
+                      className="nav-link"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => navigate("/")}
+                    >
                       LOGIN
                     </a>
                   </li>
@@ -500,6 +525,22 @@ function Menu() {
                         </a>
                       </li>
                     )}
+
+                    {userRole === "member" ||
+                      userRole === "librarian" ||
+                      (userRole === "manager" && (
+                        <li>
+                          <i className="bi bi-chevron-right"></i>
+                          <a
+                            onClick={() => navigate("/announcement")}
+                            className="text-white"
+                            style={{ cursor: "pointer" }}
+                          >
+                            Announcements
+                          </a>
+                        </li>
+                      ))}
+
                     {userRole === "community_member" && (
                       <li>
                         <i className="bi bi-chevron-right"></i>
@@ -544,7 +585,7 @@ function Menu() {
                 <li>
                   <i className="bi bi-chevron-right"></i>
                   <a
-                    onClick={() => navigate("/privacy")}
+                    onClick={() => logoutUser()}
                     className="text-white"
                     style={{ cursor: "pointer" }}
                   >

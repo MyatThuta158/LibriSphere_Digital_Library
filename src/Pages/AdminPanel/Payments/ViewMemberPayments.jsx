@@ -141,7 +141,7 @@ const ViewMemberPayments = () => {
                       <button
                         className="btn btn-success px-4"
                         onClick={() =>
-                          navigate(`/Admin/AcceptDetailPayments/${payment.sid}`)
+                          navigate(`/Admin/DetailPayments/${payment.sid}`)
                         }
                       >
                         Accept Detail

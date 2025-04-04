@@ -70,7 +70,6 @@ function Notification() {
 
   return (
     <div>
-      <Menu />
       <Container className="my-4">
         {/* Subscription Notifications Section */}
         {notifications.subscription_notifications &&

@@ -58,7 +58,7 @@ function ResubmitPayment() {
 
   const handleModalOk = () => {
     setMessage(null);
-    navigate("/library/home1");
+    navigate("/library/home");
   };
 
   if (!subscription) return <div className="text-center mt-5">Loading...</div>;
@@ -67,7 +67,6 @@ function ResubmitPayment() {
 
   return (
     <div>
-      <Menu />
       <div className="container my-5">
         <h2 className="mb-4 text-center">Resubmit Your Payment</h2>
         {/* First Row: Three Cards */}

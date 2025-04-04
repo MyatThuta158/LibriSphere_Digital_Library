@@ -195,7 +195,7 @@ function ResourceDetail() {
             <p className="fw-bold">Publish Date: {resource.publish_date}</p>
             {/* Download Button */}
             <div
-              onClick={() => navigate(`/Customer/readResource`)}
+              onClick={() => navigate(`/library/ReadResource/${id}`)}
               className="btn btn-dark mt-3"
             >
               Read Resource

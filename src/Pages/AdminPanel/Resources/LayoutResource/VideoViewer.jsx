@@ -69,9 +69,10 @@ const VideoViewer = ({ fileId }) => {
       color: "#333",
     },
     videoContainer: {
-      width: "100%",
+      width: "80vw",
+      height: "80vh",
       position: "relative",
-      paddingTop: "56.25%", // 16:9 aspect ratio
+      // paddingTop: "56.25%", // 16:9 aspect ratio
       margin: "20px 0",
       backgroundColor: "#000",
     },
@@ -104,24 +105,10 @@ const VideoViewer = ({ fileId }) => {
 
   return (
     <div style={styles.videoViewer}>
-      <header style={styles.videoHeader}>
-        <div style={styles.logo}>MyVideoSite</div>
-        <nav style={styles.videoNav}>
-          <a href="/" style={styles.navLink}>
-            Home
-          </a>
-          <a href="/trending" style={styles.navLink}>
-            Trending
-          </a>
-          <a href="/subscriptions" style={styles.navLink}>
-            Subscriptions
-          </a>
-        </nav>
-      </header>
       <div style={styles.videoContainer} ref={containerRef}>
         {videoUrl ? (
           <ReactPlayer
-            url={`http://127.0.0.1:8000/streamVideo/6`}
+            url={`http://127.0.0.1:8000/streamVideo/${fileId}?nocache=${Date.now()}`}
             playing={isPlaying}
             controls
             width="100%"
@@ -140,16 +127,6 @@ const VideoViewer = ({ fileId }) => {
           <p style={styles.loading}>Loading video...</p>
         )}
       </div>
-      <div style={styles.videoDescription}>
-        <h2>Video Title</h2>
-        <p>
-          This is a description of the video. It provides details about the
-          content, the author, and other relevant information.
-        </p>
-      </div>
-      <footer style={styles.videoFooter}>
-        <p>&copy; 2025 MyVideoSite. All rights reserved.</p>
-      </footer>
     </div>
   );
 };

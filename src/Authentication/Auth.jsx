@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   // Function to log out a user
   const logoutUser = () => {
+    console.log("logout");
     setUser(null);
     setToken(null);
     Cookies.remove("token");

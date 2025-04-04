@@ -30,7 +30,7 @@ import UpdateMembershipPlan from "../Pages/AdminPanel/MembershipPlan/UpdateMembe
 import PdfViewer from "../Pages/AdminPanel/Resources/ResourceRead";
 import ResourceRead from "../Pages/AdminPanel/Resources/ResourceRead";
 import ResourceAll from "../Pages/AdminPanel/Resources/ResourceAll";
-import ReadResource from "../Pages/MemberPages/ReadResource";
+import ReadResource from "../Pages/AdminPanel/Resources/ResourceRead";
 import UpdateResources from "../Pages/AdminPanel/Resources/UpdateResource";
 import PermissionForRoute from "../Authentication/PermissionForRoute";
 import UserPrediction from "../Pages/AdminPanel/Reports/UserPrediction";
@@ -41,6 +41,7 @@ import DetailAnnouncement from "../Pages/AdminPanel/Announcements/DetailAnnounce
 import ResubmitPayment from "../Pages/AdminPanel/Payments/ResubmitPayment";
 import SubscriberPrediction from "../Pages/AdminPanel/Reports/SubscriberPrediction";
 import LibrarianDashboard from "../Pages/AdminPanel/Dashboard/LibrarianDashboard";
+import SubscriberRevenuePrediction from "../Pages/AdminPanel/Reports/SubscriberRevenuePrediction";
 
 function AdminRoute() {
   return (
@@ -114,6 +115,11 @@ function AdminRoute() {
           />
 
           <Route
+            path="/Admin/SubscriberRevenue/Prediction"
+            element={<SubscriberRevenuePrediction />}
+          />
+
+          <Route
             path="/Admin/TotalRevenueReport"
             element={<TotalRevenueReport />}
           />
@@ -124,10 +130,10 @@ function AdminRoute() {
             element={<SubscriberPrediction />}
           />
 
+          <Route path="/Admin/ReadResource/:id" element={<ResourceRead />} />
+
           <Route path="/Admin/MembershipRevenue" element={<RevenueReport />} />
           <Route path="/Admin/AllPaymentTypes" element={<AllPayment_Types />} />
-
-          <Route path="/Admin/ReadResource" element={<ResourceRead />} />
 
           <Route path="/Admin/Profile" element={<AdminProfile />} />
 

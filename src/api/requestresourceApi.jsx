@@ -18,3 +18,6 @@ export const addComments = (id, comment) =>
 ///----------this update customer watch view----///
 export const changeNotiStatus = (id, status) =>
   apiClient.put(`updateNotiStatus/${id}`, status).then((res) => res.data);
+
+export const adminRequests = (id) =>
+  apiClient.get(`/Admin/Request/${id}`).then((res) => res.data);

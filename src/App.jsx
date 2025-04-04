@@ -34,39 +34,37 @@ function AppWithRolePermission() {
             <Route path="/" element={<Login />} />
             <Route path="/library/*" element={<MemberRoute />} />
             <Route path="/community/*" element={<CommunityMemberRoute />} />
+            <Route
+              path="Payment"
+              element={
+                <MembershipProvider>
+                  <Payment />
+                </MembershipProvider>
+              }
+            />
+
+            <Route
+              path="Membership"
+              element={
+                <MembershipProvider>
+                  <Membership />
+                </MembershipProvider>
+              }
+            />
+            <Route
+              path="/UserRegister"
+              element={
+                <MembershipProvider>
+                  <MemberRegister />
+                </MembershipProvider>
+              }
+            />
           </Route>
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/Admin" element={<AdminMenu />} />
           <Route path="/*" element={<AdminRoute />} />
 
           <Route path="*" element={<NotFound />} />
-
-          <Route
-            path="/UserRegister"
-            element={
-              <MembershipProvider>
-                <MemberRegister />
-              </MembershipProvider>
-            }
-          />
-
-          <Route
-            path="Payment"
-            element={
-              <MembershipProvider>
-                <Payment />
-              </MembershipProvider>
-            }
-          />
-
-          <Route
-            path="Membership"
-            element={
-              <MembershipProvider>
-                <Membership />
-              </MembershipProvider>
-            }
-          />
         </Routes>
       </BrowserRouter>
     </AbilityContext.Provider>
