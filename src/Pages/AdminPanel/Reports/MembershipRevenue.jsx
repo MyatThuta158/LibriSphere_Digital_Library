@@ -117,7 +117,7 @@ const MembershipRevenue = () => {
 
   return (
     <div>
-      <h2>Membership revenue Report</h2>
+      <h2>Subscription revenue Report</h2>
       <div>
         <label>Select Report Type: </label>
         <select

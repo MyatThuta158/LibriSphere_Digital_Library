@@ -267,7 +267,7 @@ function PostEngagement() {
             {userPosts.map((post) => (
               <div key={post.ForumPostId} className="col-md-6 mb-4">
                 <div className="card h-100">
-                  {post.Photo1 && (
+                  {/* {post.Photo1 && (
                     <img
                       src={`http://127.0.0.1:8000/storage/${post.Photo1}`}
                       alt={post.Title}
@@ -278,7 +278,7 @@ function PostEngagement() {
                         e.currentTarget.style.display = "none";
                       }}
                     />
-                  )}
+                  )} */}
                   <div className="card-body">
                     <h5 className="card-title">{post.Title}</h5>
                     <p className="card-text">

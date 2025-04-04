@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import { useAuth } from "../Authentication/Auth";
@@ -8,9 +8,22 @@ import Menu from "./Layouts/Menu";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState("");
   const auth = useAuth();
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
+
+  // State for modal dialog (used for both success and failure)
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [redirectRoute, setRedirectRoute] = useState("");
+  const [modalTitle, setModalTitle] = useState("Login Status");
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    // Redirect only if a route is provided (successful login)
+    if (redirectRoute) {
+      navigate(redirectRoute, { replace: true });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,30 +38,47 @@ function Login() {
         }
       );
 
-      // This get data from response
+      // Extract response data
       const { message, user, token, role } = response.data;
 
-      //----Set the value to auth user---//
+      // Set the authentication context.
       auth.loginUser(user, token);
-
-      // console.log(response.data);
       console.log("login role", role);
 
-      if (role == "admin") {
-        Navigate("/Admin/ViewAuthors", true);
-      } else if (role == "community_member") {
-        Navigate("/community/posts", true);
+      // Determine the redirect route based on user role.
+      let route = "";
+      if (role === "admin") {
+        route = "/Admin/ViewAuthors";
+      } else if (role === "community_member") {
+        route = "/community/posts";
       } else {
-        Navigate("/library/home", true);
+        route = "/library/home";
       }
+
+      // Set modal state for a successful login.
+      setModalTitle("Login Successful");
+      setModalMessage(message);
+      setRedirectRoute(route);
+      setShowModal(true);
     } catch (error) {
       console.error(error.response?.data || error.message);
-      console.log("Error");
+      // Set modal state for a failed login.
+      setModalTitle("Login Failed");
+      setModalMessage("Invalid login credential");
+      setRedirectRoute(""); // No redirection on error.
+      setShowModal(true);
     }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div
+      className="d-flex justify-content-center align-items-center vh-100"
+      style={{
+        backgroundImage: "url('/Customer/homeBg.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <div style={{ overflow: "hidden", zIndex: "1000" }}>{/* <Menu /> */}</div>
       <div className="card p-4 shadow" style={{ width: "400px" }}>
         <h2 className="text-center mb-4">Login</h2>
@@ -86,6 +116,48 @@ function Login() {
           </button>
         </form>
       </div>
+
+      {/* Bootstrap Modal for displaying login messages */}
+      {showModal && (
+        <>
+          <div className="modal fade show" style={{ display: "block" }}>
+            <div className="modal-dialog bg-white">
+              <div
+                className="modal-content"
+                style={{
+                  background:
+                    "url('https://via.placeholder.com/400x300') no-repeat center center",
+                  backgroundSize: "cover",
+                  color: "#fff",
+                }}
+              >
+                <div className="modal-header">
+                  <h5 className="modal-title">{modalTitle}</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={handleModalClose}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="text-black">{modalMessage}</p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleModalClose}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Modal Backdrop */}
+          <div className="modal-backdrop fade show"></div>
+        </>
+      )}
     </div>
   );
 }

@@ -89,32 +89,40 @@ function UserPrediction() {
     try {
       // Call the prediction API (which might take some time).
       const res = await getUserPredict();
-      // Update currentData with the new prediction result.
-      setCurrentData(res);
+
+      // Get the current date and format it as "YYYY-MM-DD".
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+      const day = String(currentDate.getDate()).padStart(2, "0");
+      const formattedDate = `${year}-${month}-${day}`;
+
+      // Convert accuracy to a whole percentage.
+      const accuracy = Math.round(res.metrics.accuracy * 100);
+
+      // Create a new prediction object with current date and formatted accuracy.
+      const predictionData = {
+        ...res,
+        PredictedDate: formattedDate,
+        Accuracy: accuracy.toString() + "%",
+      };
+
+      // Update the current data and chart.
+      setCurrentData(predictionData);
       buildChartData(res);
 
       // Automatically store the new prediction in the database.
       const admin = JSON.parse(localStorage.getItem("user"));
       const adminId = admin && admin.id;
 
-      console.log("adminid", adminId);
       if (!adminId) {
         alert("Admin ID not found in local storage.");
         return;
       }
 
-      const accuracy = res.metrics.accuracy.toString() * 100;
-
-      const currentDate = new Date();
-      const year = currentDate.getFullYear();
-      const month = String(currentDate.getMonth() + 1).padStart(2, "0"); // Months are zero-based
-      const day = String(currentDate.getDate()).padStart(2, "0");
-      const formattedDate = `${year}-${month}-${day}`;
-
       const payload = {
-        // Convert values to strings as required by your API.
         Accuracy: accuracy.toString() + "%",
-        PredictedDate: formattedDate, // Ensure this date format matches your backend validation.
+        PredictedDate: formattedDate,
         "7DaysReport": res.predictions.next_7_days.toString(),
         "14DaysReport": res.predictions.next_14_days.toString(),
         "28DaysReport": res.predictions.next_28_days.toString(),
@@ -131,6 +139,19 @@ function UserPrediction() {
     }
   };
 
+  // Helper function to format the date string to "YYYY-MM-DD"
+  const getFormattedDate = (dateStr) => {
+    if (!dateStr) return "";
+    const dateObj = new Date(dateStr);
+    return dateObj.toISOString().split("T")[0];
+  };
+
+  // Chart options with maintainAspectRatio set to false for custom sizing.
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+  };
+
   return (
     <div>
       <h2>User Prediction Information</h2>
@@ -141,7 +162,9 @@ function UserPrediction() {
           <p>
             Last Predicted Date:{" "}
             <strong>
-              {currentData.last_information_date || currentData.PredictedDate}
+              {getFormattedDate(
+                currentData.last_information_date || currentData.PredictedDate
+              )}
             </strong>
           </p>
           <p>
@@ -157,9 +180,11 @@ function UserPrediction() {
         {isLoading ? "Predicting..." : "Make Predict"}
       </button>
 
-      {/* Display the bar chart if data is available */}
+      {/* Resize the bar chart by wrapping it in a container with set dimensions */}
       {chartData ? (
-        <Bar data={chartData} options={{ responsive: true }} />
+        <div style={{ width: "70%", height: "60vh", margin: "0 auto" }}>
+          <Bar data={chartData} options={chartOptions} />
+        </div>
       ) : (
         <p>No prediction data available.</p>
       )}

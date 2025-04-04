@@ -842,7 +842,7 @@ function SideBarMenu() {
                         className="dropdown-item"
                         onClick={() => navigate("/Admin/NewMemberReport")}
                       >
-                        New Member
+                        New Users
                       </button>
                     </li>
                     <li>
@@ -850,7 +850,7 @@ function SideBarMenu() {
                         className="dropdown-item"
                         onClick={() => navigate("/Admin/MembershipRevenue")}
                       >
-                        Membership Revenue
+                        Subscription Revenue
                       </button>
                     </li>
                     <li>
@@ -858,7 +858,7 @@ function SideBarMenu() {
                         className="dropdown-item"
                         onClick={() => navigate("/Admin/SubscriptionReport")}
                       >
-                        SubscriptioinReport
+                        Subscriber report
                       </button>
                     </li>
                     <li>
@@ -867,6 +867,14 @@ function SideBarMenu() {
                         onClick={() => navigate("/Admin/UserPredict")}
                       >
                         User Prediction
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        className="dropdown-item"
+                        onClick={() => navigate("/Admin/SubscriberPrediction")}
+                      >
+                        Subscriber Prediction
                       </button>
                     </li>
                   </ul>

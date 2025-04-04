@@ -117,7 +117,7 @@ const SubscriptionReportChart = () => {
 
   return (
     <div>
-      <h2>Subscription Report</h2>
+      <h2>Subscriber Report</h2>
       <div>
         <label>Select Report Type: </label>
         <select

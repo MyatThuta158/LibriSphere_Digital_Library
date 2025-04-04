@@ -12,6 +12,10 @@ export const getSinglePosts = (id) =>
 export const uploadPost = (data) =>
   apiClient.post(`/posts`, data).then((res) => res.data);
 
+//---------this update upload posts---//
+export const updatePost = (data, id) =>
+  apiClient.post(`/posts/update/${id}`, data).then((res) => res.data);
+
 //---------this display posts---//
 export const showUseruploadedPost = (id) =>
   apiClient.get(`/userposts/${id}`).then((res) => res.data);
@@ -23,5 +27,3 @@ export const postsEngagement = (id) =>
 //---------this is total forum engagement---//
 export const totalEngagement = (id) =>
   apiClient.get(`/userposts/totalengagement/${id}`).then((res) => res.data);
-
-

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams } from "react-router-dom";
-import { getSinglePosts } from "../../api/forumpostApi";
+import { useParams, useNavigate } from "react-router-dom";
+import { getSinglePosts, updatePost } from "../../api/forumpostApi";
 import {
   uploadDiscussion,
   showAlldiscussions,
@@ -81,6 +81,7 @@ function ImageWithFallback({ src, alt, style, ...props }) {
 
 function PostDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -98,9 +99,24 @@ function PostDetail() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState("");
 
-  // New states for delete modal
+  // States for delete modals
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
+  const [showPostDeleteModal, setShowPostDeleteModal] = useState(false);
+
+  const [updateValidationError, setUpdateValidationError] = useState("");
+  const [updateDialogVisible, setUpdateDialogVisible] = useState(false);
+
+  // States for update post modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateForm, setUpdateForm] = useState({
+    Title: "",
+    Description: "",
+    Photo1: null,
+    Photo2: null,
+    Photo3: null,
+  });
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   // Retrieve stored user (for demonstration, from localStorage)
   const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -114,6 +130,14 @@ function PostDetail() {
       try {
         const response = await getSinglePosts(id);
         setPost(response.data);
+        // Pre-fill update form with current post data.
+        setUpdateForm({
+          Title: response.data.Title,
+          Description: response.data.Description,
+          Photo1: null,
+          Photo2: null,
+          Photo3: null,
+        });
       } catch (err) {
         setError(err);
       } finally {
@@ -279,6 +303,87 @@ function PostDetail() {
     setCommentToDelete(null);
   };
 
+  // Open update modal instead of navigating to a separate edit page.
+  const handlePostEdit = () => {
+    setShowUpdateModal(true);
+  };
+
+  // Handle post deletion.
+  const handlePostDelete = () => {
+    setShowPostDeleteModal(true);
+  };
+
+  const confirmPostDelete = async () => {
+    try {
+      // Uncomment and implement deletePost if needed.
+      // await deletePost(id);
+      navigate("/forum");
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+    setShowPostDeleteModal(false);
+  };
+
+  const cancelPostDelete = () => {
+    setShowPostDeleteModal(false);
+  };
+
+  const handleDialogClose = () => {
+    // Refetch latest post data
+    getSinglePosts(id)
+      .then((response) => {
+        setPost(response.data);
+      })
+      .catch((err) => console.error("Error refreshing post:", err));
+    setUpdateDialogVisible(false);
+    setShowUpdateModal(false);
+  };
+
+  // --- Handlers for Update Post Modal ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateForm((prev) => ({ ...prev, [name]: value }));
+    // Clear the error if the Title field is not empty
+    if (name === "Title" && value.trim() !== "") {
+      setUpdateValidationError("");
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setUpdateForm((prev) => ({ ...prev, [name]: files[0] }));
+  };
+
+  // Using promise-based updatePost function.
+  const handleUpdateSubmit = (e) => {
+    e.preventDefault();
+    // Validate Title and Description
+    if (
+      updateForm.Title.trim() === "" ||
+      updateForm.Description.trim() === ""
+    ) {
+      setUpdateValidationError("Please Enter information");
+      return;
+    }
+    setUpdateValidationError(""); // Clear any previous errors
+
+    const formData = new FormData();
+    formData.append("Title", updateForm.Title);
+    formData.append("Description", updateForm.Description);
+    if (updateForm.Photo1) formData.append("Photo1", updateForm.Photo1);
+    if (updateForm.Photo2) formData.append("Photo2", updateForm.Photo2);
+    if (updateForm.Photo3) formData.append("Photo3", updateForm.Photo3);
+
+    updatePost(formData, id)
+      .then((res) => {
+        // Show update success dialog
+        setUpdateDialogVisible(true);
+      })
+      .catch((err) => {
+        console.error("Error updating post:", err);
+      });
+  };
+
   if (loading) return <div>Loading post...</div>;
   if (error) return <div>Error loading post: {error.message}</div>;
 
@@ -290,7 +395,7 @@ function PostDetail() {
 
   const formattedDate = new Date(post.created_at).toLocaleDateString();
 
-  // Slider settings: include custom arrows.
+  // Slider settings.
   const sliderSettings = {
     dots: true,
     infinite: true,
@@ -302,7 +407,7 @@ function PostDetail() {
     prevArrow: <SamplePrevArrow />,
   };
 
-  // Click handler to open the image in a new tab (or page).
+  // Click handler to open the image in a new tab.
   const handleImageClick = (photo) => {
     window.open(`http://127.0.0.1:8000/storage/${photo}`, "_blank");
   };
@@ -379,6 +484,60 @@ function PostDetail() {
                     {formattedDate}
                   </div>
                 </div>
+                {storedUser && post.UserId === storedUser.id && (
+                  <div className="ml-auto d-flex">
+                    <button
+                      onClick={handlePostEdit}
+                      style={{
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        fontSize: "16px",
+                        color: "#007bff",
+                        marginRight: "8px",
+                      }}
+                      title="Edit Post"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi bi-pencil-square"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                        <path
+                          fillRule="evenodd"
+                          d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                        />
+                      </svg>
+                    </button>
+
+                    <button
+                      onClick={handlePostDelete}
+                      style={{
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        fontSize: "16px",
+                        color: "#dc3545",
+                      }}
+                      title="Delete Post"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        className="bi bi-trash3-fill"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="p-3 border-bottom">
@@ -616,7 +775,120 @@ function PostDetail() {
         </div>
       </div>
 
-      {/* Bootstrap Delete Confirmation Modal */}
+      {/* Update Post Modal */}
+      {showUpdateModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainer}>
+            <div style={styles.modalHeader}>
+              <span style={styles.modalHeaderTitle}>Update Post</span>
+              <button
+                style={styles.modalCloseButton}
+                onClick={() => setShowUpdateModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div style={styles.modalBody}>
+              <div style={styles.modalUserSection}>
+                <img
+                  src={
+                    storedUser && storedUser.ProfilePic
+                      ? `http://127.0.0.1:8000/${storedUser.ProfilePic}`
+                      : "/Customer/pic.jpg"
+                  }
+                  alt="User Avatar"
+                  style={styles.modalUserAvatar}
+                />
+                <textarea
+                  style={styles.modalTextArea}
+                  placeholder={`What's on your mind, ${storedUser?.name}?`}
+                  name="Description"
+                  value={updateForm.Description}
+                  onChange={handleInputChange}
+                />
+              </div>
+              {updateForm.Description.trim() === "" && (
+                <div style={{ color: "red", marginTop: "4px" }}>
+                  Please Enter information
+                </div>
+              )}
+
+              <div style={{ marginBottom: "16px" }}>
+                <input
+                  type="text"
+                  placeholder="Title (optional)"
+                  name="Title"
+                  value={updateForm.Title}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #ddd",
+                    borderRadius: "6px",
+                    fontSize: "1rem",
+                  }}
+                />
+                {updateValidationError && (
+                  <div style={{ color: "red", marginTop: "4px" }}>
+                    {updateValidationError}
+                  </div>
+                )}
+              </div>
+              <div style={styles.fileInputGroup}>
+                <label style={styles.fileInputLabel}>Upload Photo 1</label>
+                <input
+                  type="file"
+                  name="Photo1"
+                  accept="image/*"
+                  style={styles.fileInput}
+                  onChange={handleFileChange}
+                />
+              </div>
+              <div style={styles.fileInputGroup}>
+                <label style={styles.fileInputLabel}>Upload Photo 2</label>
+                <input
+                  type="file"
+                  name="Photo2"
+                  accept="image/*"
+                  style={styles.fileInput}
+                  onChange={handleFileChange}
+                />
+              </div>
+              <div style={styles.fileInputGroup}>
+                <label style={styles.fileInputLabel}>Upload Photo 3</label>
+                <input
+                  type="file"
+                  name="Photo3"
+                  accept="image/*"
+                  style={styles.fileInput}
+                  onChange={handleFileChange}
+                />
+              </div>
+              {updateSuccess && (
+                <div
+                  style={{
+                    color: "green",
+                    marginTop: "8px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Post updated successfully!
+                </div>
+              )}
+              <div style={styles.modalFooter}>
+                <button
+                  style={styles.modalFooterButton}
+                  onClick={handleUpdateSubmit}
+                >
+                  Update
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal for Comments */}
       <Modal show={showDeleteModal} onHide={cancelDelete}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Delete</Modal.Title>
@@ -634,6 +906,22 @@ function PostDetail() {
         </Modal.Footer>
       </Modal>
 
+      {/* Delete Confirmation Modal for Post */}
+      <Modal show={showPostDeleteModal} onHide={cancelPostDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Post Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this post?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={cancelPostDelete}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={confirmPostDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {showVoterPopup && (
         <VoterLists
           id={id}
@@ -641,8 +929,124 @@ function PostDetail() {
           show={showVoterPopup}
         />
       )}
+
+      {updateDialogVisible && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              width: "300px",
+            }}
+          >
+            <p>Post updated successfully!</p>
+            <button className="btn btn-primary" onClick={handleDialogClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </HelmetProvider>
   );
 }
+
+// Inline styles for the update modal.
+const styles = {
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1050,
+  },
+  modalContainer: {
+    backgroundColor: "#fff",
+    borderRadius: "8px",
+    width: "90%",
+    maxWidth: "500px",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.3)",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "16px",
+    borderBottom: "1px solid #ddd",
+  },
+  modalHeaderTitle: {
+    fontSize: "1.25rem",
+    fontWeight: "bold",
+  },
+  modalCloseButton: {
+    background: "none",
+    border: "none",
+    fontSize: "1.5rem",
+    cursor: "pointer",
+  },
+  modalBody: {
+    padding: "16px",
+  },
+  modalUserSection: {
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "16px",
+  },
+  modalUserAvatar: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    marginRight: "12px",
+  },
+  modalTextArea: {
+    flex: 1,
+    padding: "8px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    minHeight: "80px",
+    fontSize: "1rem",
+  },
+  fileInputGroup: {
+    marginBottom: "12px",
+  },
+  fileInputLabel: {
+    display: "block",
+    marginBottom: "4px",
+    fontWeight: "bold",
+  },
+  fileInput: {
+    width: "100%",
+  },
+  modalFooter: {
+    textAlign: "right",
+    paddingTop: "12px",
+  },
+  modalFooterButton: {
+    padding: "8px 16px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+  },
+};
 
 export default PostDetail;

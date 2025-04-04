@@ -232,7 +232,9 @@ function SubscriberPrediction() {
 
       {/* Render the bar chart if chart data is available */}
       {chartData ? (
-        <Bar data={chartData} options={{ responsive: true }} />
+        <div style={{ width: "70%", height: "60vh", margin: "0 0" }}>
+          <Bar data={chartData} options={{ responsive: true }} />
+        </div>
       ) : (
         <p>No prediction data available.</p>
       )}
