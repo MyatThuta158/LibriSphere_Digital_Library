@@ -27,3 +27,7 @@ export const resubmitSubShow = (id) =>
 //------This is to show subscription resubmit detail-----//
 export const getResubmit = (id) =>
   apiClient.get(`/subscription/resubmit/show/${id}`).then((res) => res.data);
+
+//------Get subscription date-----//
+export const getSubscriptionDate = (userid) =>
+  apiClient.get(`/subscriptiondate/${userid}`).then((res) => res.data);

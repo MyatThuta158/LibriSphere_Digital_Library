@@ -40,6 +40,7 @@ import ShowAnnouncment from "../Pages/AdminPanel/Announcements/ShowAnnouncement"
 import DetailAnnouncement from "../Pages/AdminPanel/Announcements/DetailAnnouncement";
 import ResubmitPayment from "../Pages/AdminPanel/Payments/ResubmitPayment";
 import SubscriberPrediction from "../Pages/AdminPanel/Reports/SubscriberPrediction";
+import LibrarianDashboard from "../Pages/AdminPanel/Dashboard/LibrarianDashboard";
 
 function AdminRoute() {
   return (
@@ -133,6 +134,10 @@ function AdminRoute() {
           <Route
             path="/Admin/Subscription/Resubmit/:id"
             element={<ResubmitPayment />}
+          />
+          <Route
+            path="/Admin/LibrarianDashboard"
+            element={<LibrarianDashboard />}
           />
 
           {/* This is for announcement  */}

@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import SideBar from "./Layout/SideBar";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { getPosts, uploadPost } from "../../api/forumpostApi";
 import { useNavigate } from "react-router-dom";
-import Menu from "../Layouts/Menu";
 
 function PostsFeed() {
   // All posts fetched from the backend.
@@ -25,11 +23,14 @@ function PostsFeed() {
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
 
+  // New state for the success dialog box.
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
   // Error states for text inputs.
   const [titleError, setTitleError] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
 
-  // New state for the search query.
+  // State for the search query.
   const [searchQuery, setSearchQuery] = useState("");
 
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ function PostsFeed() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setPostForm((prev) => ({ ...prev, [name]: value }));
-    // Clear error messages as the user enters text
+    // Clear error messages as the user enters text.
     if (name === "Title" && value.trim()) {
       setTitleError("");
     }
@@ -161,9 +162,8 @@ function PostsFeed() {
     try {
       const response = await uploadPost(formData);
       if (response.success) {
-        // Reset posts and pointer by triggering a refresh to fetch posts from the beginning.
-        setRefreshCount(refreshCount + 1);
-        setUploadMessage("Post uploaded successfully!");
+        // Instead of auto-dismissing the dialog, show it until the user clicks "Close".
+        setShowSuccessDialog(true);
 
         // Reset form state.
         setPostForm({
@@ -173,12 +173,6 @@ function PostsFeed() {
           Photo2: null,
           Photo3: null,
         });
-
-        // Optionally close the modal after a short delay.
-        setTimeout(() => {
-          closeModal();
-          setUploadMessage("");
-        }, 1500);
       } else {
         setUploadError("Failed to upload post.");
       }
@@ -186,6 +180,15 @@ function PostsFeed() {
       console.error("Error uploading post:", error);
       setUploadError("Error uploading post.");
     }
+  };
+
+  // Handler for closing the success dialog.
+  const handleCloseSuccessDialog = () => {
+    setShowSuccessDialog(false);
+    // Trigger refresh to fetch posts data after closing the dialog.
+    setRefreshCount((prev) => prev + 1);
+    // Optionally, close the modal as well.
+    closeModal();
   };
 
   const baseStorageUrl = "http://127.0.0.1:8000/storage";
@@ -205,7 +208,6 @@ function PostsFeed() {
       maxWidth: "800px",
       margin: "0 auto",
     },
-    // Create Post Button.
     createPostButton: {
       width: "100%",
       padding: "14px 20px",
@@ -221,7 +223,6 @@ function PostsFeed() {
       display: "flex",
       alignItems: "center",
     },
-    // Modal styles.
     modalOverlay: {
       position: "fixed",
       top: 0,
@@ -316,7 +317,6 @@ function PostsFeed() {
       cursor: "pointer",
       fontWeight: "bold",
     },
-    // Post card styles.
     postCard: {
       backgroundColor: "#fff",
       borderRadius: "8px",
@@ -353,7 +353,7 @@ function PostsFeed() {
     bannerImage: {
       width: "100%",
       height: "300px",
-      objectFit: "contain", // Ensures the full image is visible
+      objectFit: "contain",
       backgroundColor: "#f0f0f0",
     },
     postContent: {
@@ -388,7 +388,6 @@ function PostsFeed() {
       marginBottom: "16px",
       fontWeight: "bold",
     },
-    // Styles for the search bar.
     searchBarContainer: {
       marginBottom: "20px",
       display: "flex",
@@ -433,11 +432,39 @@ function PostsFeed() {
     sliderButtonRight: {
       right: "0",
     },
+    // Styles for the success dialog box.
+    successDialogOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "rgba(0,0,0,0.5)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 2000,
+    },
+    successDialogContainer: {
+      background: "#fff",
+      padding: "20px",
+      borderRadius: "8px",
+      boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+      textAlign: "center",
+    },
+    successDialogButton: {
+      marginTop: "10px",
+      padding: "8px 16px",
+      background: "#1877f2",
+      color: "#fff",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+    },
   };
 
   // Inline component for image slider functionality.
   const ImageSlider = ({ post }) => {
-    // Build an array of images that are not null/undefined.
     const initialImages = [];
     if (post.Photo1) initialImages.push(`${baseStorageUrl}/${post.Photo1}`);
     if (post.Photo2) initialImages.push(`${baseStorageUrl}/${post.Photo2}`);
@@ -446,21 +473,18 @@ function PostsFeed() {
     const [validImages, setValidImages] = useState(initialImages);
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // Handle image load errors by removing the failed image from the array.
+    // Handle image load errors by removing the failed image.
     const handleImageError = (index) => {
       setValidImages((prevImages) => {
         const updated = [...prevImages];
         updated.splice(index, 1);
         return updated;
       });
-      // Reset current index to 0 (or you could do some logic to keep it in range).
       setCurrentIndex(0);
     };
 
-    // If no valid images remain, return null.
     if (validImages.length === 0) return null;
 
-    // If only one valid image, display it without Prev/Next.
     if (validImages.length === 1) {
       return (
         <img
@@ -472,10 +496,8 @@ function PostsFeed() {
       );
     }
 
-    // Otherwise, display slider with Prev/Next buttons.
     return (
       <div style={styles.sliderContainer}>
-        {/* Show Prev button only if multiple images remain */}
         {validImages.length > 1 && (
           <button
             onClick={() =>
@@ -485,18 +507,15 @@ function PostsFeed() {
             }
             style={{ ...styles.sliderButton, ...styles.sliderButtonLeft }}
           >
-            &#10094; {/* Left arrow icon */}
+            &#10094;
           </button>
         )}
-
         <img
           src={validImages[currentIndex]}
           alt={post.Title}
           style={styles.bannerImage}
           onError={() => handleImageError(currentIndex)}
         />
-
-        {/* Show Next button only if multiple images remain */}
         {validImages.length > 1 && (
           <button
             onClick={() =>
@@ -504,7 +523,7 @@ function PostsFeed() {
             }
             style={{ ...styles.sliderButton, ...styles.sliderButtonRight }}
           >
-            &#10095; {/* Right arrow icon */}
+            &#10095;
           </button>
         )}
       </div>
@@ -540,7 +559,20 @@ function PostsFeed() {
   return (
     <HelmetProvider>
       <div>
-        {/* <Menu /> can be uncommented if needed */}
+        {/* Success dialog box */}
+        {showSuccessDialog && (
+          <div style={styles.successDialogOverlay}>
+            <div style={styles.successDialogContainer}>
+              <h3>Post uploaded successfully!</h3>
+              <button
+                style={styles.successDialogButton}
+                onClick={handleCloseSuccessDialog}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
         <section style={styles.pageSection}>
           <div style={styles.mainContent} className="main-content">
             <div style={styles.container} className="container">
@@ -562,7 +594,6 @@ function PostsFeed() {
                   </button>
                 )}
               </div>
-
               {/* Create Post Button */}
               <div style={styles.createPostButton} onClick={openModal}>
                 <img
@@ -582,7 +613,6 @@ function PostsFeed() {
                 />
                 What's on your mind, {currentUser.name}?
               </div>
-
               {/* Modal for Creating a Post */}
               {showModal && (
                 <div style={styles.modalOverlay}>
@@ -712,10 +742,7 @@ function PostsFeed() {
                   </div>
                 </div>
               )}
-
-              {/* Display posts:
-                  If there is a search query, show filtered posts.
-                  Otherwise, use infinite scroll to display posts. */}
+              {/* Display posts: either filtered or infinite scroll */}
               {searchQuery ? (
                 filteredPosts.map((post, index) => (
                   <div
