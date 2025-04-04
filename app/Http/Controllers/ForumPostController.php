@@ -87,9 +87,15 @@ class ForumPostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ForumPost $forumPost)
+    public function update(Request $request, $id)
     {
+        // Clean any previous output
+        ob_clean();
+
         try {
+            // Retrieve the forum post by ID.
+            $forumPost = ForumPost::findOrFail($id);
+
             // Validate request data (all fields are optional for partial update)
             $validated = $request->validate([
                 'Title'       => 'sometimes|required|string|max:255',
@@ -97,7 +103,6 @@ class ForumPostController extends Controller
                 'Photo1'      => 'nullable|image',
                 'Photo2'      => 'nullable|image',
                 'Photo3'      => 'nullable|image',
-
             ]);
 
             // Update title and description if provided
@@ -108,34 +113,31 @@ class ForumPostController extends Controller
                 $forumPost->Description = $validated['Description'];
             }
 
-            // For each photo and file field:
-            // If a new file is provided, delete the existing file from storage and update with the new file.
-            // If not provided, keep the current file name.
-
-            // Photo1
+            // Update Photo1 if a new file is provided.
             if ($request->hasFile('Photo1')) {
                 if ($forumPost->Photo1 && Storage::exists($forumPost->Photo1)) {
                     Storage::delete($forumPost->Photo1);
                 }
-                $forumPost->Photo1 = $request->file('Photo1')->store('posts');
+                $forumPost->Photo1 = $request->file('Photo1')->store('posts', 'public');
             }
 
-            // Photo2
+            // Update Photo2 if a new file is provided.
             if ($request->hasFile('Photo2')) {
                 if ($forumPost->Photo2 && Storage::exists($forumPost->Photo2)) {
                     Storage::delete($forumPost->Photo2);
                 }
-                $forumPost->Photo2 = $request->file('Photo2')->store('posts');
+                $forumPost->Photo2 = $request->file('Photo2')->store('posts', 'public');
             }
 
-            // Photo3
+            // Update Photo3 if a new file is provided.
             if ($request->hasFile('Photo3')) {
                 if ($forumPost->Photo3 && Storage::exists($forumPost->Photo3)) {
                     Storage::delete($forumPost->Photo3);
                 }
-                $forumPost->Photo3 = $request->file('Photo3')->store('posts');
+                $forumPost->Photo3 = $request->file('Photo3')->store('posts', 'public');
             }
 
+            // Save the updated forum post.
             $forumPost->save();
 
             return response()->json(['success' => true, 'data' => $forumPost], 200);
@@ -211,8 +213,10 @@ class ForumPostController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            // Instead of returning 404 when no posts are found,
+            // return a successful response with an empty array.
             if ($posts->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'No posts found for this user.'], 404);
+                return response()->json(['success' => true, 'data' => []], 200);
             }
 
             return response()->json(['success' => true, 'data' => $posts], 200);

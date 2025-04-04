@@ -13,8 +13,8 @@ class SubscriptionSeeder extends Seeder
         $faker = Faker::create();
 
         // Define the time span for the data: January 1, 2024 to March 15, 2025
-        $startDate = Carbon::create(2024, 1, 1);
-        $endDate   = Carbon::create(2025, 3, 15);
+        $startDate = Carbon::create(2024, 5, 1);
+        $endDate   = Carbon::create(2025, 5, 30);
         $totalDays = $startDate->diffInDays($endDate);
 
         // Total number of subscriptions to be created

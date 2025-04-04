@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //-----------------This is for forum posts---------------//
     Route::apiResource('posts', App\Http\Controllers\ForumPostController::class);
+    Route::post('/posts/update/{id}', [App\Http\Controllers\ForumPostController::class, 'update']);
     Route::get('/userposts/{id}', [App\Http\Controllers\ForumPostController::class, 'userPosts']);
     Route::get('/userposts/report/{id}', [App\Http\Controllers\ForumPostController::class, 'multiIntervalReport']);
     Route::get('/userposts/totalengagement/{id}', [App\Http\Controllers\ForumPostController::class, 'totalUserEngagement']);
@@ -88,6 +89,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscription/resubmit/{id}', [App\Http\Controllers\SubscriptionController::class, 'showSubscriptionDetailWithLatestNotification']);
     Route::post('/subscriber/prediction/store', [App\Http\Controllers\SubscriberPredictionController::class, 'storePredictions']);
     Route::get('/subscriber/prediction/get', [App\Http\Controllers\SubscriberPredictionController::class, 'getLatestPredictions']);
+
+    Route::get('/subscriptiondate/{id}', [App\Http\Controllers\SubscriptionController::class, 'getUserSubscriptionInfo']);
+
+    Route::get('/admindashboard', [App\Http\Controllers\DashboardController::class, 'adminDashboard']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);

@@ -11,20 +11,49 @@ use Illuminate\Validation\ValidationException;
 
 class SubscriptionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function getUserSubscriptionInfo($id)
     {
-        //
-    }
+        // Retrieve the user id from the request
+        if (! $id) {
+            return response()->json([
+                'status'  => 400,
+                'message' => 'User id is required',
+            ], 400);
+        }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        // Fetch the latest subscription for the user along with its membership plan
+        $subscription = Subscription::with('membershipPlan')
+            ->where('users_id', $id)
+            ->latest('MemberstartDate')
+            ->first();
+
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found for the given user',
+            ], 404);
+        }
+
+        // Calculate days left ensuring the value is an integer
+        $today         = Carbon::now();
+        $memberEndDate = Carbon::parse($subscription->MemberEndDate);
+        $daysLeft      = $today->lessThanOrEqualTo($memberEndDate)
+        ? (int) $today->diffInDays($memberEndDate)
+        : 0;
+
+        // Prepare the data to return, including the subscription end date.
+        $data = [
+            'subscription_id'       => $subscription->id,
+            'membership_plan_name'  => $subscription->membershipPlan->PlanName ?? 'N/A', // Adjust if your field name differs
+            'subscribed_date'       => $subscription->MemberstartDate,
+            'subscription_end_date' => $subscription->MemberEndDate,
+            'days_left'             => $daysLeft,
+        ];
+
+        return response()->json([
+            'status' => 200,
+            'data'   => $data,
+        ]);
     }
 
     /**
