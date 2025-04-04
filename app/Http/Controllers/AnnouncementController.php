@@ -13,15 +13,16 @@ class AnnouncementController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        if (! $user || ! $user->hasRole('manager')) {
-            return response()->json([
-                'error' => 'Only managers can view announcements.',
-            ], 403);
-        }
+        // $user = Auth::user();
+        // if (! $user || ! $user->hasRole('manager')) {
+        //     return response()->json([
+        //         'error' => 'Only managers can view announcements.',
+        //     ], 403);
+        // }
 
         try {
-            $announcements = Announcement::with('admin')->paginate(10);
+            $announcements = Announcement::with('admin')->orderBy('created_at', 'desc')->get();
+
             return response()->json([
                 'status'  => 200,
                 'data'    => $announcements,

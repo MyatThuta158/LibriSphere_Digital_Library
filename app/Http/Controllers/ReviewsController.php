@@ -30,7 +30,8 @@ class ReviewsController extends Controller
         try {
             // Validate the request data
             $request->validate([
-                'resource_id'   => 'required|exists:resources,id',
+                'resource_id'   => 'required|exists:electronic_resources,id',
+
                 'user_id'       => 'required|exists:users,id',
                 'ReviewStar'    => 'required|integer|min:1|max:5',
                 'ReviewMessage' => 'required|string|max:500',
@@ -55,7 +56,7 @@ class ReviewsController extends Controller
             // Return an error response with status 500
             return response()->json([
                 'status'  => 500,
-                'message' => 'Failed to add review. Please try again.',
+                'message' => 'Failed to add review.' . $e->getMessage(),
                 'error'   => $e->getMessage(),
             ], 500);
         }

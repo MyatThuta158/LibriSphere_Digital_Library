@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -10,15 +9,15 @@ class Reviews extends Model
 
     // Define the fillable attributes (columns you want to mass assign)
     protected $fillable = [
-        'resource_id','user_id','ReviewStar','ReviewMessage'
-        
+        'resource_id', 'user_id', 'ReviewStar', 'ReviewMessage',
+
     ];
 
     public $timestamps = true;
 
     public function resource()
     {
-        return $this->belongsTo(Resources::class);
+        return $this->belongsTo(Resources::class, 'resource_id');
     }
 
     // Relationship with User model

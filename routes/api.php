@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/subscriptions', App\Http\Controllers\SubscriptionController::class);
     Route::apiResource('/Requests', App\Http\Controllers\RequestResourcesController::class);
     Route::post('/updateRole', [App\Http\Controllers\UserController::class, 'updateRole']);
+    Route::get('/Admin/Request/{id}', [App\Http\Controllers\RequestResourcesController::class, 'showForAdmin']);
     Route::put('/updateAdminComments/{id}', [App\Http\Controllers\RequestResourcesController::class, 'updateAdminComment']);
     Route::put('/updateNotiStatus/{id}', [App\Http\Controllers\RequestResourcesController::class, 'updateNotificationStatus']);
     Route::get('/AllPayments', [App\Http\Controllers\SubscriptionController::class, 'getSubscriptionDetails']);
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/MembershipRevenueReport', [App\Http\Controllers\ReportController::class, 'membershipRevenueReport']);
     Route::get('/TotalRevenueReport', [App\Http\Controllers\ReportController::class, 'totalRevenueReport']);
 
+    Route::get('/allMembership', [App\Http\Controllers\MembershipPlanController::class, 'all']);
     //-----This is to update user information------//
     Route::patch('/User/UpdateInfo/{id}', [App\Http\Controllers\UserController::class, 'updateInfo']);
     Route::post('/User/UpdateProfile/{id}', [App\Http\Controllers\UserController::class, 'updateProfilePicture']);

@@ -35,11 +35,11 @@ class FileController extends Controller
 
     public function stream(Request $request, $id)
     {
-        // Set CORS headers if required.
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Expose-Headers: Content-Range, Accept-Ranges, Content-Length");
+        header("Cache-Control: no-cache, must-revalidate");
+        header("Expires: 0");
 
-        // Retrieve resource by ID.
         $resource = Resources::find($id);
         if (! $resource) {
             return response()->json(['error' => 'Resource not found'], 404);

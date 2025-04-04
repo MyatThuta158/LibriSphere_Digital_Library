@@ -20,6 +20,13 @@ class MembershipPlanController extends Controller
         return response()->json($data);
     }
 
+    public function all()
+    {
+        // Fetch paginated data
+
+        $data = MembershipPlan::all();
+        return response()->json($data);
+    }
     /**
      * Show the form for creating a new resource.
      */
