@@ -10,7 +10,7 @@ import {
   Legend,
 } from "chart.js";
 import { getSubscriberPredict } from "../../../api/predictionApi";
-import { getAllMembership } from "../../../api/membershipApi"; // Adjust the import path if needed
+import { adminMembership } from "../../../api/membershipApi"; // Adjust the import path if needed
 
 ChartJS.register(
   CategoryScale,
@@ -71,9 +71,11 @@ function SubscriberRevenuePrediction() {
       // Get predictions from the ML API.
       const predictionRes = await getSubscriberPredict();
       // Get membership plans.
-      const membershipRes = await getAllMembership();
+      const membershipRes = await adminMembership();
+
+      // console.log(membershipRes);
       // Assuming membershipRes is in the form: { data: [ { PlanName, Price, ... }, ... ] }
-      const membershipPlans = membershipRes.data;
+      const membershipPlans = membershipRes;
       // Build a lookup map for membership plans using PlanName as the key.
       const membershipMap = {};
       membershipPlans.forEach((plan) => {

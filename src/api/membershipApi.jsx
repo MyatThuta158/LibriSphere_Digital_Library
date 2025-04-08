@@ -23,3 +23,6 @@ export const updateMembershipPlan = (id, formData) =>
 // -------This is for update memberships--------//
 export const deleteMembership = (id) =>
   apiClient.delete(`/memberships/${id}`).then((res) => res.data);
+
+export const adminMembership = () =>
+  apiClient.get(`/allMembership`).then((response) => response.data);

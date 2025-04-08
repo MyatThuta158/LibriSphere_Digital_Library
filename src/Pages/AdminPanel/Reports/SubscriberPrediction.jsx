@@ -180,6 +180,8 @@ function SubscriberPrediction() {
 
       // Store the transformed payload in the database.
       await storeSubscriber({ data: payload });
+
+      // console.log(respond);
       console.log("Prediction data stored successfully.");
     } catch (error) {
       console.error("Error during prediction or storing:", error);

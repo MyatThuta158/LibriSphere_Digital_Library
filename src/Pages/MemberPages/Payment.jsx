@@ -87,7 +87,7 @@ function Payment() {
         console.log("payment user".localUser);
 
         // Show success modal
-        setMessage("Account registered and subscription successful!");
+        setMessage("Payment submission successful!");
         console.log("User role updated successfully!");
       } else {
         console.error("Failed to update user role");

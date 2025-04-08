@@ -249,7 +249,7 @@ function MemberRegister() {
 
                     <div className="d-grid">
                       <button type="submit" className="btn bg-light-subtle">
-                        Submit
+                        Register
                       </button>
                     </div>
                   </form>
@@ -274,18 +274,18 @@ function MemberRegister() {
                   <h5 className="modal-title" id="messageModalLabel">
                     {registrationSuccess ? "Subscription" : "Error"}
                   </h5>
-                  <button
+                  {/* <button
                     type="button"
                     className="btn-close"
                     onClick={() => setMessage("")}
-                  ></button>
+                  ></button> */}
                 </div>
                 <div className="modal-body">{message}</div>
                 <div className="modal-footer">
                   {registrationSuccess ? (
                     <>
                       <button
-                        className="btn btn-success"
+                        className="btn btn-primary"
                         onClick={() => navigate("/Membership")}
                       >
                         Yes
