@@ -63,7 +63,7 @@ function RequestResources() {
       let res = await createRequest(formData);
 
       if (res.status === 200) {
-        setMessage("Book request submitted successfully!");
+        setMessage("Digital resource request submitted successfully!");
         setMessageType("success");
         reset();
         setSelectedFile(null);
@@ -317,7 +317,7 @@ function RequestResources() {
                       Cancel
                     </button>
                     <button type="submit" className="btn btn-primary">
-                      Add
+                      Submit
                     </button>
                   </div>
                 </form>

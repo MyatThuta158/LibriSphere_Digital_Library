@@ -2,43 +2,43 @@ import React, { useEffect, useRef, useState } from "react";
 import Resumable from "resumablejs";
 import { getAuthors } from "../../../api/authorsApi";
 import { getGenres } from "../../../api/genresAPI";
-import { getType } from "../../../api/resourcetypeApi"; // Import your resource type API call
+import { getType } from "../../../api/resourcetypeApi";
 import { useForm } from "react-hook-form";
 import { createResource } from "../../../api/resourceApi";
 
 function AddResources() {
+  // States for authors, genres, resource types, etc.
   const [author, setAuthor] = useState([]);
-  const [img, setImg] = useState();
-  const fileInput = useRef(null);
-  const fileChunkRef = useRef(null);
-  const [uploadedFilePath, setUploadedFilePath] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [chunkedFileName, setChunkedFileName] = useState("");
-
-  // New state for resource types.
+  const [genre, setGenre] = useState([]);
   const [resourceTypes, setResourceTypes] = useState([]);
   const [selectedType, setSelectedType] = useState("");
 
-  // Other states for author search, genre selection, etc.
+  // States for dropdowns and selection
   const [searchAuthor, setSearchAuthor] = useState("");
   const [filterAuthor, setFilterAuthor] = useState([]);
   const [status, setStatus] = useState(false);
   const [selectValue, setSelectValue] = useState({});
   const [flag, setFlag] = useState(false);
   const [authorname, setAuthorname] = useState("");
-  const [genre, setGenre] = useState([]);
+
   const [genreSelectvalue, setGenreSelectvalue] = useState([]);
   const [input, setInput] = useState("");
   const [genreFlag, setGenreflag] = useState(false);
   const [available, setAvailable] = useState(false);
   const [genreValue, setGenrevalue] = useState([]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm();
+  // States for cover photo and chunked file upload
+  const [img, setImg] = useState();
+  const [uploadedFilePath, setUploadedFilePath] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [chunkedFileName, setChunkedFileName] = useState("");
+
+  // State to control the modal display
+  const [showModal, setShowModal] = useState(false);
+
+  // Refs for file inputs
+  const fileInput = useRef(null);
+  const fileChunkRef = useRef(null);
 
   const token = localStorage.getItem("token");
 
@@ -91,7 +91,6 @@ function AddResources() {
 
     const fetchResourceTypes = async () => {
       const typeData = await getType();
-
       console.log(typeData);
       setResourceTypes(typeData.data);
     };
@@ -101,7 +100,7 @@ function AddResources() {
     fetchResourceTypes();
   }, []);
 
-  // Author search effect
+  // Author search effect for dropdown design
   useEffect(() => {
     if (searchAuthor) {
       const filteredData = author.filter((data) =>
@@ -127,13 +126,13 @@ function AddResources() {
     setStatus(false);
   };
 
-  // Genre selection and filtering functions
-  const handleSelectGenre = (selectValue) => {
+  // Genre filtering and selection with dropdown design
+  const handleSelectGenre = (genreItem) => {
     setGenreSelectvalue((value) => {
-      if (!value.includes(selectValue)) {
+      if (!value.includes(genreItem)) {
         setInput("");
         setGenreflag(false);
-        return [...value, selectValue];
+        return [...value, genreItem];
       }
       return value;
     });
@@ -167,8 +166,28 @@ function AddResources() {
     }
   };
 
-  const elimateGenre = (genre) => () => {
-    setGenreSelectvalue((value) => value.filter((g) => g !== genre));
+  const elimateGenre = (genreItem) => () => {
+    setGenreSelectvalue((value) => value.filter((g) => g !== genreItem));
+  };
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
+
+  // Function to reset all fields and states when closing the modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    reset();
+    setUploadProgress(0);
+    setAuthorname("");
+    setGenreSelectvalue([]);
+    setSelectValue({});
+    setImg("");
+    setUploadedFilePath("");
+    setSelectedType("");
   };
 
   // Handle form submission
@@ -194,15 +213,8 @@ function AddResources() {
       const result = await createResource(formData);
       console.log(result);
       if (result.status === 200) {
-        console.log("Submitted successfully!");
-        reset();
-        setUploadProgress(0);
-        setAuthorname("");
-        setGenreSelectvalue([]);
-        setSelectValue({});
-        setImg("");
-        setUploadedFilePath("");
-        setSelectedType("");
+        // Show modal on successful submission
+        setShowModal(true);
       } else {
         console.log("Cannot submit");
       }
@@ -217,40 +229,42 @@ function AddResources() {
         <h1 className="text-center">Add Resources</h1>
         <div className="row">
           <form className="col-md-12" onSubmit={handleSubmit(onSubmit)}>
+            {/* Code & Name */}
             <div className="d-flex justify-content-center">
               <div className="form-group col-md-6">
-                <label htmlFor="title">Code</label>
+                <label htmlFor="code">Code</label>
                 <input
                   type="text"
                   {...register("code", { required: "Code is required" })}
                   className="form-control"
-                  id="title"
+                  id="code"
                 />
               </div>
               <div className="form-group col-md-6">
-                <label htmlFor="title">Name</label>
+                <label htmlFor="name">Name</label>
                 <input
                   type="text"
                   className="form-control"
                   {...register("name", { required: "Name is required" })}
-                  id="title"
+                  id="name"
                 />
               </div>
             </div>
 
+            {/* Publish Date, Resource Type & Chunked File Upload */}
             <div className="d-flex justify-content-center">
               <div className="form-group col-md-4">
-                <label htmlFor="title">Publish Date</label>
+                <label htmlFor="date">Publish Date</label>
                 <input
                   type="date"
                   {...register("date", {
                     required: "Publish date is required",
                   })}
                   className="form-control"
-                  id="title"
+                  id="date"
                 />
               </div>
-              {/* New Resource Type selection */}
+              {/* Resource Type selection */}
               <div className="form-group col-md-4">
                 <label htmlFor="resourceType">Resource Type</label>
                 <select
@@ -268,7 +282,7 @@ function AddResources() {
                   ))}
                 </select>
               </div>
-              {/* Dedicated file input for chunked upload */}
+              {/* Chunked File input for resource file */}
               <div className="form-group col-md-4">
                 <label htmlFor="resumable-file-input">
                   File (Chunked Upload)
@@ -308,13 +322,14 @@ function AddResources() {
               </div>
             </div>
 
-            {/* The rest of your form (author, genre, cover photo, ISBN, description) */}
+            {/* Author & Genre Selection */}
             <div className="d-flex justify-content-center">
+              {/* Author Selection Dropdown */}
               <div
                 className="form-group col-md-6"
                 style={{ position: "relative" }}
               >
-                <label htmlFor="title">Author</label>
+                <label htmlFor="author">Author</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type="text"
@@ -364,7 +379,7 @@ function AddResources() {
                     {filterAuthor.map((author, index) => (
                       <li
                         key={index}
-                        className="dropdown-item"
+                        className="dropdown-item text-black"
                         onClick={() => handleSelectAuthor(author)}
                         style={{ cursor: "pointer" }}
                       >
@@ -391,11 +406,12 @@ function AddResources() {
                 )}
               </div>
 
+              {/* Genre Selection Dropdown */}
               <div
                 className="form-group col-md-6"
                 style={{ position: "relative" }}
               >
-                <label htmlFor="title">Genre</label>
+                <label htmlFor="genre">Genre</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type="text"
@@ -420,17 +436,17 @@ function AddResources() {
                       zIndex: 1000,
                     }}
                   >
-                    {genreValue.map((genre, index) => (
+                    {genreValue.map((genreItem, index) => (
                       <li
                         key={index}
-                        className="dropdown-item"
-                        onClick={() => handleSelectGenre(genre)}
+                        className="dropdown-item text-black"
+                        onClick={() => handleSelectGenre(genreItem)}
                         style={{ cursor: "pointer" }}
                       >
-                        {genre.name}
+                        {genreItem.name}
                         <button
                           className="px-4 text-white rounded bg-primary border-0 float-end"
-                          onClick={() => handleSelectGenre(genre)}
+                          onClick={() => handleSelectGenre(genreItem)}
                         >
                           Add
                         </button>
@@ -455,15 +471,15 @@ function AddResources() {
                   </ul>
                 )}
                 {genreSelectvalue.length > 0 && (
-                  <div className="d-flex" style={{ height: "100%" }}>
-                    {genreSelectvalue.map((genre, index) => (
+                  <div className="d-flex" style={{ height: "30%" }}>
+                    {genreSelectvalue.map((genreItem, index) => (
                       <div
                         key={index}
                         className="rounded px-2 m-1 text-white d-flex bg-primary border-0"
                       >
-                        {genre.name}
+                        {genreItem.name}
                         <div
-                          onClick={elimateGenre(genre)}
+                          onClick={elimateGenre(genreItem)}
                           style={{ cursor: "pointer" }}
                         >
                           <svg
@@ -484,9 +500,10 @@ function AddResources() {
               </div>
             </div>
 
+            {/* Cover Photo & ISBN */}
             <div className="d-flex justify-content-center">
               <div className="form-group col-md-6">
-                <label htmlFor="title">Cover Photo</label>
+                <label htmlFor="coverPhoto">Cover Photo</label>
                 <input
                   type="file"
                   className="form-control"
@@ -537,6 +554,7 @@ function AddResources() {
               </div>
             </div>
 
+            {/* Description */}
             <div className="form-group col-md-12">
               <label className="d-block" htmlFor="desc">
                 Description
@@ -555,6 +573,42 @@ function AddResources() {
           </form>
         </div>
       </div>
+
+      {/* Bootstrap Modal for Success Message */}
+      {showModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+          tabIndex="-1"
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Submission Successful</h5>
+                <button
+                  type="button"
+                  className="close"
+                  onClick={handleCloseModal}
+                >
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <p>Your resource has been submitted successfully.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -25,6 +25,7 @@ function ResourceDetail() {
   });
   const [hoverStar, setHoverStar] = useState(null);
   const [editingReviewId, setEditingReviewId] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("success"); // "success" or "error"
@@ -62,6 +63,7 @@ function ResourceDetail() {
   const fetchReviews = async () => {
     try {
       const resourceReview = await resourceReviews(id);
+      console.log(resourceReview);
       setReviews(resourceReview.reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -75,12 +77,14 @@ function ResourceDetail() {
       ReviewMessage: review.ReviewMessage,
     });
     setEditingReviewId(review.id);
+    setErrorMessage("");
   };
 
   // Cancel editing mode
   const handleCancelEdit = () => {
     setEditingReviewId(null);
     setNewReview({ ReviewStar: 0, ReviewMessage: "" });
+    setErrorMessage("");
   };
 
   // Delete review when user clicks the delete icon
@@ -105,6 +109,16 @@ function ResourceDetail() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Clear any previous error message
+    setErrorMessage("");
+
+    // Validate only the review message is entered.
+    if (newReview.ReviewMessage.trim() === "") {
+      setErrorMessage("Please enter review");
+      return;
+    }
+
     if (editingReviewId) {
       // Update existing review
       try {
@@ -216,7 +230,7 @@ function ResourceDetail() {
                 <img
                   src={
                     review.profile_pic
-                      ? `${baseUrl}storage/${review.profile_pic}`
+                      ? `http://127.0.0.1:8000/storage/${review.profile_pic}`
                       : "/Customer/pic.jpg"
                   }
                   alt={review.user_name}
@@ -269,6 +283,9 @@ function ResourceDetail() {
                   ))}
                 </div>
                 <p>{review.ReviewMessage}</p>
+                <small className="text-muted">
+                  Created on: {new Date(review.created_at).toLocaleString()}
+                </small>
               </div>
             </div>
           ))
@@ -309,8 +326,11 @@ function ResourceDetail() {
                 onChange={(e) =>
                   setNewReview({ ...newReview, ReviewMessage: e.target.value })
                 }
-                required
               ></textarea>
+              {/* Inline error sentence with red text for review message */}
+              {errorMessage && (
+                <p className="text-danger mt-2">{errorMessage}</p>
+              )}
               <div className="d-flex">
                 <button type="submit" className="btn btn-primary">
                   {editingReviewId ? "Update Review" : "Submit Review"}
@@ -341,7 +361,7 @@ function ResourceDetail() {
             <div className="modal-content">
               <div
                 className={`modal-header ${
-                  modalType === "success" ? "bg-success" : "bg-danger"
+                  modalType === "success" ? "bg-primary" : "bg-danger"
                 } text-white`}
               >
                 <h5 className="modal-title">

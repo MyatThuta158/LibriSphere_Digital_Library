@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Resumable from "resumablejs";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { detail, resourceUpdate } from "../../../api/resourceApi";
 import { getAuthors } from "../../../api/authorsApi";
 import { getGenres } from "../../../api/genresAPI";
@@ -9,6 +9,7 @@ import { getType } from "../../../api/resourcetypeApi";
 
 function UpdateResources() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const {
     register,
@@ -32,16 +33,21 @@ function UpdateResources() {
   const [genreDropdown, setGenreDropdown] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState(null);
 
-  // States for resumable file upload
+  // Local state to track the cover photo file
+  const [photoFile, setPhotoFile] = useState(null);
+
+  // State for showing modal dialog on successful update
+  const [showModal, setShowModal] = useState(false);
+
+  // States for resumable file upload of the resource file
   const [uploadedFilePath, setUploadedFilePath] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileChunkRef = useRef(null);
 
-  // Refs for file inputs
-  const photoInputRef = useRef(null);
+  // Ref for the resource file input (used for resumable upload)
   const resourceFileRef = useRef(null);
 
-  // Fetch resource details and pre-populate form fields
+  // Fetch resource details and pre-populate the form fields
   useEffect(() => {
     async function fetchResource() {
       try {
@@ -66,7 +72,9 @@ function UpdateResources() {
         if (res.data.genre) {
           setSelectedGenres(res.data.genre);
         }
-        if (res.data.resource_typeId) {
+        if (res.data.resource_type && res.data.resource_type.id) {
+          setSelectedType(res.data.resource_type.id);
+        } else if (res.data.resource_typeId) {
           setSelectedType(res.data.resource_typeId);
         }
       } catch (error) {
@@ -82,10 +90,12 @@ function UpdateResources() {
       try {
         const authorRes = await getAuthors();
         setAuthors(authorRes.data);
+
         const genreRes = await getGenres();
         setGenres(genreRes.data);
+
         const typeRes = await getType();
-        setResourceTypes(typeRes.data);
+        setResourceTypes(typeRes.data || typeRes);
       } catch (error) {
         console.error(
           "Error fetching authors, genres or resource types",
@@ -96,9 +106,12 @@ function UpdateResources() {
     fetchData();
   }, []);
 
-  // Filter authors based on search input
+  // Filter authors based on the search input
   useEffect(() => {
-    if (searchAuthor) {
+    if (
+      searchAuthor &&
+      (!selectedAuthor.name || searchAuthor !== selectedAuthor.name)
+    ) {
       const filtered = authors.filter((a) =>
         a.name.toLowerCase().includes(searchAuthor.toLowerCase())
       );
@@ -108,7 +121,7 @@ function UpdateResources() {
       setFilterAuthors([]);
       setAuthorDropdown(false);
     }
-  }, [searchAuthor, authors]);
+  }, [searchAuthor, authors, selectedAuthor]);
 
   const handleSelectAuthor = (author) => {
     setSelectedAuthor(author);
@@ -116,7 +129,7 @@ function UpdateResources() {
     setAuthorDropdown(false);
   };
 
-  // Filter genres based on genre input
+  // Filter genres based on the genre input
   useEffect(() => {
     if (genreInput) {
       const filtered = genres.filter((g) =>
@@ -142,14 +155,14 @@ function UpdateResources() {
     setSelectedGenres((prev) => prev.filter((g) => g.id !== genreId));
   };
 
-  // Initialize Resumable for chunked file upload of resource file
+  // Initialize Resumable for the resource file upload
   useEffect(() => {
     const token = localStorage.getItem("token");
     const r = new Resumable({
       target: "http://127.0.0.1:8000/upload-chunk",
       chunkSize: 1 * 1024 * 1024, // 1MB chunks
       simultaneousUploads: 3,
-      query: { token, id }, // Include the resource id here
+      query: { token, id },
       headers: { Authorization: `Bearer ${token}` },
       testChunks: false,
       throttleProgressCallbacks: 1,
@@ -177,9 +190,14 @@ function UpdateResources() {
     });
   }, []);
 
+  // Function to handle closing the modal and navigate back
+  const handleCloseModal = () => {
+    setShowModal(false);
+    navigate(-1);
+  };
+
   // Handle form submission
   const onSubmit = async (data) => {
-    // Note: If a new resource file is being uploaded, uploadedFilePath should be set via Resumable.
     const formData = new FormData();
     formData.append("code", data.code);
     formData.append("name", data.name);
@@ -191,20 +209,18 @@ function UpdateResources() {
     }
     formData.append("genre", JSON.stringify(selectedGenres.map((g) => g.id)));
     formData.append("resourceType", selectedType);
-    // Append cover photo if provided
-    if (data.Photo && data.Photo.length > 0) {
-      formData.append("Photo", data.Photo[0]);
+    // Append the cover photo file from state instead of relying on react-hook-form for the file value.
+    if (photoFile) {
+      formData.append("Photo", photoFile);
     }
-    // Append resource file if a new file was uploaded via Resumable
     if (uploadedFilePath) {
       formData.append("file", uploadedFilePath);
     }
-
     try {
       const result = await resourceUpdate(id, formData);
       if (result.status === 200) {
         console.log("Resource updated successfully");
-        // Optionally, add redirection or a success notification here.
+        setShowModal(true);
       } else {
         console.error("Update failed", result);
       }
@@ -218,7 +234,7 @@ function UpdateResources() {
       <h1 className="text-center">Update Resource</h1>
       <div className="row">
         <form className="col-md-12" onSubmit={handleSubmit(onSubmit)}>
-          {/* Row for code and name */}
+          {/* Row for Code and Name */}
           <div className="d-flex justify-content-center">
             <div className="form-group col-md-6">
               <label htmlFor="code">Code</label>
@@ -242,7 +258,7 @@ function UpdateResources() {
             </div>
           </div>
 
-          {/* Row for publish date, resource type, and file upload */}
+          {/* Row for Publish Date, Resource Type, and Resource File Upload */}
           <div className="d-flex justify-content-center">
             <div className="form-group col-md-4">
               <label htmlFor="date">Publish Date</label>
@@ -285,9 +301,9 @@ function UpdateResources() {
             </div>
           </div>
 
-          {/* Row for author and genre selection */}
+          {/* Row for Author and Genre Selection */}
           <div className="d-flex justify-content-center">
-            {/* Author selection */}
+            {/* Author Selection */}
             <div
               className="form-group col-md-6"
               style={{ position: "relative" }}
@@ -329,7 +345,7 @@ function UpdateResources() {
                   className="dropdown-menu show"
                   style={{
                     position: "absolute",
-                    top: "100%",
+                    top: "65%",
                     left: "0",
                     width: "100%",
                     zIndex: 1000,
@@ -338,7 +354,7 @@ function UpdateResources() {
                   {filterAuthors.map((author, index) => (
                     <li
                       key={index}
-                      className="dropdown-item"
+                      className="dropdown-item text-black"
                       style={{ cursor: "pointer" }}
                       onClick={() => handleSelectAuthor(author)}
                     >
@@ -349,7 +365,7 @@ function UpdateResources() {
               )}
             </div>
 
-            {/* Genre selection */}
+            {/* Genre Selection */}
             <div
               className="form-group col-md-6"
               style={{ position: "relative" }}
@@ -379,7 +395,7 @@ function UpdateResources() {
                   {genreOptions.map((genre, index) => (
                     <li
                       key={index}
-                      className="dropdown-item"
+                      className="dropdown-item text-black"
                       style={{ cursor: "pointer" }}
                       onClick={() => handleSelectGenre(genre)}
                     >
@@ -405,19 +421,19 @@ function UpdateResources() {
             </div>
           </div>
 
-          {/* Row for cover photo and ISBN */}
+          {/* Row for Cover Photo and ISBN */}
           <div className="d-flex justify-content-center">
             <div className="form-group col-md-6">
               <label htmlFor="Photo">Cover Photo</label>
               <input
                 type="file"
-                {...register("Photo")}
                 className="form-control"
                 id="Photo"
-                ref={photoInputRef}
                 onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setPreviewPhoto(URL.createObjectURL(e.target.files[0]));
+                  const file = e.target.files ? e.target.files[0] : null;
+                  if (file) {
+                    setPhotoFile(file);
+                    setPreviewPhoto(URL.createObjectURL(file));
                   }
                 }}
               />
@@ -434,9 +450,7 @@ function UpdateResources() {
                     style={{ cursor: "pointer" }}
                     onClick={() => {
                       setPreviewPhoto(null);
-                      if (photoInputRef.current) {
-                        photoInputRef.current.value = null;
-                      }
+                      setPhotoFile(null);
                     }}
                   >
                     Remove
@@ -444,7 +458,6 @@ function UpdateResources() {
                 </div>
               )}
             </div>
-
             <div className="form-group col-md-6">
               <label htmlFor="ISBN">ISBN</label>
               <input
@@ -475,6 +488,42 @@ function UpdateResources() {
           </button>
         </form>
       </div>
+
+      {/* Bootstrap Modal Dialog for update success */}
+      {showModal && (
+        <div
+          className="modal show d-block"
+          tabIndex="-1"
+          role="dialog"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Success</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseModal}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Resource updated successfully.</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCloseModal}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
