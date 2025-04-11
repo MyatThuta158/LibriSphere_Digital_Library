@@ -15,7 +15,18 @@ function Menu() {
   const user = storedUser ? JSON.parse(storedUser) : null;
   const userName = user ? user.name : "User Name";
   const userRole = user ? user.role : "Admin";
-  const userPic = user ? user.profilePhoto : null;
+
+  const initialPic =
+    userRole === "member" || userRole === "community_member"
+      ? user
+        ? user.ProfilePic
+        : null
+      : user
+      ? user.ProfilePicture
+      : null;
+
+  const [userPic, setUserpic] = useState(initialPic);
+
   const isMember = Boolean(user);
   const ability = Ability();
   const [state, setState] = useState(false);
@@ -35,6 +46,8 @@ function Menu() {
         console.error("Error fetching notifications:", error);
       });
   }, [state]);
+
+  console.log("user pic", userPic);
 
   return (
     <div>

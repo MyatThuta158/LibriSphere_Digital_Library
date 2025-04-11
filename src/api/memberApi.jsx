@@ -10,8 +10,16 @@ export const changeRole = (data) =>
 
 //----------This is the profile update codes-----//
 export const updatePfinfo = (data, id) =>
-  apiClient.patch(`/User/UpdateInfo/${id}`, data).then((res) => res.data);
+  apiClient.post(`/User/UpdateInfo/${id}`, data).then((res) => res.data);
 
 //--------This is profile pic update codes---------//
 export const updatePfpic = (data, id) =>
   apiClient.post(`/User/UpdateProfile/${id}`, data).then((res) => res.data);
+
+//--------This is profile pic update codes---------//
+export const resetUserPassword = (data) =>
+  apiClient.post(`/User/ResetPassword`, data).then((res) => res.data);
+
+//--------This is profile pic update codes---------//
+export const getUserInfo = (id) =>
+  apiClient.get(`/User/info/${id}`).then((res) => res.data);
