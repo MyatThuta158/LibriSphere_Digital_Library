@@ -245,14 +245,52 @@ class UserController extends Controller
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function resetPassword(Request $request)
     {
-        //
-    }
+        // Retrieve the authenticated user
+        $user = Auth::user();
 
-    // -----------This is for member report----------//
+        // dd($user);
+
+        if (! $user) {
+            return response()->json([
+                'message' => 'User not found!',
+                'status'  => 404,
+            ], 404);
+        }
+
+        // Validate the request. The "confirmed" rule requires that the request includes
+        // a matching "new_password_confirmation" field.
+        $validatedData = $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:8',
+        ]);
+
+        //dd($validatedData);
+        // Check if the current password matches the stored hash
+        if (! Hash::check($validatedData['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect!',
+                'status'  => 400,
+            ], 400);
+        }
+
+        // Check if the new password is the same as the current password
+        if (Hash::check($validatedData['new_password'], $user->password)) {
+            return response()->json([
+                'message' => 'same password',
+                'status'  => 400,
+            ], 400);
+        }
+
+        // Update the user's password with the new hashed password.
+        $user->password = Hash::make($validatedData['new_password']);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password changed successfully!',
+            'status'  => 200,
+        ], 200);
+    }
 
 }

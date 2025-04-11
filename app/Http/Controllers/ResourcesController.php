@@ -125,7 +125,7 @@ class ResourcesController extends Controller
     {
         try {
             // Eager load both the author and Genre relationships
-            $resource = Resources::with(['author', 'Genre'])->find($id);
+            $resource = Resources::with(['author', 'Genre', 'ResourceType'])->find($id);
 
             if ($resource) {
                 return response()->json(['data' => $resource], 200);
@@ -208,7 +208,7 @@ class ResourcesController extends Controller
                 Storage::disk('public')->delete($resource->cover_photo);
             }
             $photo               = $request->file('Photo');
-            $photoPath           = $photo->store('userimg', 'public');
+            $photoPath           = $photo->store('resources', 'public');
             $data['cover_photo'] = $photoPath;
         }
 
