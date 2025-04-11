@@ -42,9 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/allMembership', [App\Http\Controllers\MembershipPlanController::class, 'all']);
     //-----This is to update user information------//
-    Route::patch('/User/UpdateInfo/{id}', [App\Http\Controllers\UserController::class, 'updateInfo']);
+    Route::post('/User/UpdateInfo/{id}', [App\Http\Controllers\UserController::class, 'updateUser']);
     Route::post('/User/UpdateProfile/{id}', [App\Http\Controllers\UserController::class, 'updateProfilePicture']);
     Route::post('/User/ResetPassword', [App\Http\Controllers\UserController::class, 'resetPassword']);
+    Route::get('/User/info/{id}', [App\Http\Controllers\UserController::class, 'show']);
 
     //-----This is to update resource information------//
     Route::post('/Admin/UpdateResource/{id}', [App\Http\Controllers\ResourcesController::class, 'update']);

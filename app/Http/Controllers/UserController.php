@@ -134,7 +134,27 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            // Retrieve the user along with related information
+            $user = User::findOrFail($id);
+
+            return response()->json([
+                'message' => 'User retrieved successfully!',
+                'status'  => 200,
+                'user'    => $user,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error'  => 'User not found!',
+                'status' => 404,
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error retrieving user: ' . $e->getMessage());
+            return response()->json([
+                'error'  => 'An error occurred while retrieving the user.',
+                'status' => 500,
+            ], 500);
+        }
     }
 
     public function updateRole(Request $request)
@@ -166,41 +186,60 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function updateInfo(Request $request, string $id)
+    public function updateUser(Request $request, string $id)
     {
+        ob_clean();
         try {
-            // Validate only the fields you want to update
-            $validatedData = $request->validate([
+            // Build validation rules for the profile information
+            $rules = [
                 'name'         => 'required|string',
                 'email'        => 'required|email|string|unique:users,email,' . $id,
                 'phone_number' => 'required|string',
                 'DateOfBirth'  => 'required|string',
-                'gender'       => 'required|string|in:male,female',
+            ];
 
-            ]);
+            // If a profile picture is included, add the file validation rule
+            if ($request->hasFile('ProfilePic')) {
+                $rules['ProfilePic'] = 'required|image|mimes:jpeg,png,jpg,gif|max:2048';
+            }
 
-            // Find user by ID
+            // Validate the request data according to the rules above
+            $validatedData = $request->validate($rules);
+
+            // Find the user by ID
             $user = User::findOrFail($id);
 
-            //dd($request->all());
+            // If a new profile picture is included, process the file upload
+            if ($request->hasFile('ProfilePic')) {
+                // If an existing profile picture exists, delete it from storage
+                if ($user->ProfilePic && Storage::disk('public')->exists($user->ProfilePic)) {
+                    Storage::disk('public')->delete($user->ProfilePic);
+                }
+                // Get the uploaded file and store it in the 'users' directory
+                $photo     = $request->file('ProfilePic');
+                $photoPath = $photo->store('users', 'public');
+                // Add or replace the ProfilePic field with the new file path in the validated data
+                $validatedData['ProfilePic'] = $photoPath;
+            }
 
-            // Update only the allowed fields
+            // Update the user with the validated (and possibly extended) data
             $result = $user->update($validatedData);
 
             if (! $result) {
                 return response()->json([
                     'message' => 'Fail to update user data!',
                     'status'  => 500,
-
                 ], 500);
             }
+
+            // Refresh the user instance to ensure we have the latest data
+            $user->refresh();
 
             return response()->json([
                 'message' => 'User updated successfully!',
                 'status'  => 200,
                 'user'    => $user,
             ], 200);
-
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'validation_failed',
@@ -212,37 +251,6 @@ class UserController extends Controller
                 'status' => 500,
             ], 500);
         }
-    }
-
-    //----------This is to update profile picture-----------//
-    public function updateProfilePicture(Request $request, $id)
-    {
-        ob_clean();
-        // Find the user by the provided ID or return a 404 error.
-        $user = User::findOrFail($id);
-
-        // Validate the incoming image file.
-        $request->validate([
-            'ProfilePic' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        // If an existing profile picture exists, remove it.
-        if ($user->ProfilePic && Storage::disk('public')->exists($user->ProfilePic)) {
-            Storage::disk('public')->delete($user->ProfilePic);
-        }
-
-        // Handle file upload: store the new profile picture in the 'users' directory.
-        $photo     = $request->file('ProfilePic');
-        $photoPath = $photo->store('users', 'public'); // Stored under storage/app/public/users
-
-        // Update only the ProfilePic field for the user.
-        $user->update(['ProfilePic' => $photoPath]);
-
-        // Return a success response with the URL to the updated profile picture.
-        return response()->json([
-            'message'    => 'Profile picture updated successfully!',
-            'ProfilePic' => $photoPath,
-        ], 200);
     }
 
     public function resetPassword(Request $request)
@@ -278,7 +286,7 @@ class UserController extends Controller
         // Check if the new password is the same as the current password
         if (Hash::check($validatedData['new_password'], $user->password)) {
             return response()->json([
-                'message' => 'same password',
+                'message' => 'Your current and new password are the same password.Please type another new password!',
                 'status'  => 400,
             ], 400);
         }
