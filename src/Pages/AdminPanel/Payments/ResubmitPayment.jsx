@@ -100,17 +100,17 @@ function ResubmitPayment() {
   }
 
   return (
-    <div className="container py-4">
+    <div className="container py-5">
       <h2 className="text-center mb-4">Resubmit Payment Details</h2>
 
-      <div className="row">
-        {/* Left Side: Member Info & Latest Notification */}
+      <div className="row g-4">
+        {/* Left Side: Member Information */}
         <div className="col-md-6">
-          <div className="card mb-4 shadow-sm">
+          <div className="card shadow-sm">
+            <div className="card-header bg-primary text-white border-bottom">
+              <h5 className="mb-0">Member Information</h5>
+            </div>
             <div className="card-body">
-              <h5 className="card-title border-bottom pb-2">
-                Member Information
-              </h5>
               <p>
                 <strong>Name:</strong> {data.user.name}
               </p>
@@ -121,40 +121,28 @@ function ResubmitPayment() {
                 <strong>Phone:</strong> {data.user.phone_number || "N/A"}
               </p>
               {data.user.profile_pic ? (
-                <img
-                  src={data.user.profile_pic}
-                  alt="Profile"
-                  className="img-fluid rounded"
-                  style={{ maxWidth: "100px" }}
-                />
+                <div className="text-center">
+                  <img
+                    src={data.user.profile_pic}
+                    alt="Profile"
+                    className="img-fluid rounded mb-2"
+                    style={{ maxWidth: "100px" }}
+                  />
+                </div>
               ) : (
                 <p className="text-muted">No Profile Picture</p>
               )}
             </div>
           </div>
-
-          {data.latest_notification && (
-            <div className="card mb-4 shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title border-bottom pb-2">
-                  Latest Notification
-                </h5>
-                <p>
-                  <strong>Description:</strong>{" "}
-                  {data.latest_notification.description}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right Side: Payment Information */}
         <div className="col-md-6">
-          <div className="card mb-4 shadow-sm">
+          <div className="card shadow-sm">
+            <div className="card-header bg-success text-white border-bottom">
+              <h5 className="mb-0">Payment Information</h5>
+            </div>
             <div className="card-body">
-              <h5 className="card-title border-bottom pb-2">
-                Payment Information
-              </h5>
               <p>
                 <strong>Payment Type:</strong> {data.payment.payment_type}
               </p>
@@ -200,13 +188,13 @@ function ResubmitPayment() {
       </div>
 
       {/* Subscription Details Section */}
-      <div className="row">
+      <div className="row mt-4">
         <div className="col-12">
-          <div className="card mb-4 shadow-sm">
+          <div className="card shadow-sm">
+            <div className="card-header bg-secondary text-white border-bottom">
+              <h5 className="mb-0">Subscription Details</h5>
+            </div>
             <div className="card-body">
-              <h5 className="card-title border-bottom pb-2">
-                Subscription Details
-              </h5>
               <p>
                 <strong>Subscription ID:</strong> {data.subscription_id}
               </p>
@@ -249,7 +237,11 @@ function ResubmitPayment() {
         role="dialog"
         aria-hidden={!showRejectModal}
       >
-        <div className="modal-dialog" role="document" style={{ zIndex: 1050 }}>
+        <div
+          className="modal-dialog modal-dialog-centered"
+          role="document"
+          style={{ zIndex: 1050 }}
+        >
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">Enter Rejection Reason</h5>
@@ -306,7 +298,10 @@ function ResubmitPayment() {
             role="dialog"
             aria-hidden="false"
           >
-            <div className="modal-dialog" style={{ zIndex: 1050 }}>
+            <div
+              className="modal-dialog modal-dialog-centered"
+              style={{ zIndex: 1050 }}
+            >
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Success</h5>
@@ -349,7 +344,10 @@ function ResubmitPayment() {
             role="dialog"
             aria-hidden="false"
           >
-            <div className="modal-dialog" style={{ zIndex: 1050 }}>
+            <div
+              className="modal-dialog modal-dialog-centered"
+              style={{ zIndex: 1050 }}
+            >
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">Error</h5>

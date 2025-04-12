@@ -31,3 +31,7 @@ export const getResubmit = (id) =>
 //------Get subscription date-----//
 export const getSubscriptionDate = (userid) =>
   apiClient.get(`/subscriptiondate/${userid}`).then((res) => res.data);
+
+//------this is cancel subscription-----//
+export const cancelSubscripiton = (id) =>
+  apiClient.post(`/subscription/cancle/${id}`).then((res) => res.data);

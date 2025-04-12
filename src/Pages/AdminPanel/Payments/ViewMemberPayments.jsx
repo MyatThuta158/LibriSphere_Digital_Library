@@ -98,12 +98,12 @@ const ViewMemberPayments = () => {
                   <td className="px-4 py-3">{`#${payment.id}`}</td>
                   <td className="px-4 py-3">{payment.date}</td>
                   <td className="px-4 py-3 flex items-center">
-                    <img
+                    {/* <img
                       src={payment.image}
                       alt="Profile"
                       style={{ width: "5vw", height: "10vh" }}
                       className="rounded-full mr-3"
-                    />
+                    /> */}
                     <div>
                       <p className="font-medium text-center">{payment.name}</p>
                     </div>
@@ -132,7 +132,7 @@ const ViewMemberPayments = () => {
                       <button
                         className="btn btn-danger px-4"
                         onClick={() =>
-                          navigate(`/Admin/RejectDetailPayments/${payment.sid}`)
+                          navigate(`/Admin/DetailPayments/${payment.sid}`)
                         }
                       >
                         Reject Detail
@@ -150,9 +150,7 @@ const ViewMemberPayments = () => {
                       <button
                         className="btn btn-info px-4"
                         onClick={() =>
-                          navigate(
-                            `/Admin/Subscription/Resubmit/${payment.sid}`
-                          )
+                          navigate(`/Admin/DetailPayments/${payment.sid}`)
                         }
                       >
                         Resubmit Detail

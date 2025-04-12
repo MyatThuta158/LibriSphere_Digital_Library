@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { detailInfoPayment, changeStatus } from "../../../api/subscriptionApi";
+import {
+  detailInfoPayment,
+  changeStatus,
+  cancelSubscripiton,
+} from "../../../api/subscriptionApi";
 
 function DetailMemberPayment() {
   const { id } = useParams(); // Get subscription ID from URL
@@ -19,7 +23,7 @@ function DetailMemberPayment() {
     });
   }, [id]);
 
-  // Generic function to handle status change
+  // Generic function to handle status change (for Approve/Reject)
   const handleStatusChange = async (status, additionalPayload = {}) => {
     setLoading(true);
     const payload = { payment_status: status, ...additionalPayload };
@@ -35,6 +39,23 @@ function DetailMemberPayment() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to handle subscription cancellation
+  const handleCancelClick = () => {
+    setLoading(true);
+    cancelSubscripiton(id)
+      .then((res) => {
+        console.log(res);
+        setSuccessMessage("Subscription cancelled successfully");
+      })
+      .catch((error) => {
+        console.error("Error cancelling subscription:", error);
+        setErrorMessage("Failed to cancel subscription.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   // When Reject button is clicked, show the reject modal
@@ -131,23 +152,35 @@ function DetailMemberPayment() {
               <p>
                 <strong>Member End Date:</strong> {data.member_end_date}
               </p>
-
-              <div className="d-flex">
-                <button
-                  className="btn btn-success me-2"
-                  onClick={handleApproveClick}
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Accept"}
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={handleRejectClick}
-                  disabled={loading}
-                >
-                  {loading ? "Processing..." : "Reject"}
-                </button>
-              </div>
+              {/* Conditionally render the button group if payment status is not Rejected or Approved */}
+              {!(
+                data.payment.payment_status === "Rejected" ||
+                data.payment.payment_status === "Approved"
+              ) && (
+                <div className="d-flex flex-wrap gap-2">
+                  <button
+                    className="btn btn-success"
+                    onClick={handleApproveClick}
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : "Accept"}
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={handleRejectClick}
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : "Reject"}
+                  </button>
+                  <button
+                    className="btn btn-warning"
+                    onClick={handleCancelClick}
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : "Cancel"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
