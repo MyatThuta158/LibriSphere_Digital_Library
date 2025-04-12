@@ -91,6 +91,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/noti/totalcount', [App\Http\Controllers\NotificationController::class, 'totalCount']);
     Route::get('/subscription/resubmit/{id}', [App\Http\Controllers\SubscriptionController::class, 'showSubscriptionDetailWithLatestNotification']);
+
+    //----This will used to check whether there need to show membership plan or not----//
+    Route::get('/subscription/check/{id}', [App\Http\Controllers\SubscriptionController::class, 'checkUserSubscriptionStatus']);
+
+    Route::get('/subscription/detailshow/{id}', [App\Http\Controllers\SubscriptionController::class, 'getSubscriptionDataWithNotifications']);
+
+    Route::post('/subscription/cancle/{id}', [App\Http\Controllers\SubscriptionController::class, 'cancelSubscriptionOnly']);
     Route::post('/subscriber/prediction/store', [App\Http\Controllers\SubscriberPredictionController::class, 'storePredictions']);
     Route::get('/subscriber/prediction/get', [App\Http\Controllers\SubscriberPredictionController::class, 'getLatestPredictions']);
 

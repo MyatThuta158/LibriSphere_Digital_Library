@@ -477,7 +477,6 @@ class SubscriptionController extends Controller
 
         // Find the subscription
         $subscription = Subscription::find($id);
-
         if (! $subscription) {
             return response()->json([
                 'status'  => 404,
@@ -485,30 +484,45 @@ class SubscriptionController extends Controller
             ], 404);
         }
 
-        // Update the payment status
-        $subscription->PaymentStatus = $request->payment_status;
-
-        // When payment is approved, also update SubscriptionStatus to active
-        if ($request->payment_status === "Approved") {
+        // Determine subscription and payment statuses based on payment_status value
+        $status = $request->payment_status;
+        if ($status === "Approved") {
             $subscription->SubscriptionStatus = 'active';
             $subscription->PaymentStatus      = 'Approved';
+            // Set admin approve date to today's date using Carbon
+            $subscription->AdminApprovedDate = Carbon::now()->toDateTimeString();
+        } elseif ($status === "Rejected") {
+            $subscription->SubscriptionStatus = 'inactive';
+            $subscription->PaymentStatus      = 'Rejected';
+        } elseif ($status === "Resubmit") {
+            $subscription->SubscriptionStatus = 'inactive';
+            $subscription->PaymentStatus      = 'Resubmit';
+        } elseif ($status === "pending") {
+            $subscription->SubscriptionStatus = 'active';
+            $subscription->PaymentStatus      = 'pending';
+        }
+
+        // If the authenticated user is a librarian or manager,
+        // record their id in the subscription (assuming an 'admin_id' column exists)
+        $authUser = auth()->user();
+        if ($authUser && in_array($authUser->role, ['librarian', 'manager'])) {
+            $subscription->admin_id = $authUser->id;
         }
 
         $subscription->save();
 
         // Get the associated user
         $user = $subscription->user;
-
         if ($user) {
             try {
-                if ($request->payment_status === "Approved") {
+                if ($status === "Approved") {
                     $user->update(['role' => 'member']);
                     $user->syncRoles('member');
-                } elseif ($request->payment_status === "Rejected") {
+                } elseif ($status === "Rejected") {
                     $user->update(['role' => 'community_member']);
                     $user->syncRoles('community_member');
                 }
-                // For Resubmit, we don't change the user role.
+                // For Resubmit or pending, no role change is applied.
             } catch (\Exception $e) {
                 return response()->json([
                     'status'  => 500,
@@ -519,16 +533,19 @@ class SubscriptionController extends Controller
         }
 
         // Prepare notification description based on the payment status
-        if ($request->payment_status === "Approved") {
+        if ($status === "Approved") {
             $description = "Your subscription expired date is " . $subscription->MemberEndDate;
-        } elseif ($request->payment_status === "Rejected") {
+        } elseif ($status === "Rejected") {
             $description = $request->notification_description;
-        } elseif ($request->payment_status === "Resubmit") {
+        } elseif ($status === "Resubmit") {
             $description = "Your payment has been resubmitted. Please wait for admin to review your payment.";
+        } else {
+            // pending status; if needed, you can customize this message.
+            $description = "Your subscription payment is pending.";
         }
 
-        // Create a notification if the payment status is one of Approved, Rejected, or Resubmit
-        if (in_array($request->payment_status, ['Approved', 'Rejected', 'Resubmit'])) {
+        // Create a notification if the payment status is one of Approved, Rejected, Resubmit, or pending if required.
+        if (in_array($status, ['Approved', 'Rejected', 'Resubmit', 'pending'])) {
             SubscriptionNotification::create([
                 'SubscriptionId' => $subscription->id,
                 'Description'    => $description,
@@ -540,6 +557,146 @@ class SubscriptionController extends Controller
             'status'  => 200,
             'message' => 'Payment status updated successfully',
             'data'    => $subscription,
+        ]);
+    }
+    public function cancelSubscriptionOnly(Request $request, $id)
+    {
+        // Retrieve the subscription along with its membership plan.
+        $subscription = Subscription::with('membershipPlan')->find($id);
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Update subscription status fields.
+        $subscription->PaymentStatus      = 'cancel';
+        $subscription->SubscriptionStatus = 'inactive';
+
+        // Check if the authenticated user is either 'librarian' or 'manager'
+        $user = auth()->user();
+        if ($user && in_array($user->role, ['librarian', 'manager'])) {
+            // Record the user id who canceled (assuming a 'cancelled_by' column exists in your subscriptions table)
+            $subscription->admin_id = $user->id;
+        }
+
+        $subscription->save();
+
+        // Get membership plan name; use a default if unavailable.
+        $membershipPlanName = $subscription->membershipPlan->PlanName ?? 'N/A';
+        // Assume 'membership date' refers to MemberstartDate; adjust if needed.
+        $membershipDate = $subscription->MemberstartDate;
+
+        // Construct the notification message.
+        $message = "Your subscription {$membershipPlanName} that was subscribed in {$membershipDate} is cancled.";
+
+        // Create a new subscription notification.
+        SubscriptionNotification::create([
+            'SubscriptionId' => $subscription->id,
+            'Description'    => $message,
+            'WatchStatus'    => 'unwatch',
+        ]);
+
+        return response()->json([
+            'status'  => 200,
+            'message' => 'Subscription cancelled successfully',
+            'data'    => $subscription,
+        ]);
+    }
+
+    public function checkUserSubscriptionStatus($userId)
+    {
+        // Retrieve the latest subscription for the given user ID
+        $subscription = Subscription::where('users_id', $userId)
+            ->latest('MemberstartDate')
+            ->first();
+
+        // If there is no subscription, return false.
+        if (! $subscription) {
+            return false;
+        }
+
+        // Normalize the payment status for case-insensitive comparison.
+        $status = strtolower($subscription->PaymentStatus);
+
+        // Return true for "rejected", "resubmit", or "pending" statuses.
+        if (in_array($status, ['rejected', 'resubmit', 'pending'])) {
+            return true;
+        }
+
+        // For an accepted/approved subscription, check the MemberEndDate.
+        if ($status === 'approved') {
+            $today         = Carbon::now();
+            $memberEndDate = Carbon::parse($subscription->MemberEndDate);
+
+            // Calculate the number of days left from today until the subscription end date.
+            $daysLeft = $today->lessThanOrEqualTo($memberEndDate)
+            ? (int) $today->diffInDays($memberEndDate)
+            : 0;
+
+            // If the subscription expires in 7 or fewer days, return true.
+            if ($daysLeft <= 7) {
+                return true;
+            }
+        }
+
+        // In all other cases, return false.
+        return false;
+    }
+
+    public function getSubscriptionDataWithNotifications($id)
+    {
+        // Retrieve the subscription along with its related data and all notifications.
+        $subscription = Subscription::with([
+            'user',
+            'paymentType',
+            'membershipPlan',
+            'subscriptionNotifications',
+        ])->find($id);
+
+        // Check if the subscription exists.
+        if (! $subscription) {
+            return response()->json([
+                'status'  => 404,
+                'message' => 'Subscription not found',
+            ], 404);
+        }
+
+        // Prepare the data to return.
+        $data = [
+            'subscription_id'   => $subscription->id,
+            'user'              => [
+                'id'           => $subscription->user->id ?? null,
+                'name'         => $subscription->user->name ?? null,
+                'email'        => $subscription->user->email ?? null,
+                'phone_number' => $subscription->user->phone_number ?? null,
+                'profile_pic'  => $subscription->user->ProfilePic ?? null,
+            ],
+            'membership_plan'   => $subscription->membershipPlan,
+            'payment'           => [
+                'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
+                'payment_screenshot'     => $subscription->PaymentScreenShot,
+                'payment_account_name'   => $subscription->PaymentAccountName,
+                'payment_account_number' => $subscription->PaymentAccountNumber,
+                'payment_date'           => $subscription->PaymentDate,
+                'payment_status'         => $subscription->PaymentStatus,
+            ],
+            'member_start_date' => $subscription->MemberstartDate,
+            'member_end_date'   => $subscription->MemberEndDate,
+            'admin_id'          => $subscription->admin_id,
+            // Map each notification to include description and watch status.
+            'notifications'     => $subscription->subscriptionNotifications->map(function ($notification) {
+                return [
+                    'description'  => $notification->Description,
+                    'watch_status' => $notification->WatchStatus,
+                ];
+            }),
+        ];
+
+        return response()->json([
+            'status' => 200,
+            'data'   => $data,
         ]);
     }
 
