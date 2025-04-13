@@ -38,16 +38,23 @@ function Menu() {
 
   // Fetch the total notification count when the component mounts or state changes
   useEffect(() => {
-    getNotification()
-      .then((data) => {
-        setNotificationCount(data.total_notifications);
-      })
-      .catch((error) => {
-        console.error("Error fetching notifications:", error);
-      });
+    const fetchNoti = async () => {
+      const response = await getNotification();
+      // console.log("noti", response);
+      setNotificationCount(response.total_notifications);
+    };
+
+    fetchNoti();
+    // getNotification()
+    //   .then((data) => {
+    //     setNotificationCount(data.total_notifications);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error fetching notifications:", error);
+    //   });
   }, [state]);
 
-  console.log("user pic", userPic);
+  //console.log("user pic", notificationCount);
 
   return (
     <div>
@@ -205,6 +212,7 @@ function Menu() {
                             style={{ background: "#4e73df" }}
                             onClick={() => navigate("/community/notification")}
                           >
+                            {" "}
                             Notifications{" "}
                             {notificationCount > 0 && (
                               <span className="badge bg-danger ms-1">
@@ -288,7 +296,20 @@ function Menu() {
                                   style={{ background: "#4e73df" }}
                                   onClick={() => navigate("/Admin/Profile")}
                                 >
-                                  <i className="bi bi-person-circle me-2"></i>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    className="bi bi-person-circle me-2"
+                                    viewBox="0 0 16 16"
+                                  >
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
+                                    />
+                                  </svg>
                                   Profile
                                 </button>
                               </li>
@@ -316,11 +337,20 @@ function Menu() {
                                               error
                                             );
                                           });
-                                        navigate("/community/notification");
-                                        setState(!state);
+                                        window.location.href =
+                                          "/community/notification";
                                       }}
                                     >
-                                      <i className="bi bi-bell me-2"></i>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        fill="currentColor"
+                                        className="bi bi-bell-fill me-2"
+                                        viewBox="0 0 16 16"
+                                      >
+                                        <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2m.995-14.901a1 1 0 1 0-1.99 0A5 5 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901" />
+                                      </svg>
                                       Notifications{" "}
                                       {notificationCount > 0 && (
                                         <span className="badge bg-danger ms-1">
@@ -363,8 +393,24 @@ function Menu() {
                                   style={{ background: "#4e73df" }}
                                   onClick={() => logoutUser()}
                                 >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    fill="currentColor"
+                                    className="bi bi-box-arrow-right me-2"
+                                    viewBox="0 0 16 16"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
+                                    />
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+                                    />
+                                  </svg>
                                   Log Out
-                                  <i className="bi bi-box-arrow-right ms-2"></i>
                                 </button>
                               </li>
                             </ul>

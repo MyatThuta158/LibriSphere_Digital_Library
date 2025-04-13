@@ -23,3 +23,11 @@ export const resetUserPassword = (data) =>
 //--------This is profile pic update codes---------//
 export const getUserInfo = (id) =>
   apiClient.get(`/User/info/${id}`).then((res) => res.data);
+
+//--------This is profile pic update codes---------//
+export const getallUser = () =>
+  apiClient.get(`/alluser`).then((res) => res.data);
+
+//--------This is profile pic update codes---------//
+export const resetPassword = (id, data) =>
+  apiClient.post(`/user/changepassword/${id}`, data).then((res) => res.data);

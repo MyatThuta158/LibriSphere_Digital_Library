@@ -42,6 +42,7 @@ import ResubmitPayment from "../Pages/AdminPanel/Payments/ResubmitPayment";
 import SubscriberPrediction from "../Pages/AdminPanel/Reports/SubscriberPrediction";
 import LibrarianDashboard from "../Pages/AdminPanel/Dashboard/LibrarianDashboard";
 import SubscriberRevenuePrediction from "../Pages/AdminPanel/Reports/SubscriberRevenuePrediction";
+import ViewAllUsers from "../Pages/AdminPanel/Users/ViewAllUsers";
 
 function AdminRoute() {
   return (
@@ -101,6 +102,8 @@ function AdminRoute() {
             path="/Admin/DetailPayments/:id"
             element={<DetailMemberPayment />}
           />
+
+          <Route path="/Admin/User" element={<ViewAllUsers />} />
 
           {/* This is for reports */}
           <Route path="/Admin/NewMemberReport" element={<NewMemberReport />} />

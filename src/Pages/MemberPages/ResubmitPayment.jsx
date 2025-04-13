@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router-dom";
 import { Modal, Button } from "react-bootstrap";
-import { getResubmit, resubmitSubscription } from "../../api/subscriptionApi";
+import {
+  getResubmit,
+  resubmitSubscription,
+  cancelSubscripiton,
+} from "../../api/subscriptionApi";
 import Menu from "../Layouts/Menu";
 
 function ResubmitPayment() {
@@ -56,6 +60,18 @@ function ResubmitPayment() {
       });
   };
 
+  const handleCancelPayment = () => {
+    // Call the cancel subscription API with the subscription id
+    cancelSubscripiton(id)
+      .then((res) => {
+        // Assuming the API returns a 200 status for successful cancelation.
+        setMessage("Subscription canceled successfully.");
+      })
+      .catch((error) => {
+        console.error("Error canceling subscription:", error);
+      });
+  };
+
   const handleModalOk = () => {
     setMessage(null);
     navigate("/library/home");
@@ -105,7 +121,7 @@ function ResubmitPayment() {
                   {subscription.membership.Price}
                 </p>
                 <p>
-                  <strong>Subscription Duration:</strong>
+                  <strong>Subscription Duration:</strong>{" "}
                   {subscription.membership.Duration}{" "}
                   {subscription.membership.Duration > 1 ? "months" : "month"}
                 </p>
@@ -120,17 +136,16 @@ function ResubmitPayment() {
               </div>
               <div className="card-body text-center">
                 <p className="mb-2">
-                  <strong>Payment type:</strong>
-                  {subscription.payment_type.PaymentTypeName}{" "}
+                  <strong>Payment type:</strong>{" "}
+                  {subscription.payment_type.PaymentTypeName}
                 </p>
                 <p>
-                  <strong>Payment Account Name:</strong>
-                  {subscription.payment_type.AccountName}{" "}
+                  <strong>Payment Account Name:</strong>{" "}
+                  {subscription.payment_type.AccountName}
                 </p>
-
                 <p>
-                  <strong>Payment Account Number:</strong>
-                  {subscription.payment_type.AccountNumber}{" "}
+                  <strong>Payment Account Number:</strong>{" "}
+                  {subscription.payment_type.AccountNumber}
                 </p>
                 {subscription.payment_type.QR_Scan ? (
                   <img
@@ -263,9 +278,16 @@ function ResubmitPayment() {
                       </small>
                     )}
                   </div>
-                  <div className="d-grid">
+                  <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-primary">
                       Resubmit Payment
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={handleCancelPayment}
+                    >
+                      Cancel Payment
                     </button>
                   </div>
                 </form>
