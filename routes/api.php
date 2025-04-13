@@ -84,6 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/notification', [App\Http\Controllers\NotificationController::class, 'index']);
 
+    Route::get('/alluser', [App\Http\Controllers\UserController::class, 'index']);
+    Route::post('/user/changepassword/{id}', [App\Http\Controllers\UserController::class, 'changeUserPassword']);
+
     Route::post('/subscription/resubmit/{id}', [App\Http\Controllers\SubscriptionController::class, 'update']);
     Route::get('/subscription/resubmit/show/{id}', [App\Http\Controllers\SubscriptionController::class, 'showResubmit']);
 

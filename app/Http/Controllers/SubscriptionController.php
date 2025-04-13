@@ -518,7 +518,8 @@ class SubscriptionController extends Controller
                 if ($status === "Approved") {
                     $user->update(['role' => 'member']);
                     $user->syncRoles('member');
-                } elseif ($status === "Rejected") {
+                } elseif (in_array($status, ['Rejected', 'Resubmit', 'cancel'])) {
+                    // For these statuses, set the role to community_member
                     $user->update(['role' => 'community_member']);
                     $user->syncRoles('community_member');
                 }
@@ -583,13 +584,29 @@ class SubscriptionController extends Controller
 
         $subscription->save();
 
+        // Update the associated user role to 'community_member' when the subscription is canceled.
+        // Assumes that the Subscription model has a 'user' relationship.
+        $subscriptionUser = $subscription->user;
+        if ($subscriptionUser) {
+            try {
+                $subscriptionUser->update(['role' => 'community_member']);
+                $subscriptionUser->syncRoles('community_member');
+            } catch (\Exception $e) {
+                return response()->json([
+                    'status'  => 500,
+                    'message' => 'Failed to update user role',
+                    'error'   => $e->getMessage(),
+                ], 500);
+            }
+        }
+
         // Get membership plan name; use a default if unavailable.
         $membershipPlanName = $subscription->membershipPlan->PlanName ?? 'N/A';
         // Assume 'membership date' refers to MemberstartDate; adjust if needed.
         $membershipDate = $subscription->MemberstartDate;
 
         // Construct the notification message.
-        $message = "Your subscription {$membershipPlanName} that was subscribed in {$membershipDate} is cancled.";
+        $message = "Your subscription {$membershipPlanName} that was subscribed in {$membershipDate} is cancelled.";
 
         // Create a new subscription notification.
         SubscriptionNotification::create([

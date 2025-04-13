@@ -17,7 +17,15 @@ class UserController extends Controller
      */
     public function index()
     {
-        return response()->json(['message' => 'Its work']);
+        // Fetch all users without pagination
+        $users = User::all();
+
+        // Return the users in a JSON response
+        return response()->json([
+            'message' => 'Users retrieved successfully!',
+            'status'  => 200,
+            'users'   => $users,
+        ], 200);
     }
 
     /**
@@ -299,6 +307,40 @@ class UserController extends Controller
             'message' => 'Password changed successfully!',
             'status'  => 200,
         ], 200);
+    }
+
+    public function changeUserPassword(Request $request, string $id)
+    {
+        // Validate the new password from the request
+        $request->validate([
+            'new_password' => 'required|string|min:8',
+        ]);
+
+        try {
+            // Find the user by ID; if not found, an exception is thrown
+            $user = User::findOrFail($id);
+
+            // Update the user's password with the new hashed password
+            $user->password = Hash::make($request->input('new_password'));
+            $user->save();
+
+            return response()->json([
+                'message' => 'User password updated successfully!',
+                'status'  => 200,
+                'user'    => $user,
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'User not found!',
+                'status'  => 404,
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Error updating password: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Something went wrong. Please try again later!',
+                'status'  => 500,
+            ], 500);
+        }
     }
 
 }

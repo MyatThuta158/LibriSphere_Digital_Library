@@ -32,7 +32,8 @@ class NotificationController extends Controller
         $subscriptionNotifications = SubscriptionNotification::with('subscription')
             ->whereHas('subscription', function ($query) use ($user) {
                 $query->where('users_id', $user->id);
-            })->get();
+            })->orderBy('created_at', 'desc')
+            ->get();
 
         // Get all forum post IDs submitted by the authenticated user.
         $forumPostIds = $user->forumPosts()->pluck('ForumPostId');
@@ -42,6 +43,7 @@ class NotificationController extends Controller
         $discussionNotifications = Discussion::with('user')
             ->where('NotiStatus', 'unwatched')
             ->whereIn('ForumPostId', $forumPostIds)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([
@@ -86,12 +88,15 @@ class NotificationController extends Controller
 
         $user = auth()->user();
 
+        // dd($user->id);
+
         // Count subscription notifications with WatchStatus 'unwatched' whose subscription belongs to the user.
-        $subscriptionCount = SubscriptionNotification::where('WatchStatus', 'unwatched')
+        $subscriptionCount = SubscriptionNotification::where('WatchStatus', 'unwatch')
             ->whereHas('subscription', function ($query) use ($user) {
                 $query->where('users_id', $user->id);
             })->count();
 
+        // dd($subscriptionCount);
         // Get all forum post IDs submitted by the authenticated user.
         $forumPostIds = $user->forumPosts()->pluck('ForumPostId');
 
