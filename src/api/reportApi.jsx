@@ -1,5 +1,6 @@
 ///----------This is for subscription report--------////
 import apiClient from "./apiClient"; // Make sure to adjust the import path as needed
+import axios from "axios"; // Import axios for HTTP requests
 
 export const SubscriptionReport = (period, year = null, month = null) => {
   let params = new URLSearchParams({ period });
@@ -47,3 +48,20 @@ export const TotalFinancialReport = (period, year = null, month = null) => {
     .get(`/TotalRevenueReport?${params.toString()}`)
     .then((res) => res.data);
 };
+
+export function SubscriptionTableReport(
+  period,
+  year = null,
+  month = null,
+  page
+) {
+  const params = new URLSearchParams();
+  params.append("period", period);
+  if (year) params.append("year", String(year));
+  if (month) params.append("month", String(month));
+  params.append("page", String(page));
+
+  return apiClient
+    .get(`/subscription/table/report?${params.toString()}`)
+    .then((res) => res.data);
+}

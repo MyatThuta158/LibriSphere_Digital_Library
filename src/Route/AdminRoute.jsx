@@ -43,6 +43,7 @@ import SubscriberPrediction from "../Pages/AdminPanel/Reports/SubscriberPredicti
 import LibrarianDashboard from "../Pages/AdminPanel/Dashboard/LibrarianDashboard";
 import SubscriberRevenuePrediction from "../Pages/AdminPanel/Reports/SubscriberRevenuePrediction";
 import ViewAllUsers from "../Pages/AdminPanel/Users/ViewAllUsers";
+import SubscriptionTableReport from "../Pages/AdminPanel/Reports/SubscriptionTableReport";
 
 function AdminRoute() {
   return (
@@ -155,6 +156,11 @@ function AdminRoute() {
           <Route
             path="/Admin/ViewAnnouncementDetail/:id"
             element={<DetailAnnouncement />}
+          />
+
+          <Route
+            path="/Admin/SubscriptionReport/Table"
+            element={<SubscriptionTableReport />}
           />
         </Route>
       </Route>
