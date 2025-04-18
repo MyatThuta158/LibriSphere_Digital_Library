@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { SubscriptionTableReport as fetchSubs } from "../../../api/reportApi";
+import { UserTableReport as fetchUsers } from "../../../api/reportApi";
 
-// --- Pagination Helper (in the same file) ---
 const DOTS = "DOTS";
 
 function getPaginationRange({
@@ -13,7 +12,6 @@ function getPaginationRange({
   const totalPageCount = Math.ceil(totalCount / pageSize);
   const totalPageNumbers = siblingCount * 2 + 5;
 
-  // No need for dots if the number of pages is small
   if (totalPageNumbers >= totalPageCount) {
     return Array.from({ length: totalPageCount }, (_, i) => i + 1);
   }
@@ -23,27 +21,22 @@ function getPaginationRange({
     currentPage + siblingCount,
     totalPageCount
   );
-
   const showLeftDots = leftSiblingIndex > 2;
   const showRightDots = rightSiblingIndex < totalPageCount - 2;
 
   const pages = [];
-
   if (!showLeftDots && showRightDots) {
-    // No left dots, but show right dots
     const leftItemCount = 3 + 2 * siblingCount;
     const leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
     pages.push(...leftRange, DOTS, totalPageCount);
   } else if (showLeftDots && !showRightDots) {
-    // Show left dots, no right dots
     const rightItemCount = 3 + 2 * siblingCount;
     const rightRange = Array.from(
       { length: rightItemCount },
       (_, i) => totalPageCount - rightItemCount + 1 + i
     );
     pages.push(1, DOTS, ...rightRange);
-  } else if (showLeftDots && showRightDots) {
-    // Both sides have dots
+  } else {
     const middleRange = Array.from(
       { length: rightSiblingIndex - leftSiblingIndex + 1 },
       (_, i) => leftSiblingIndex + i
@@ -54,22 +47,20 @@ function getPaginationRange({
   return pages;
 }
 
-// --- Main Component ---
-const SubscriptionTableReport = () => {
-  // --- Filter state ---
+const UserTableReport = () => {
+  // Filters
   const [period, setPeriod] = useState("7_days");
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-  // --- Data & pagination meta state ---
+  // Data & Meta
   const [rows, setRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0); // total items from API
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- Fetch data on filter or page change ---
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -77,17 +68,17 @@ const SubscriptionTableReport = () => {
     const yParam = period === "monthly" || period === "yearly" ? year : null;
     const mParam = period === "monthly" ? month : null;
 
-    fetchSubs(period, yParam, mParam, currentPage)
+    fetchUsers(period, yParam, mParam, currentPage)
       .then((response) => {
         setRows(response.data);
         setCurrentPage(response.current_page);
         setLastPage(response.last_page);
-        setTotalCount(response.total); // assume API returns total count
-        setLoading(false);
+        setTotalCount(response.total);
       })
-      .catch((err) => {
-        console.error(err);
-        setError("Failed to load subscriptions");
+      .catch(() => {
+        setError("Failed to load users");
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, [period, year, month, currentPage]);
@@ -98,8 +89,7 @@ const SubscriptionTableReport = () => {
     }
   };
 
-  // --- Pagination range config ---
-  const pageSize = Math.ceil(totalCount / lastPage) || 10; // derive pageSize if needed
+  const pageSize = Math.ceil(totalCount / lastPage) || 10;
   const paginationRange = getPaginationRange({
     totalCount,
     pageSize,
@@ -109,7 +99,7 @@ const SubscriptionTableReport = () => {
 
   return (
     <div className="container-fluid py-3">
-      <h2 className="text-center mb-4">Subscription Table Report</h2>
+      <h2 className="text-center mb-4">New Member Report</h2>
 
       {/* Filters */}
       <div className="d-flex flex-wrap justify-content-center mb-3 gap-2">
@@ -199,32 +189,32 @@ const SubscriptionTableReport = () => {
                 style={{ position: "sticky", top: 0, zIndex: 1 }}
               >
                 <tr>
-                  {/* <th>ID</th> */}
-                  <th>User</th>
-                  <th>Plan</th>
-                  <th>Subscribe Date</th>
-                  <th>Payment Status</th>
-                  <th>Subscription Status</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Gender</th>
+                  <th>Date of Birth</th>
+                  <th>Role</th>
+                  <th>Account Create</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((sub) => (
-                  <tr key={sub.id}>
-                    {/* <td>{sub.id}</td> */}
-                    <td>
-                      {sub.user.name} ({sub.user.email})
-                    </td>
-                    <td>{sub.membership_plan.PlanName}</td>
-                    <td>{sub.PaymentDate}</td>
-                    <td>{sub.PaymentStatus}</td>
-                    <td>{sub.SubscriptionStatus}</td>
+                {rows.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td>{user.phone_number}</td>
+                    <td>{user.gender}</td>
+                    <td>{user.DateOfBirth}</td>
+                    <td>{user.role}</td>
+                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* Collapsed Pagination */}
+          {/* Pagination */}
           <nav>
             <ul className="pagination justify-content-center mt-3">
               <li
@@ -280,4 +270,4 @@ const SubscriptionTableReport = () => {
   );
 };
 
-export default SubscriptionTableReport;
+export default UserTableReport;

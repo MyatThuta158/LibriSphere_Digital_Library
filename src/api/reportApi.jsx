@@ -65,3 +65,15 @@ export function SubscriptionTableReport(
     .get(`/subscription/table/report?${params.toString()}`)
     .then((res) => res.data);
 }
+
+export function UserTableReport(period, year = null, month = null, page) {
+  const params = new URLSearchParams();
+  params.append("period", period);
+  if (year) params.append("year", String(year));
+  if (month) params.append("month", String(month));
+  params.append("page", String(page));
+
+  return apiClient
+    .get(`/user/table/report?${params.toString()}`)
+    .then((res) => res.data);
+}
