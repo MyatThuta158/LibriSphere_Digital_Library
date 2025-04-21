@@ -283,4 +283,13 @@ class ResourcesController extends Controller
 
         return response()->json(['data' => $resources], 200);
     }
+
+    // In ResourcesController.php
+    public function incrementView($id)
+    {
+        $resource = Resources::findOrFail($id);
+        $resource->incrementViewCount();
+        return response()->json(['MemberViewCount' => $resource->MemberViewCount]);
+    }
+
 }

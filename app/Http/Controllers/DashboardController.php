@@ -11,7 +11,7 @@ class DashboardController extends Controller
     public function adminDashboard()
     {
         // Count subscriptions where the status is pending
-        $pendingSubscriptions = Subscription::where('SubscriptionStatus', 'pending')->count();
+        $pendingSubscriptions = Subscription::where('PaymentStatus', 'pending')->count();
 
         // Count all electronic resources in the library
         $totalResources = Resources::count();

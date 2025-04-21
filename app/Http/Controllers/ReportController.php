@@ -547,4 +547,125 @@ class ReportController extends Controller
         // Return the final JSON response.
         return response()->json($grouped);
     }
+
+    //-----This is the subscription table report----//
+    public function subscriptionTableReport(Request $request)
+    {
+        // 1) Validate period
+        $allowed = ['7_days', '14_days', '28_days', 'monthly', 'yearly'];
+        $period  = $request->query('period', '7_days');
+        if (! in_array($period, $allowed)) {
+            return response()->json([
+                'error' => "Invalid period “{$period}”. Use: " . implode(', ', $allowed),
+            ], 422);
+        }
+
+        // 2) Determine date range
+        switch ($period) {
+            case '7_days':
+                $start = Carbon::now()->subDays(6)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case '14_days':
+                $start = Carbon::now()->subDays(13)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case '28_days':
+                $start = Carbon::now()->subDays(27)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case 'monthly':
+                // allow passing ?year=2025&month=4 for historic months
+                $year  = $request->query('year', Carbon::now()->year);
+                $month = $request->query('month', Carbon::now()->month);
+                $start = Carbon::createFromDate($year, $month, 1)->startOfDay();
+                $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
+                break;
+            case 'yearly':
+                // require a ?year=2025 parameter
+                if (! $request->has('year')) {
+                    return response()->json([
+                        'error' => 'Year parameter is required for yearly reports.',
+                    ], 422);
+                }
+                $year  = $request->query('year');
+                $start = Carbon::createFromDate($year, 1, 1)->startOfDay();
+                $end   = Carbon::createFromDate($year, 12, 31)->endOfDay();
+                break;
+        }
+
+        // 3) Fetch paginated subscriptions
+        $perPage = $request->query('per_page', 10);
+
+        $subscriptions = Subscription::with(['user', 'membershipPlan', 'paymentType'])
+            ->whereBetween('PaymentDate', [$start, $end])
+            ->where('PaymentStatus', '=', 'Approved')
+            ->orderBy('PaymentDate', 'desc')
+            ->paginate($perPage);
+
+        // 4) Return JSON (includes data + pagination meta)
+        return response()->json($subscriptions);
+    }
+
+    public function userTableReport(Request $request)
+    {
+        // 1) Validate period
+        $allowed = ['7_days', '14_days', '28_days', 'monthly', 'yearly'];
+        $period  = $request->query('period', '7_days');
+        if (! in_array($period, $allowed)) {
+            return response()->json([
+                'error' => "Invalid period “{$period}”. Use: " . implode(', ', $allowed),
+            ], 422);
+        }
+
+        // 2) Determine date range
+        switch ($period) {
+            case '7_days':
+                $start = Carbon::now()->subDays(6)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case '14_days':
+                $start = Carbon::now()->subDays(13)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case '28_days':
+                $start = Carbon::now()->subDays(27)->startOfDay();
+                $end   = Carbon::now()->endOfDay();
+                break;
+            case 'monthly':
+                $year  = $request->query('year', Carbon::now()->year);
+                $month = $request->query('month', Carbon::now()->month);
+                $start = Carbon::createFromDate($year, $month, 1)->startOfDay();
+                $end   = Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
+                break;
+            case 'yearly':
+                if (! $request->has('year')) {
+                    return response()->json([
+                        'error' => 'Year parameter is required for yearly reports.',
+                    ], 422);
+                }
+                $year  = $request->query('year');
+                $start = Carbon::createFromDate($year, 1, 1)->startOfDay();
+                $end   = Carbon::createFromDate($year, 12, 31)->endOfDay();
+                break;
+        }
+
+        // 3) Fetch paginated users
+        $perPage = $request->query('per_page', 10);
+
+        $users = User::with([
+            'subscriptions',
+            'reviews',
+            'forumPosts',
+            'discussions',
+            'votes',
+        ])
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        // 4) Return JSON
+        return response()->json($users);
+    }
+
 }

@@ -32,4 +32,10 @@ class Resources extends Model
     {
         return $this->belongsTo(ResourceType::class, 'resource_typeId', 'id');
     }
+
+    public function incrementViewCount(): int
+    {
+        // Eloquent’s increment() defaults to +1 and issues a single SQL UPDATE … + 1
+        return $this->increment('MemberViewCount');
+    }
 }

@@ -61,12 +61,11 @@ class AdminController extends Controller
     public function store(Request $request)
     {
         ob_clean();
-        // Optionally, if you want to restrict this to only managers,
-        // uncomment the following lines and adjust as needed.
-        // $user = Auth::user();
-        // if (!$user || !$user->hasRole('manager') || !$user->can('manage users')) {
-        //     return response()->json(['error' => 'Only managers can register new admins.'], 403);
-        // }
+   
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('manager') || !$user->can('manage users')) {
+            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        }
 
         // Validate the request input with a custom message for a duplicate email.
         try {
@@ -135,6 +134,9 @@ class AdminController extends Controller
     public function show()
     {
         $admin = Auth::user();
+
+
+        
         if (! $admin) {
             return response()->json([
                 'message' => 'Admin not found!',

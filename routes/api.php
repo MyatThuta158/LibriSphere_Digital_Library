@@ -107,6 +107,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscriptiondate/{id}', [App\Http\Controllers\SubscriptionController::class, 'getUserSubscriptionInfo']);
 
     Route::get('/admindashboard', [App\Http\Controllers\DashboardController::class, 'adminDashboard']);
+
+    Route::get('/subscription/table/report', [App\Http\Controllers\ReportController::class, 'subscriptionTableReport']);
+
+    Route::get('/user/table/report', [App\Http\Controllers\ReportController::class, 'userTableReport']);
+
+    Route::get('/increment/view/{id}', [App\Http\Controllers\ResourcesController::class, 'incrementView']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);

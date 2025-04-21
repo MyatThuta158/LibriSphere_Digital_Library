@@ -81,35 +81,37 @@ class NotificationController extends Controller
 
     public function totalCount()
     {
-        // Ensure the user is authenticated.
+        // 1) Auth check as before
         if (! auth()->check()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-
         $user = auth()->user();
 
-        // dd($user->id);
+        // 2) Wrap all counting in try/catch
+        try {
+            $subscriptionCount = SubscriptionNotification::where('WatchStatus', 'unwatch')
+                ->whereHas('subscription', function ($query) use ($user) {
+                    $query->where('users_id', $user->id);
+                })
+                ->count();
 
-        // Count subscription notifications with WatchStatus 'unwatched' whose subscription belongs to the user.
-        $subscriptionCount = SubscriptionNotification::where('WatchStatus', 'unwatch')
-            ->whereHas('subscription', function ($query) use ($user) {
-                $query->where('users_id', $user->id);
-            })->count();
+            $forumPostIds = $user->forumPosts()->pluck('ForumPostId')->toArray();
 
-        // dd($subscriptionCount);
-        // Get all forum post IDs submitted by the authenticated user.
-        $forumPostIds = $user->forumPosts()->pluck('ForumPostId');
+            $discussionCount = Discussion::where('NotiStatus', 'unwatched')
+                ->whereIn('ForumPostId', $forumPostIds)
+                ->count();
 
-        // Count discussion notifications with NotiStatus 'unwatched' for the user's forum posts.
-        $discussionCount = Discussion::where('NotiStatus', 'unwatched')
-            ->whereIn('ForumPostId', $forumPostIds)
-            ->count();
+            $totalNotifications = $subscriptionCount + $discussionCount;
+        } catch (\Exception $e) {
+            // on any error, default to zero
+            \Log::warning('totalCount failed: ' . $e->getMessage());
+            $totalNotifications = 0;
+        }
 
-        $totalNotifications = $subscriptionCount + $discussionCount;
-
+        // 3) Always return 200
         return response()->json([
             'total_notifications' => $totalNotifications,
-        ]);
+        ], 200);
     }
 
 }
