@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { detail } from "../../../api/resourceApi";
+import { detail, incrementView } from "../../../api/resourceApi";
 
 import axios from "axios";
 import { FaStar, FaTrash } from "react-icons/fa";
@@ -171,7 +171,9 @@ function ResourceDetail() {
             <button
               className="mt-3 btn btn-primary  text-white p-3"
               style={{ borderRadius: "10px" }}
-              onClick={() => navigate(`/Admin/ReadResource/${id}`)}
+              onClick={() => {
+                navigate(`/Admin/ReadResource/${id}`);
+              }}
             >
               View Resource
             </button>

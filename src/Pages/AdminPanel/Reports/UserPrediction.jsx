@@ -167,13 +167,13 @@ function UserPrediction() {
               )}
             </strong>
           </p>
-          <p>
+          {/* <p>
             Accuracy:{" "}
             <strong>
               {currentData.Accuracy ||
                 (currentData.metrics && currentData.metrics.accuracy)}
             </strong>
-          </p>
+          </p> */}
         </div>
       )}
       <button onClick={handlePredict} disabled={isLoading}>

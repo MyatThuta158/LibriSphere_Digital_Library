@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { detail } from "../../api/resourceApi";
+import { detail, incrementView } from "../../api/resourceApi";
 import Menu from "../Layouts/Menu";
 import axios from "axios";
 import { FaStar, FaEdit, FaTrash } from "react-icons/fa";
@@ -87,6 +87,13 @@ function ResourceDetail() {
     setErrorMessage("");
   };
 
+  //----This increment the count----//
+
+  const incrementViewCount = async (id) => {
+    const res = await incrementView(id);
+
+    console.log("count".res);
+  };
   // Delete review when user clicks the delete icon
   const handleDeleteReview = async (reviewId) => {
     try {
@@ -209,7 +216,10 @@ function ResourceDetail() {
             <p className="fw-bold">Publish Date: {resource.publish_date}</p>
             {/* Download Button */}
             <div
-              onClick={() => navigate(`/library/ReadResource/${id}`)}
+              onClick={() => {
+                navigate(`/library/ReadResource/${id}`);
+                incrementViewCount(id);
+              }}
               className="btn btn-dark mt-3"
             >
               Read Resource

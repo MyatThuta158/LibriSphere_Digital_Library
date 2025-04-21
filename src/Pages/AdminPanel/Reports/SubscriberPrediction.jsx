@@ -222,9 +222,9 @@ function SubscriberPrediction() {
               {formatDate(currentData[selectedPlan].PredictedDate)}
             </strong>
           </p>
-          <p>
+          {/* <p>
             Accuracy: <strong>{currentData[selectedPlan].Accuracy}</strong>
-          </p>
+          </p> */}
         </div>
       )}
 

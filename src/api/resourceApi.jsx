@@ -20,6 +20,11 @@ export const search = (query) =>
 export const detail = (id) =>
   apiClient.get(`/resource/${id}`).then((res) => res.data);
 
+//--------This increment the view count -=-------//
+//-----This is the retrieve for resource detail----///
+export const incrementView = (id) =>
+  apiClient.get(`/increment/view/${id}`).then((res) => res.data);
+
 //-----This is the update function for resource----///
 export const resourceUpdate = (id, data) =>
   apiClient.post(`/Admin/UpdateResource/${id}`, data).then((res) => res.data);
