@@ -45,6 +45,7 @@ import SubscriberRevenuePrediction from "../Pages/AdminPanel/Reports/SubscriberR
 import ViewAllUsers from "../Pages/AdminPanel/Users/ViewAllUsers";
 import SubscriptionTableReport from "../Pages/AdminPanel/Reports/SubscriptionTableReport";
 import UserTableReport from "../Pages/AdminPanel/Reports/UserTableReport";
+import ManagerDashboard from "../Pages/AdminPanel/Dashboard/ManagerDashboard";
 
 function AdminRoute() {
   return (
@@ -149,6 +150,11 @@ function AdminRoute() {
           <Route
             path="/Admin/LibrarianDashboard"
             element={<LibrarianDashboard />}
+          />
+
+          <Route
+            path="/Admin/ManagerDashboard"
+            element={<ManagerDashboard />}
           />
 
           {/* This is for announcement  */}
