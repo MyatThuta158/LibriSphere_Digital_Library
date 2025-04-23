@@ -113,6 +113,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/table/report', [App\Http\Controllers\ReportController::class, 'userTableReport']);
 
     Route::get('/increment/view/{id}', [App\Http\Controllers\ResourcesController::class, 'incrementView']);
+
+    Route::get('/manager/dashboard', [App\Http\Controllers\DashboardController::class, 'managerDashboard']);
+
+    Route::delete('/forum/posts/delete/{id}', [App\Http\Controllers\ForumPostController::class, 'destroy']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);

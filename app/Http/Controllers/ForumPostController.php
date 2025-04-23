@@ -172,28 +172,37 @@ class ForumPostController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ForumPost $forumPost)
+    public function destroy($id)
     {
         try {
-            // Delete associated files if they exist
-            if ($forumPost->Photo1 && Storage::exists($forumPost->Photo1)) {
-                Storage::delete($forumPost->Photo1);
-            }
-            if ($forumPost->Photo2 && Storage::exists($forumPost->Photo2)) {
-                Storage::delete($forumPost->Photo2);
-            }
-            if ($forumPost->Photo3 && Storage::exists($forumPost->Photo3)) {
-                Storage::delete($forumPost->Photo3);
-            }
-            if ($forumPost->File && Storage::exists($forumPost->File)) {
-                Storage::delete($forumPost->File);
+                                                     // 1. Retrieve the post or fail
+            $forumPost = ForumPost::findOrFail($id); // :contentReference[oaicite:1]{index=1}
+
+            // 2. Delete associated files if they exist
+            foreach (['Photo1', 'Photo2', 'Photo3', 'File'] as $field) {
+                $path = $forumPost->{$field};
+                if ($path && Storage::exists($path)) {
+                    Storage::delete($path);
+                }
             }
 
-            $forumPost->delete();
+                                  // 3. Delete the model
+            $forumPost->delete(); // :contentReference[oaicite:2]{index=2}
 
-            return response()->json(['success' => true, 'message' => 'Forum post deleted successfully'], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Forum post deleted successfully',
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forum post not found',
+            ], 404);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
         }
     }
     public function userPosts($id)
