@@ -27,3 +27,6 @@ export const postsEngagement = (id) =>
 //---------this is total forum engagement---//
 export const totalEngagement = (id) =>
   apiClient.get(`/userposts/totalengagement/${id}`).then((res) => res.data);
+
+export const deletePosts = (id) =>
+  apiClient.delete(`/forum/posts/delete/${id}`).then((res) => res.data);

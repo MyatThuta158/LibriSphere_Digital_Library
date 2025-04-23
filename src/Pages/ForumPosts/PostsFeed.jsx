@@ -39,11 +39,9 @@ function PostsFeed() {
   // Define the number of posts to load per batch.
   const batchSize = 10;
 
+  const userStorage = JSON.parse(localStorage.getItem("user") || "{}");
   // Simulated current user; replace with actual auth data as needed.
-  const currentUser = {
-    name: "John Doe",
-    ProfilePic: null,
-  };
+  const currentUser = userStorage;
 
   // Forbidden keywords list.
   const forbiddenKeywords = ["$", "sales", "cash on delivery", "COD", "price"];
@@ -599,7 +597,7 @@ function PostsFeed() {
                 <img
                   src={
                     currentUser.ProfilePic
-                      ? `${baseStorageUrl}/${currentUser.ProfilePic}`
+                      ? `http://127.0.0.1:8000/storage/${currentUser.ProfilePic}`
                       : "/Customer/pic.jpg"
                   }
                   alt="User Avatar"
