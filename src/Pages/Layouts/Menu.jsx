@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import "../../main.css";
 import { Ability } from "../../Authentication/PermissionForUser";
 // Import API functions (adjust the paths as necessary)
@@ -10,6 +10,9 @@ import {
 import { useAuth } from "../../Authentication/Auth";
 
 function Menu() {
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
   const navigate = useNavigate();
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
@@ -55,6 +58,8 @@ function Menu() {
   }, [state]);
 
   //console.log("user pic", notificationCount);
+
+  const isCommunityActive = location.pathname.startsWith("/community");
 
   return (
     <div>
@@ -104,27 +109,42 @@ function Menu() {
             <ul className="navbar-nav">
               <li className="nav-item">
                 <a
-                  className="nav-link text-white"
+                  className={`nav-link ${
+                    isActive("/library/Home") ? "text-dark" : "text-white"
+                  }`}
+                  onClick={(e) => {
+                    navigate("/library/Home");
+                  }}
                   style={{ cursor: "pointer" }}
-                  onClick={() => navigate("/library/Home")}
                 >
                   HOME
                 </a>
               </li>
               <li className="nav-item">
                 <a
-                  className="nav-link text-white"
-                  onClick={() => navigate("/About")}
+                  className={`nav-link ${
+                    isActive("/library/About") ? "text-dark" : "text-white"
+                  }`}
+                  onClick={() => {
+                    navigate("/about");
+                  }}
+                  style={{ cursor: "pointer" }}
                 >
-                  ABOUT
+                  About
                 </a>
               </li>
               {isMember && (
                 <>
                   <li className="nav-item">
                     <a
-                      className="nav-link text-white"
-                      onClick={() => navigate("/library/Resource")}
+                      className={`nav-link ${
+                        isActive("/library/Resource")
+                          ? "text-dark"
+                          : "text-white"
+                      }`}
+                      onClick={() => {
+                        navigate("/library/Resource");
+                      }}
                       style={{ cursor: "pointer" }}
                     >
                       RESOURCES
@@ -133,8 +153,14 @@ function Menu() {
                   {ability.can("make", "request") && (
                     <li className="nav-item">
                       <a
-                        className="nav-link text-white"
-                        onClick={() => navigate("/library/ResourceRequest")}
+                        className={`nav-link ${
+                          isActive("/library/ResourceRequest")
+                            ? "text-dark"
+                            : "text-white"
+                        }`}
+                        onClick={() => {
+                          navigate("/library/ResourceRequest");
+                        }}
                         style={{ cursor: "pointer" }}
                       >
                         RESOURCE REQUEST
@@ -145,35 +171,41 @@ function Menu() {
                   {user?.role === "community_member" && (
                     <li className="nav-item">
                       <a
-                        className="nav-link text-white"
-                        style={{ background: "#4e73df", cursor: "pointer" }}
-                        onClick={() => navigate("/Membership")}
+                        className={`nav-link ${
+                          isActive("/Membership") ? "text-dark" : "text-white"
+                        }`}
+                        onClick={() => {
+                          navigate("/Membership");
+                        }}
+                        style={{ cursor: "pointer" }}
                       >
                         Subscription plans
                       </a>
                     </li>
                   )}
 
-                  {userRole === "member" ||
-                    userRole === "librarian" ||
-                    (userRole === "manager" && (
-                      <li className="nav-item">
-                        <a
-                          onClick={() => navigate("/announcement")}
-                          className="text-white nav-link"
-                          style={{ cursor: "pointer" }}
-                        >
-                          Announcements
-                        </a>
-                      </li>
-                    ))}
+                  <li className="nav-item">
+                    <a
+                      className={`nav-link ${
+                        isActive("/announcement") ? "text-dark" : "text-white"
+                      }`}
+                      onClick={() => {
+                        navigate("/announcement");
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      Announcements
+                    </a>
+                  </li>
 
                   {/* Community routes dropdown menu */}
                   {(userRole === "community_member" ||
                     userRole === "member") && (
                     <li className="nav-item dropdown">
                       <a
-                        className="nav-link dropdown-toggle text-white"
+                        className={`nav-link dropdown-toggle ${
+                          isCommunityActive ? "text-dark" : "text-white"
+                        }`}
                         id="communityDropdown"
                         role="button"
                         data-bs-toggle="dropdown"
@@ -187,50 +219,50 @@ function Menu() {
                         style={{ background: "#4e73df" }}
                       >
                         <li>
-                          <button
-                            className="dropdown-item text-white"
-                            style={{ background: "#4e73df" }}
-                            onClick={() => navigate("/community/posts")}
+                          <a
+                            className={`nav-link ${
+                              isActive("/community/posts")
+                                ? "text-dark"
+                                : "text-white"
+                            }`}
+                            onClick={() => {
+                              navigate("/community/posts");
+                            }}
+                            style={{ cursor: "pointer" }}
                           >
                             Post Feed
-                          </button>
+                          </a>
                         </li>
                         <li>
-                          <button
-                            className="dropdown-item text-white"
-                            style={{ background: "#4e73df" }}
-                            onClick={() =>
-                              navigate("/community/useruploadedpost")
-                            }
+                          <a
+                            className={`nav-link ${
+                              isActive("/community/useruploadedpost")
+                                ? "text-dark"
+                                : "text-white"
+                            }`}
+                            onClick={() => {
+                              navigate("/community/useruploadedpost");
+                            }}
+                            style={{ cursor: "pointer" }}
                           >
                             User Posts
-                          </button>
+                          </a>
                         </li>
+
                         <li>
-                          <button
-                            className="dropdown-item text-white"
-                            style={{ background: "#4e73df" }}
-                            onClick={() => navigate("/community/notification")}
-                          >
-                            {" "}
-                            Notifications{" "}
-                            {notificationCount > 0 && (
-                              <span className="badge bg-danger ms-1">
-                                {notificationCount}
-                              </span>
-                            )}
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            className="dropdown-item text-white"
-                            style={{ background: "#4e73df" }}
-                            onClick={() =>
-                              navigate("/community/posts/postengagement")
-                            }
+                          <a
+                            className={`nav-link ${
+                              isActive("/community/posts/postengagement")
+                                ? "text-dark"
+                                : "text-white"
+                            }`}
+                            onClick={() => {
+                              navigate("/community/posts/postengagement");
+                            }}
+                            style={{ cursor: "pointer" }}
                           >
                             Post Engagement
-                          </button>
+                          </a>
                         </li>
                       </ul>
                     </li>
@@ -364,29 +396,37 @@ function Menu() {
                                   </li>
                                 </>
                               )}
-                              <li>
-                                <a
-                                  className="dropdown-item text-white"
-                                  style={{ color: "black" }}
-                                  onClick={() => navigate("/community/posts")}
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                    className="bi bi-door-closed me-2"
-                                    viewBox="0 0 16 16"
-                                  >
-                                    <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
-                                    <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
-                                  </svg>
-                                  Go to Community
-                                </a>
-                              </li>
-                              <li>
-                                <hr className="dropdown-divider" />
-                              </li>
+
+                              {userRole !== "community_member" && (
+                                <>
+                                  <li>
+                                    <a
+                                      className="dropdown-item text-white"
+                                      style={{ color: "black" }}
+                                      onClick={() =>
+                                        navigate("/community/posts")
+                                      }
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        fill="currentColor"
+                                        className="bi bi-door-closed me-2"
+                                        viewBox="0 0 16 16"
+                                      >
+                                        <path d="M3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13h1.5a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1H3zm1 13h8V2H4z" />
+                                        <path d="M9 9a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
+                                      </svg>
+                                      Go to Community
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <hr className="dropdown-divider" />
+                                  </li>
+                                </>
+                              )}
+
                               <li>
                                 <button
                                   className="dropdown-item text-white"

@@ -21,6 +21,8 @@ import {
 import MemberRegister from "./Pages/MemberPages/MemberRegister"; // Replace with the correct path
 import Payment from "./Pages/MemberPages/Payment"; // Replace with the correct path
 import Membership from "./Pages/MemberPages/Membership";
+import Announcement from "./Pages/MemberPages/Announcement";
+import About from "./Pages/About";
 
 function AppWithRolePermission() {
   const { user } = useAuth();
@@ -51,6 +53,9 @@ function AppWithRolePermission() {
                 </MembershipProvider>
               }
             />
+
+            <Route path="about" element={<About />} />
+            <Route path="announcement" element={<Announcement />} />
             <Route
               path="/UserRegister"
               element={

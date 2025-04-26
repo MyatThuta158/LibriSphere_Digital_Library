@@ -202,7 +202,7 @@ function ResourceDisplay() {
           }}
         >
           <div className="container h-100 d-flex flex-column justify-content-center align-items-center">
-            <h1 className="mb-2">Digital Library Resources</h1>
+            <h1 className="mb-2 text-white">Digital Library Resources</h1>
             <p className="mb-4">Explore our collection of digital materials</p>
             {/* Search bar and selection options */}
             <div className="w-100" style={{ maxWidth: "600px" }}>

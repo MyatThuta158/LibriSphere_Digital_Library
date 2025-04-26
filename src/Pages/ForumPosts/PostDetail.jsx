@@ -14,6 +14,7 @@ import {
   getVoters,
   deleteVote,
 } from "../../api/voteApi";
+import { deletePosts } from "../../api/forumpostApi";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import Slider from "react-slick";
 import VoterLists from "./Layout/VoterLists";
@@ -313,15 +314,18 @@ function PostDetail() {
     setShowPostDeleteModal(true);
   };
 
-  const confirmPostDelete = async () => {
-    try {
-      // Uncomment and implement deletePost if needed.
-      // await deletePost(id);
-      navigate("/forum");
-    } catch (err) {
-      console.error("Error deleting post:", err);
-    }
-    setShowPostDeleteModal(false);
+  const confirmPostDelete = () => {
+    deletePosts(id)
+      .then((res) => {
+        console.log("Deleted post:", res);
+        navigate(-1);
+      })
+      .catch((err) => {
+        console.error("Error deleting post:", err);
+      })
+      .finally(() => {
+        setShowPostDeleteModal(false);
+      });
   };
 
   const cancelPostDelete = () => {
@@ -625,7 +629,7 @@ function PostDetail() {
                           src={
                             comment.user?.ProfilePic
                               ? `http://127.0.0.1:8000/storage/${comment.user.ProfilePic}`
-                              : "http://127.0.0.1:8000/storage/default-avatar.png"
+                              : "/Customer/pic.jpg"
                           }
                           alt="Comment User Avatar"
                         />
@@ -793,7 +797,7 @@ function PostDetail() {
                 <img
                   src={
                     storedUser && storedUser.ProfilePic
-                      ? `http://127.0.0.1:8000/${storedUser.ProfilePic}`
+                      ? `http://127.0.0.1:8000/storage/${storedUser.ProfilePic}`
                       : "/Customer/pic.jpg"
                   }
                   alt="User Avatar"
