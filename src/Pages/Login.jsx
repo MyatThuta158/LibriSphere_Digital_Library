@@ -186,8 +186,10 @@ function Login() {
       if (elapsed <= oneDayMs && auth.user) {
         // route based on role
         const role = auth.user.role;
-        if (role === "admin") {
-          navigate("/Admin/ViewAuthors", { replace: true });
+        if (role === "librarian") {
+          navigate("/Admin/LibrarianDashboard", { replace: true });
+        } else if (role === "manager") {
+          navigate("/Admin/ManagerDashboard", { replace: true });
         } else if (role === "community_member") {
           navigate("/community/posts", { replace: true });
         } else {
@@ -278,11 +280,12 @@ function Login() {
             <input
               type="password"
               id="password"
+              name="password"
               className="form-control"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
-              autoComplete="current-password"
             />
           </div>
           <button type="submit" className="btn btn-primary w-100">

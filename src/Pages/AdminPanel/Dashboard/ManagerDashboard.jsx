@@ -155,7 +155,7 @@ export default function ManagerDashboard() {
           },
           {
             label: "Revenue (This Month)",
-            value: data.currentMonthRevenue,
+            value: `$ ${data.currentMonthRevenue}`,
             color: "warning",
           },
         ].map(({ label, value, color }) => (

@@ -20,6 +20,10 @@ export const search = (query) =>
 export const detail = (id) =>
   apiClient.get(`/resource/${id}`).then((res) => res.data);
 
+// Resource delete
+export const deleteResource = (id) =>
+  apiClient.delete(`/resource/delete/${id}`).then((res) => res.data);
+
 //--------This increment the view count -=-------//
 //-----This is the retrieve for resource detail----///
 export const incrementView = (id) =>

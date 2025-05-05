@@ -281,8 +281,8 @@ function ResourceDisplay() {
                 </Button>
               </div>
               {/* Reset Filters Button */}
-              <div className="text-center">
-                <Button variant="secondary" onClick={resetFilters}>
+              <div className="text-center ">
+                <Button variant="primary" onClick={resetFilters}>
                   Show All Resources
                 </Button>
               </div>

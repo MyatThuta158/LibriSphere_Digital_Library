@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,7 +10,7 @@ import {
   Legend,
 } from "chart.js";
 import { getSubscriberPredict } from "../../../api/predictionApi";
-import { adminMembership } from "../../../api/membershipApi"; // Adjust the import path if needed
+import { storeRevenue, getRevenue } from "../../../api/predictionstoreApi";
 
 ChartJS.register(
   CategoryScale,
@@ -21,30 +21,59 @@ ChartJS.register(
   Legend
 );
 
-// Helper function to format ISO date string to "YYYY-MM-DD"
 const formatDate = (dateString) => {
   if (!dateString) return "";
   return dateString.includes("T") ? dateString.split("T")[0] : dateString;
 };
 
 function SubscriberRevenuePrediction() {
-  const [currentData, setCurrentData] = useState({}); // Object mapping plan names to computed prediction records
-  const [availablePlans, setAvailablePlans] = useState([]); // List of unique plan names
-  const [selectedPlan, setSelectedPlan] = useState("");
+  const [currentData, setCurrentData] = useState({});
+  const [availableTypes, setAvailableTypes] = useState([]);
+  const [selectedType, setSelectedType] = useState("");
   const [chartData, setChartData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Build chart data for the selected plan.
-  const buildChartData = (planRecord) => {
-    if (!planRecord) return;
-    const next7 = planRecord.predictions.next_7_days;
-    const next14 = planRecord.predictions.next_14_days;
-    const next28 = planRecord.predictions.next_28_days;
-    const chart = {
+  const parseAccuracy = (acc) => {
+    if (typeof acc === "string") {
+      return parseFloat(acc.replace("%", ""));
+    }
+    return acc;
+  };
+
+  const filterStoredData = (data) => {
+    const grouped = {};
+    data.forEach((item) => {
+      const revenueType = item.SubscriptionPlanName;
+      if (
+        !grouped[revenueType] ||
+        parseAccuracy(item.Accuracy) >
+          parseAccuracy(grouped[revenueType].Accuracy)
+      ) {
+        grouped[revenueType] = item;
+      }
+    });
+    return grouped;
+  };
+
+  const buildChartData = (typeRecord) => {
+    if (!typeRecord) return;
+    let next7, next14, next28;
+
+    if (typeRecord.predictions) {
+      next7 = typeRecord.predictions.next_7_days;
+      next14 = typeRecord.predictions.next_14_days;
+      next28 = typeRecord.predictions.next_28_days;
+    } else {
+      next7 = typeRecord["7DaysReport"];
+      next14 = typeRecord["14DaysReport"];
+      next28 = typeRecord["28DaysReport"];
+    }
+
+    setChartData({
       labels: ["Next 7 days", "Next 14 days", "Next 28 days"],
       datasets: [
         {
-          label: `${selectedPlan} Predicted Revenue`,
+          label: `${selectedType} Revenue Prediction`,
           data: [next7, next14, next28],
           backgroundColor: [
             "rgba(75, 192, 192, 0.6)",
@@ -53,143 +82,142 @@ function SubscriberRevenuePrediction() {
           ],
         },
       ],
-    };
-    setChartData(chart);
+    });
   };
 
-  // When the selected plan changes, update the chart.
-  React.useEffect(() => {
-    if (currentData && selectedPlan && currentData[selectedPlan]) {
-      buildChartData(currentData[selectedPlan]);
-    }
-  }, [selectedPlan, currentData]);
+  // Fetch stored predictions on mount
+  useEffect(() => {
+    const fetchStoredRevenue = async () => {
+      try {
+        const response = await getRevenue();
+        if (response?.data) {
+          const filtered = filterStoredData(response.data);
+          setCurrentData(filtered);
+          const types = Object.keys(filtered);
+          setAvailableTypes(types);
+          if (types.length > 0) {
+            setSelectedType(types[0]);
+            buildChartData(filtered[types[0]]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching revenue data:", error);
+      }
+    };
+    fetchStoredRevenue();
+  }, []);
 
-  // Handle the prediction: call both APIs, multiply predictions by membership price, then update state.
+  // Rebuild chart when selection or data changes
+  useEffect(() => {
+    if (currentData[selectedType]) {
+      buildChartData(currentData[selectedType]);
+    }
+  }, [selectedType, currentData]);
+
   const handlePredict = async () => {
     setIsLoading(true);
     try {
-      // Get predictions from the ML API.
-      const predictionRes = await getSubscriberPredict();
-      // Get membership plans.
-      const membershipRes = await adminMembership();
+      const res = await getSubscriberPredict();
+      const currentDate = new Date().toISOString().split("T")[0];
+      const admin = JSON.parse(localStorage.getItem("user"));
+      const adminId = admin?.id;
 
-      // console.log(membershipRes);
-      // Assuming membershipRes is in the form: { data: [ { PlanName, Price, ... }, ... ] }
-      const membershipPlans = membershipRes;
-      // Build a lookup map for membership plans using PlanName as the key.
-      const membershipMap = {};
-      membershipPlans.forEach((plan) => {
-        membershipMap[plan.PlanName] = plan;
-      });
+      const payload = Object.keys(res).map((planName) => ({
+        SubscriptionPlanName: planName,
+        Accuracy: res[planName].metrics?.accuracy
+          ? `${(res[planName].metrics.accuracy * 100).toFixed(0)}%`
+          : "0%",
+        PredictedDate: currentDate,
+        "7DaysReport":
+          res[planName].predictions?.next_7_days?.toString() || "0",
+        "14DaysReport":
+          res[planName].predictions?.next_14_days?.toString() || "0",
+        "28DaysReport":
+          res[planName].predictions?.next_28_days?.toString() || "0",
+        AdminId: adminId,
+      }));
 
-      // Process predictions: Multiply each predicted subscription count by the membership plan price.
       const newData = {};
-      Object.keys(predictionRes).forEach((planName) => {
-        const prediction = predictionRes[planName];
-        // Use a default price of 1 if the membership plan is not found.
-        const price = membershipMap[planName]
-          ? parseFloat(membershipMap[planName].Price)
-          : 1;
-        newData[planName] = {
-          predictions: {
-            next_7_days: prediction.predictions.next_7_days * price,
-            next_14_days: prediction.predictions.next_14_days * price,
-            next_28_days: prediction.predictions.next_28_days * price,
-          },
-          Accuracy:
-            prediction.metrics && prediction.metrics.accuracy
-              ? (prediction.metrics.accuracy * 100).toFixed(0) + "%"
-              : "0%",
-          // Use the current date as the predicted date.
-          PredictedDate: new Date().toISOString().split("T")[0],
+      payload.forEach((item) => {
+        newData[item.SubscriptionPlanName] = {
+          SubscriptionPlanName: item.SubscriptionPlanName,
+          Accuracy: item.Accuracy,
+          PredictedDate: item.PredictedDate,
+          "7DaysReport": parseInt(item["7DaysReport"], 10),
+          "14DaysReport": parseInt(item["14DaysReport"], 10),
+          "28DaysReport": parseInt(item["28DaysReport"], 10),
         };
       });
 
-      // Update state.
       setCurrentData(newData);
-      const plans = Object.keys(newData);
-      setAvailablePlans(plans);
-      if (plans.length > 0) {
-        setSelectedPlan(plans[0]);
-        buildChartData(newData[plans[0]]);
+      setAvailableTypes(Object.keys(newData));
+      if (Object.keys(newData).length > 0) {
+        setSelectedType(Object.keys(newData)[0]);
       }
+
+      await storeRevenue({ data: payload });
+      console.log("Predictions stored successfully");
     } catch (error) {
-      console.error("Error during prediction:", error);
-      alert("An error occurred during prediction.");
+      console.error("Prediction error:", error);
+      alert("Error generating predictions");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 1) Define chart options with a tooltip callback that adds '$'
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = context.parsed.y; // parsed.y holds the bar value :contentReference[oaicite:0]{index=0}
+            return `$${value}`; // prepend dollar sign :contentReference[oaicite:1]{index=1}
+          },
+        },
+      },
+    },
+  };
+
   return (
     <div>
-      <h2>Subscriber Revenue Prediction Report</h2>
+      <h2>Revenue Predictions</h2>
 
-      {/* Dynamic dropdown based on unique SubscriptionPlanName */}
-      {availablePlans.length > 0 && (
+      {availableTypes.length > 0 && (
         <div>
-          <label htmlFor="plan-select">Select Membership Type: </label>
+          <label>Select Membership Type: </label>
           <select
-            id="plan-select"
-            value={selectedPlan}
-            onChange={(e) => setSelectedPlan(e.target.value)}
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
           >
-            {availablePlans.map((plan) => (
-              <option key={plan} value={plan}>
-                {plan}
+            {availableTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
               </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* Display last predicted date and accuracy for the selected plan */}
-      {currentData && selectedPlan && currentData[selectedPlan] && (
-        <div>
-          <p>
-            Last Predicted Date:{" "}
-            <strong>
-              {formatDate(currentData[selectedPlan].PredictedDate)}
-            </strong>
-          </p>
-          <p>
-            Accuracy: <strong>{currentData[selectedPlan].Accuracy}</strong>
-          </p>
-        </div>
+      {currentData[selectedType] && (
+        <p>
+          Last Predicted Date:{" "}
+          <strong>{formatDate(currentData[selectedType].PredictedDate)}</strong>
+        </p>
       )}
 
       <button onClick={handlePredict} disabled={isLoading}>
-        {isLoading ? "Predicting..." : "Make Predict"}
+        {isLoading ? "Generating..." : "Generate Predictions"}
       </button>
 
-      {/* Render the bar chart if chart data is available */}
       {chartData ? (
-        <div style={{ width: "70%", height: "60vh", margin: "0 auto" }}>
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      let label = context.dataset.label || "";
-                      if (label) {
-                        label += ": ";
-                      }
-                      if (context.parsed.y !== null) {
-                        label += "$" + context.parsed.y;
-                      }
-                      return label;
-                    },
-                  },
-                },
-              },
-            }}
-          />
+        <div style={{ width: "70%", height: "60vh" }}>
+          {/* 2) Pass chartOptions into the Bar component */}
+          <Bar data={chartData} options={chartOptions} />
         </div>
       ) : (
-        <p>No prediction data available.</p>
+        <p>No revenue prediction data available</p>
       )}
     </div>
   );

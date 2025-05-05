@@ -26,7 +26,7 @@ function ShowAnnouncment() {
     try {
       const dataResult = await getAnnouncements();
       console.log(dataResult);
-      return dataResult.data.data;
+      return dataResult.data;
     } catch (err) {
       setMessage(err);
       return [];

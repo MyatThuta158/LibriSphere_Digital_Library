@@ -3,10 +3,12 @@ import Menu from "../Layouts/Menu";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { getResources } from "../../api/resourceApi";
 import { Card, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 function Home1() {
   const [resource, setResource] = useState([]);
   const [hoveredItem, setHoveredItem] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResource = async () => {
@@ -18,7 +20,37 @@ function Home1() {
     fetchResource();
   });
 
-  //console.log(resource);
+  const faqData = [
+    {
+      question: "How do I create an account and get my digital library card?",
+      answer:
+        'Click the "Sign Up" button at the top right, complete the registration form with your details, and verify your email. Your digital library card will appear instantly in your profile, granting you access to all member services.',
+    },
+    {
+      question: "How can I find the books or articles I need?",
+      answer:
+        "Use the search bar at the top to enter keywords, titles, or authors. Apply filters like format, publication date, and subject on the results page to narrow down your search.",
+    },
+    {
+      question: "What is the borrowing limit and how do I renew items?",
+      answer:
+        'Each member can borrow up to 5 e-books and 3 audiobooks at a time for a loan period of 21 days. To renew, go to "My Loans" and select "Renew" if no one else is waiting for that item.',
+    },
+    {
+      question: "Can I download books for offline reading?",
+      answer:
+        'Yes. Available e-books and audiobooks have a "Download" button on their details page. Tap it to save the file for offline access in our mobile app or desktop reader.',
+    },
+    {
+      question: "What accessibility features are supported?",
+      answer:
+        'We offer adjustable font sizes, high-contrast mode, text-to-speech playback, and screen-reader compatibility throughout the site. Visit "Accessibility Options" in your profile to customize your experience.',
+    },
+  ];
+
+  const [activeIndex, setActiveIndex] = useState(null);
+  const toggle = (index) =>
+    setActiveIndex(activeIndex === index ? null : index);
   return (
     <HelmetProvider>
       <Helmet>
@@ -33,24 +65,28 @@ function Home1() {
               READ. LEARN. ACCESS.
             </h2>
             <p data-aos="fade-up" data-aos-delay="200">
-              LibriSphere gives you access to Audiobooks, eBooks, Music, Movies
-              and Comics.
+              LibriSphere gives you access to eBooks, historical books, old and
+              rare videos and source of legendary videos.
             </p>
             <div
               className="d-flex mt-4"
               data-aos="fade-up"
               data-aos-delay="300"
             >
-              <a href="#about" className="btn-get-started">
+              <a
+                href="#about"
+                className="btn-get-started"
+                onClick={() => navigate("/Membership")}
+              >
                 Start Membership
               </a>
-              <a
+              {/* <a
                 href="https://www.youtube.com/watch?v=Y7f98aduVJ8"
                 className="glightbox btn-watch-video d-flex align-items-center"
               >
                 <i className="bi bi-play-circle"></i>
                 <span>Watch Video</span>
-              </a>
+              </a> */}
             </div>
           </div>
         </section>
@@ -187,19 +223,23 @@ function Home1() {
                 -
               </div>
               <p className="mt-4 text-justify w-75 mx-auto">
-                Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis
-                aute irure dolor in reprehenderit in voluptate velit esse cillum
-                dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-                cupidatat non proident, sunt in culpa qui officia deserunt
-                mollit anim id est laborumLorem ipsum dolor sit amet,
-                consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-                labore et dolore magna aliqua. Ullamco laboris nisi ut aliquip
-                ex ea commodo consequat. Duis aute irure dolor in reprehenderit
-                in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-                Excepteur sint occaecat cupidatat non proident, sunt in culpa
-                qui officia deserunt mollit anim id est laborumLorem ipsum dolor
-                sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua.
+                LibriSphere is a prominent digital library in Myanmar that was
+                founded by a group of young entrepreneurs in 2020. Formerly,
+                LibriSphere is founded under the name of “READ e-books
+                collection” and that name was changed in 2021 in order to
+                recognize more for readers. This shift marks the library to
+                become known not only as Myanmar’s first digital library but
+                also as a vast digital resource for international readers to
+                make entrainment and research. LibriSphere is offering vast of
+                digital resources such as books, research paper, newspaper and
+                more for entertainment and academic purpose. Due to the digital
+                edge, people want to read books through mobile devices and some
+                resources can only have digital copies to make research and
+                more. Therefore, the library is prominent quickly and there can
+                attract readers not only for local but also for international.
+                Therefore, there are two thousand active library members
+                currently and member based are became larger and larger during
+                four years due to diverse collection of digital resources.
               </p>
             </div>
             <div
@@ -393,41 +433,43 @@ function Home1() {
                 data-aos="fade-up"
               >
                 <p>
-                  Cupiditate placeat cupiditate placeat est ipsam culpa.
-                  Delectus quia minima quod. Sunt saepe odit aut quia voluptatem
-                  hic voluptas dolor doloremque. Cupiditate placeat cupiditate
-                  placeat est ipsam culpa. Delectus quia minima quod. Sunt saepe
-                  odit aut quia voluptatem hic voluptas dolor
-                  doloremque.Cupiditate placeat cupiditate placeat est ipsam
-                  culpa. Delectus quia minima quod. Sunt saepe odit aut quia
-                  voluptatem hic voluptas dolor doloremque.Cupiditate placeat
-                  cupiditate placeat est ipsam culpa. Delectus quia minima quod.
-                  Sunt saepe odit aut quia voluptatem hic voluptas dolor
-                  doloremque.
+                  Digital library member-side features encompass a comprehensive
+                  suite of functionalities designed to enhance user engagement,
+                  streamline information discovery, and facilitate personalized
+                  access to digital resources. Members can register and manage
+                  their profiles through secure authentication mechanisms,
+                  including instant digital cards and multi-factor verification
+                  Overdrive's Resource Center . They benefit from robust search
+                  and discovery tools with full-text, faceted, and advanced
+                  Boolean search capabilities Digital Commons Informa TechTarget
+                  , as well as 24/7 remote access to a vast array of multimedia
+                  content, with support for simultaneous users and offline
+                  downloads
                 </p>
                 <ul>
                   <li>
                     <i className="bi bi-check"></i>{" "}
                     <span>
-                      Ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                      Faceted Browsing and Metadata Filters: Users refine
+                      results by author, subject, date, format, and other
+                      metadata facets, enabling precise discovery tailored to
+                      research needs
                     </span>
                   </li>
                   <li>
                     <i className="bi bi-check"></i>
                     <span>
                       {" "}
-                      Duis aute irure dolor in reprehenderit in voluptate velit.
+                      24/7 Remote Access: Digital libraries eliminate physical
+                      boundaries, granting continuous access to resources from
+                      any location with Internet connectivity
                     </span>
-                  </li>
-                  <li>
-                    <i className="bi bi-check"></i>{" "}
-                    <span>
-                      Facilis ut et voluptatem aperiam. Autem soluta ad fugiat
-                    </span>
-                    .
                   </li>
                 </ul>
-                <a href="#" className="btn btn-get-started align-self-start">
+                <a
+                  className="btn btn-get-started align-self-start"
+                  onClick={() => navigate("/UserRegister")}
+                >
                   Get Started
                 </a>
               </div>
@@ -552,7 +594,7 @@ function Home1() {
           }
         `}</style>
 
-        <section id="pricing" className="pricing section">
+        {/* <section id="pricing" className="pricing section">
           <div className="container section-title" data-aos="fade-up">
             <h2>Subscription Plans</h2>
             <span>
@@ -652,7 +694,7 @@ function Home1() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Section Title */}
 
@@ -724,8 +766,12 @@ function Home1() {
                   <h4>Sarah Jhonson</h4>
                   <span>3 year member</span>
                   <p>
-                    Labore ipsam sit consequatur exercitationem rerum laboriosam
-                    laudantium aut quod dolores exercitationem ut
+                    Very happy I started using LibriSphere! It's another great
+                    reason to have a library card. My only complaint is that I
+                    have notifications turned on for when a hold is ready, but
+                    they don't seem to work. I had a hold lapse and had to wait
+                    another couple weeks for the book because of this. Other
+                    notifications (like loan expiring) are working properly.
                   </p>
                 </div>
               </div>
@@ -756,18 +802,19 @@ function Home1() {
                   <h4>William Anderson</h4>
                   <span>5 year member</span>
                   <p>
-                    Illum minima ea autem doloremque ipsum quidem quas
-                    aspernatur modi ut praesentium vel tque sed facilis at qui
+                    I have always extolled the virtues of public libraries and
+                    now that I can carry the library with me on my iPad, I tell
+                    everyone I know about LibriSphere.
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </section>
-
         <section id="faq" className="faq section">
           <div className="container">
             <div className="row gy-4">
+              {/* Intro column */}
               <div className="col-lg-4" data-aos="fade-up" data-aos-delay="100">
                 <div className="content px-xl-5">
                   <h3>
@@ -775,284 +822,47 @@ function Home1() {
                     <strong>Questions</strong>
                   </h3>
                   <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                    do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Duis aute irure dolor in reprehenderit
+                    Discover common queries from our members. Click a question
+                    to expand and read the full answer.
                   </p>
                 </div>
               </div>
+
+              {/* Accordion column */}
               <div className="col-lg-8" data-aos="fade-up" data-aos-delay="200">
-                <div className="faq-container">
-                  <div className="faq-item faq-active">
-                    <h3>
-                      <span className="num">1.</span>
-                      <span>
-                        Non consectetur a erat nam at lectus urna duis?
-                      </span>
-                    </h3>
-                    <div className="faq-content">
-                      <p>
-                        Feugiat pretium nibh ipsum consequat. Tempus iaculis
-                        urna id volutpat lacus laoreet non curabitur gravida.
-                        Venenatis lectus magna fringilla urna porttitor rhoncus
-                        dolor purus non.
-                      </p>
+                <div className="accordion" id="faqAccordion">
+                  {faqData.map((item, index) => (
+                    <div className="accordion-item" key={index}>
+                      <h2 className="accordion-header" id={`heading${index}`}>
+                        <button
+                          className={`accordion-button ${
+                            activeIndex === index ? "" : "collapsed"
+                          }`}
+                          type="button"
+                          onClick={() => toggle(index)}
+                          aria-expanded={activeIndex === index}
+                          aria-controls={`collapse${index}`}
+                        >
+                          {item.question}
+                        </button>
+                      </h2>
+                      <div
+                        id={`collapse${index}`}
+                        className={`accordion-collapse collapse ${
+                          activeIndex === index ? "show" : ""
+                        }`}
+                        aria-labelledby={`heading${index}`}
+                        data-bs-parent="#faqAccordion"
+                      >
+                        <div className="accordion-body">{item.answer}</div>
+                      </div>
                     </div>
-                    <i className="faq-toggle bi bi-chevron-right"></i>
-                  </div>
-                  {/* End Faq item */}
-                  <div className="faq-item">
-                    <h3>
-                      <span className="num">2.</span>
-                      <span>
-                        Feugiat scelerisque varius morbi enim nunc faucibus a
-                        pellentesque?
-                      </span>
-                    </h3>
-                    <div className="faq-content">
-                      <p>
-                        Dolor sit amet consectetur adipiscing elit pellentesque
-                        habitant morbi. Id interdum velit laoreet id donec
-                        ultrices. Fringilla phasellus faucibus scelerisque
-                        eleifend donec pretium. Est pellentesque elit
-                        ullamcorper dignissim. Mauris ultrices eros in cursus
-                        turpis massa tincidunt dui.
-                      </p>
-                    </div>
-                    <i className="faq-toggle bi bi-chevron-right"></i>
-                  </div>
-                  {/* End Faq item */}
-                  <div className="faq-item">
-                    <h3>
-                      <span className="num">3.</span>
-                      <span>
-                        Dolor sit amet consectetur adipiscing elit pellentesque?
-                      </span>
-                    </h3>
-                    <div className="faq-content">
-                      <p>
-                        Eleifend mi in nulla posuere sollicitudin aliquam
-                        ultrices sagittis orci. Faucibus pulvinar elementum
-                        integer enim. Sem nulla pharetra diam sit amet nisl
-                        suscipit. Rutrum tellus pellentesque eu tincidunt.
-                        Lectus urna duis convallis convallis tellus. Urna
-                        molestie at elementum eu facilisis sed odio morbi quis
-                      </p>
-                    </div>
-                    <i className="faq-toggle bi bi-chevron-right"></i>
-                  </div>
-                  {/* End Faq item */}
-                  <div className="faq-item">
-                    <h3>
-                      <span className="num">4.</span>
-                      <span>
-                        Ac odio tempor orci dapibus. Aliquam eleifend mi in
-                        nulla?
-                      </span>
-                    </h3>
-                    <div className="faq-content">
-                      <p>
-                        Dolor sit amet consectetur adipiscing elit pellentesque
-                        habitant morbi. Id interdum velit laoreet id donec
-                        ultrices. Fringilla phasellus faucibus scelerisque
-                        eleifend donec pretium. Est pellentesque elit
-                        ullamcorper dignissim. Mauris ultrices eros in cursus
-                        turpis massa tincidunt dui.
-                      </p>
-                    </div>
-                    <i className="faq-toggle bi bi-chevron-right"></i>
-                  </div>
-                  {/* End Faq item */}
-                  <div className="faq-item">
-                    <h3>
-                      <span className="num">5.</span>
-                      <span>
-                        Tempus quam pellentesque nec nam aliquam sem et tortor
-                        consequat?
-                      </span>
-                    </h3>
-                    <div className="faq-content">
-                      <p>
-                        Molestie a iaculis at erat pellentesque adipiscing
-                        commodo. Dignissim suspendisse in est ante in. Nunc vel
-                        risus commodo viverra maecenas accumsan. Sit amet nisl
-                        suscipit adipiscing bibendum est. Purus gravida quis
-                        blandit turpis cursus in
-                      </p>
-                    </div>
-                    <i className="faq-toggle bi bi-chevron-right"></i>
-                  </div>
-                  {/* End Faq item */}
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         </section>
-
-        <footer id="footer" className="footer bg-primary text-white">
-          <div className="container footer-top">
-            <div className="row gy-4">
-              <div className="col-lg-4 col-md-6 footer-about">
-                <a href="index.html" className="logo d-flex align-items-center">
-                  <span className="sitename text-white">LibriSphere</span>
-                </a>
-                <div className="footer-contact pt-3">
-                  <p>A108 Adam Street</p>
-                  <p>New York, NY 535022</p>
-                  <p className="mt-3">
-                    <strong>Phone:</strong> <span>+1 5589 55488 55</span>
-                  </p>
-                  <p>
-                    <strong>Email:</strong> <span>info@example.com</span>
-                  </p>
-                </div>
-                <div className="social-links text-white d-flex mt-4">
-                  <a href="">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      className="bi bi-facebook"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951" />
-                    </svg>
-                  </a>
-                  <a href="">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      className="bi bi-twitter-x"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z" />
-                    </svg>
-                  </a>
-                  <a href="">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      className="bi bi-youtube"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z" />
-                    </svg>
-                  </a>
-                  <a href="">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      className="bi bi-instagram"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-
-              <div className="col-lg-2 col-md-3 footer-links text-white">
-                <h4 className="text-white">Useful Links</h4>
-                <ul>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Home
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      About us
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Services
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Terms of service
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Privacy policy
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="col-lg-2 col-md-3 footer-links">
-                <h4 className="text-white">Our Services</h4>
-                <ul>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Web Design
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Web Development
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Product Management
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Marketing
-                    </a>
-                  </li>
-                  <li>
-                    <i className="bi bi-chevron-right"></i>{" "}
-                    <a href="#" className="text-white">
-                      Graphic Design
-                    </a>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="col-lg-4 col-md-12 footer-newsletter">
-                <h4 className="text-white text-uppercase">LibriSphere</h4>
-                <p className="text-white">
-                  Subscribe to our newsletter and receive the latest news about
-                  our products and services!Subscribe to our newsletter and
-                  receive the latest news about our products and
-                  services!Subscribe to our newsletter and receive the latest
-                  news about our products and services!Subscribe to our
-                  newsletter and receive the latest news about our products and
-                  services!
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="container copyright text-center mt-4">
-            <p>
-              © <span>Copyright</span>{" "}
-              <strong className="px-1 sitename">LibriSphere</strong>{" "}
-              <span>All Rights Reserved</span>
-            </p>
-          </div>
-        </footer>
       </div>
     </HelmetProvider>
   );

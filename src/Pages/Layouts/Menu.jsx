@@ -41,21 +41,17 @@ function Menu() {
 
   // Fetch the total notification count when the component mounts or state changes
   useEffect(() => {
+    if (!user) {
+      setNotificationCount(0);
+      return;
+    }
+
     const fetchNoti = async () => {
       const response = await getNotification();
-      // console.log("noti", response);
       setNotificationCount(response.total_notifications);
     };
-
     fetchNoti();
-    // getNotification()
-    //   .then((data) => {
-    //     setNotificationCount(data.total_notifications);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error fetching notifications:", error);
-    //   });
-  }, [state]);
+  }, [state, user]);
 
   //console.log("user pic", notificationCount);
 
@@ -245,7 +241,7 @@ function Menu() {
                             }}
                             style={{ cursor: "pointer" }}
                           >
-                            User Posts
+                            User profile
                           </a>
                         </li>
 
@@ -322,32 +318,36 @@ function Menu() {
                               aria-labelledby="userDropdown"
                               style={{ background: "#4e73df" }}
                             >
-                              <li>
-                                <button
-                                  className="dropdown-item text-white"
-                                  style={{ background: "#4e73df" }}
-                                  onClick={() => navigate("/Admin/Profile")}
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    fill="currentColor"
-                                    className="bi bi-person-circle me-2"
-                                    viewBox="0 0 16 16"
+                              {(userRole === "manager" ||
+                                userRole === "librarian") && (
+                                <li>
+                                  <button
+                                    className="dropdown-item text-white"
+                                    style={{ background: "#4e73df" }}
+                                    onClick={() => navigate("/Admin/AddGenre")}
                                   >
-                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
-                                    />
-                                  </svg>
-                                  Profile
-                                </button>
-                              </li>
-                              <li>
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="16"
+                                      height="16"
+                                      fill="currentColor"
+                                      className="bi bi-person-circle me-2"
+                                      viewBox="0 0 16 16"
+                                    >
+                                      <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"
+                                      />
+                                    </svg>
+                                    Back to Admin Panel
+                                  </button>
+                                </li>
+                              )}
+
+                              {/* <li>
                                 <hr className="dropdown-divider" />
-                              </li>
+                              </li> */}
                               {(userRole === "member" ||
                                 userRole === "community_member") && (
                                 <>
@@ -664,33 +664,43 @@ function Menu() {
                 <li>
                   <i className="bi bi-chevron-right"></i>
                   <a
-                    onClick={() => navigate("/services")}
+                    onClick={() => navigate("/about")}
                     className="text-white"
                     style={{ cursor: "pointer" }}
                   >
                     About us
                   </a>
                 </li>
-                <li>
-                  <i className="bi bi-chevron-right"></i>
-                  <a
-                    onClick={() => navigate("/terms")}
-                    className="text-white"
-                    style={{ cursor: "pointer" }}
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <i className="bi bi-chevron-right"></i>
-                  <a
-                    onClick={() => logoutUser()}
-                    className="text-white"
-                    style={{ cursor: "pointer" }}
-                  >
-                    Logout
-                  </a>
-                </li>
+
+                {isMember ? (
+                  // When user exists → show Logout
+                  <li>
+                    <i className="bi bi-chevron-right"></i>
+                    <button
+                      className="text-white btn p-0"
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                      }}
+                      onClick={() => logoutUser()}
+                    >
+                      Logout
+                    </button>
+                  </li>
+                ) : (
+                  // When no user in localStorage → show Login
+                  <li>
+                    <i className="bi bi-chevron-right"></i>
+                    <a
+                      onClick={() => navigate("/")}
+                      className="text-white"
+                      style={{ cursor: "pointer" }}
+                    >
+                      Login
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
 

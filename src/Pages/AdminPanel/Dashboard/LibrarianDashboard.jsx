@@ -200,14 +200,7 @@ function LibrarianDashboard() {
                       <td>{sub.user?.email || "N/A"}</td>
                       <td>{sub.payment_type?.PaymentTypeName || "N/A"}</td>
                       <td>
-                        <span
-                          className={`badge bg-$
-                            {sub.PaymentStatus === 'pending' ? 'warning' :
-                             sub.PaymentStatus === 'Approved' ? 'success' :
-                             sub.PaymentStatus === 'Rejected' ? 'danger' :
-                             sub.PaymentStatus === 'Resubmit' ? 'info' :
-                             sub.PaymentStatus === 'active' ? 'secondary' : 'light'}`}
-                        >
+                        <span className={`badge bg-primary`}>
                           {sub.PaymentStatus}
                         </span>
                       </td>

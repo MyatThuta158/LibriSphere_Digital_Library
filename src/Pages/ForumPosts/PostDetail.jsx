@@ -154,12 +154,16 @@ function PostDetail() {
       try {
         const res = await showAlldiscussions(id);
         setComments(res.discussions || []);
+
+        console.log(comments);
       } catch (err) {
         console.error("Error fetching discussions:", err);
       }
     };
     fetchComments();
   }, [id, flag]);
+
+  console.log(storedUser);
 
   // Fetch vote counts.
   const updateVoteCounts = async () => {

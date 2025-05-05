@@ -21,6 +21,8 @@ function DetailMemberPayment() {
     detailInfoPayment(id).then((res) => {
       setData(res.data);
     });
+
+    console.log(data);
   }, [id]);
 
   // Generic function to handle status change (for Approve/Reject)

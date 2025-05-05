@@ -21,6 +21,8 @@ import PermissionForRoute from "../Authentication/PermissionForRoute";
 import Home1 from "../Pages/MemberPages/home1";
 import Menu from "../Pages/Layouts/Menu";
 import Announcement from "../Pages/MemberPages/Announcement";
+import Detaildata from "../Pages/AdminPanel/Resource_Request/DetailRequest";
+import RequestDetail from "../Pages/MemberPages/RequestDetail";
 
 function MemberRoute() {
   return (
@@ -36,7 +38,7 @@ function MemberRoute() {
         {/* <Route path="Resource" element={<ResourceDisplay />} /> */}
 
         <Route path="resource/:id" element={<ResourceDetail />} />
-        <Route path="announcement" element={<Announcement />} />
+        <Route path="/resource/request/:id" element={<RequestDetail />} />
         <Route path="ReadResource/:id" element={<ResourceRead />} />
         <Route element={<PermissionForRoute role={["member"]} />}>
           <Route path="ResourceRequest" element={<RequestResources />} />

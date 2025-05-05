@@ -1,19 +1,17 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { detail, incrementView } from "../../api/resourceApi";
-import Menu from "../Layouts/Menu";
 import axios from "axios";
 import { FaStar, FaEdit, FaTrash } from "react-icons/fa";
 import {
   resourceReviews,
   updateReview,
   deleteReview,
-} from "../../api/reviewApi"; // Import deleteReview
-
+} from "../../api/reviewApi";
 import { AbilityContext } from "../../Authentication/PermissionForUser";
 
 function ResourceDetail() {
-  const { id } = useParams(); // Get resource ID from URL
+  const { id } = useParams();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState([]);
@@ -24,90 +22,80 @@ function ResourceDetail() {
     ReviewMessage: "",
   });
   const [hoverStar, setHoverStar] = useState(null);
-  const [editingReviewId, setEditingReviewId] = useState(0);
+  const [editingReviewId, setEditingReviewId] = useState(null); // ← null initial :contentReference[oaicite:3]{index=3}
   const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
-  const [modalType, setModalType] = useState("success"); // "success" or "error"
+  const [modalType, setModalType] = useState("success");
   const baseUrl = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-
-  //-----This is for permission define---//
   const ability = useContext(AbilityContext);
-  // Retrieve the logged in user's id and role from local storage once
+
+  // load user info once
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUserid(parsedUser.id);
-      setRole(parsedUser.role);
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      const u = JSON.parse(stored);
+      setUserid(u.id);
+      setRole(u.role);
     }
   }, []);
 
+  // fetch resource & reviews
   useEffect(() => {
     const getResource = async () => {
       try {
-        const response = await detail(id);
-        setResource(response.data);
-        fetchReviews(); // Fetch existing reviews
-      } catch (error) {
-        console.error("Error fetching resource:", error);
+        const resp = await detail(id);
+        setResource(resp.data);
+        //console.log(resp.data); // comma syntax :contentReference[oaicite:2]{index=2}
+        await fetchReviews(); // initial fetch :contentReference[oaicite:4]{index=4}
+      } catch (err) {
+        console.error("Error fetching resource:", err);
       } finally {
         setLoading(false);
       }
     };
-
     getResource();
   }, [id]);
 
   const fetchReviews = async () => {
     try {
-      const resourceReview = await resourceReviews(id);
-      console.log(resourceReview);
-      setReviews(resourceReview.reviews);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
+      const res = await resourceReviews(id);
+      setReviews(res.reviews); // full objects with user_name, profile_pic
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
     }
   };
 
-  // When the edit icon is clicked, initialize the input with the review's current values
-  const handleEditReview = (review) => {
+  const handleEditReview = (r) => {
     setNewReview({
-      ReviewStar: review.ReviewStar,
-      ReviewMessage: review.ReviewMessage,
+      ReviewStar: r.ReviewStar,
+      ReviewMessage: r.ReviewMessage,
     });
-    setEditingReviewId(review.id);
+    setEditingReviewId(r.id);
     setErrorMessage("");
   };
 
-  // Cancel editing mode
   const handleCancelEdit = () => {
     setEditingReviewId(null);
     setNewReview({ ReviewStar: 0, ReviewMessage: "" });
     setErrorMessage("");
   };
 
-  //----This increment the count----//
-
-  const incrementViewCount = async (id) => {
-    const res = await incrementView(id);
-
-    console.log("count".res);
+  const incrementViewCount = async (rid) => {
+    const res = await incrementView(rid);
+    console.log("count", res); // comma syntax :contentReference[oaicite:5]{index=5}
   };
-  // Delete review when user clicks the delete icon
+
   const handleDeleteReview = async (reviewId) => {
     try {
-      // Use the provided deleteReview function
       await deleteReview(reviewId);
-      // Remove the deleted review from the state
-      setReviews((prevReviews) =>
-        prevReviews.filter((review) => review.id !== reviewId)
-      );
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
       setModalMessage("Review deleted successfully!");
       setModalType("success");
       setShowModal(true);
-    } catch (error) {
-      console.error("Error deleting review:", error);
+    } catch (err) {
+      console.error("Error deleting review:", err);
       setModalMessage("Failed to delete review. Please try again.");
       setModalType("error");
       setShowModal(true);
@@ -116,58 +104,58 @@ function ResourceDetail() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Clear any previous error message
     setErrorMessage("");
-
-    // Validate only the review message is entered.
     if (newReview.ReviewMessage.trim() === "") {
       setErrorMessage("Please enter review");
       return;
     }
 
     if (editingReviewId) {
-      // Update existing review
+      // --- UPDATE existing ---
       try {
-        const updatedData = {
+        const payload = {
           reviewid: editingReviewId,
           resource_id: id,
           user_id: userid,
           ReviewStar: newReview.ReviewStar,
           ReviewMessage: newReview.ReviewMessage,
         };
-        const response = await updateReview(editingReviewId, updatedData);
-        const updatedReviews = reviews.map((review) =>
-          review.id === editingReviewId ? response.review : review
-        );
-        setReviews(updatedReviews);
+        await updateReview(editingReviewId, payload);
+        await fetchReviews(); // ← refetch after mutation :contentReference[oaicite:6]{index=6}
         setEditingReviewId(null);
         setNewReview({ ReviewStar: 0, ReviewMessage: "" });
         setModalMessage("Review updated successfully!");
         setModalType("success");
         setShowModal(true);
-      } catch (error) {
-        console.error("Error updating review:", error);
+      } catch (err) {
+        console.error("Error updating review:", err);
         setModalMessage("Failed to update review. Please try again.");
         setModalType("error");
         setShowModal(true);
       }
     } else {
-      // Add new review
+      // --- ADD new ---
       try {
-        const response = await axios.post(`${baseUrl}Reviews/Add`, {
+        const resp = await axios.post(`${baseUrl}Reviews/Add`, {
           resource_id: id,
           user_id: userid,
           ReviewStar: newReview.ReviewStar,
           ReviewMessage: newReview.ReviewMessage,
         });
-        setReviews([...reviews, response.data.review]);
+        // hydrate with user info client-side to avoid extra fetch :contentReference[oaicite:7]{index=7}
+        const stored = JSON.parse(localStorage.getItem("user"));
+        const hydrated = {
+          ...resp.data.review,
+          user_name: stored.name,
+          profile_pic: stored.profile_pic,
+        };
+        setReviews((prev) => [...prev, hydrated]);
         setNewReview({ ReviewStar: 0, ReviewMessage: "" });
         setModalMessage("Review added successfully!");
         setModalType("success");
         setShowModal(true);
-      } catch (error) {
-        console.error("Error submitting review:", error);
+      } catch (err) {
+        console.error("Error submitting review:", err);
         setModalMessage("Failed to add review. Please try again.");
         setModalType("error");
         setShowModal(true);
@@ -175,87 +163,68 @@ function ResourceDetail() {
     }
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-  };
+  const closeModal = () => setShowModal(false);
 
-  if (loading) {
-    return <div className="text-center mt-5">Loading...</div>;
-  }
-
-  if (!resource) {
+  if (loading) return <div className="text-center mt-5">Loading...</div>;
+  if (!resource)
     return <div className="text-center mt-5">Resource not found</div>;
-  }
 
   return (
-    <div>
-      {/* <Menu /> */}
-      <div className="container" style={{ marginTop: "10%" }}>
-        <div className="row">
-          {/* Book Cover */}
-          <div className="col-md-4">
-            <img
-              src={`${baseUrl}storage/${resource.cover_photo}`}
-              className="img-fluid rounded shadow"
-              alt={resource.name}
-              style={{ height: "450px", objectFit: "cover" }}
-            />
+    <div className="container" style={{ marginTop: "5%" }}>
+      <div className="row">
+        <div className="col-md-4">
+          <img
+            src={`${baseUrl}storage/${resource.cover_photo}`}
+            className="img-fluid rounded shadow"
+            alt={resource.name}
+            style={{ height: "450px", objectFit: "cover" }}
+          />
+        </div>
+        <div className="col-md-8">
+          <h2 className="fw-bold">{resource.name}</h2>
+          <p className="text-muted">By Author Name: {resource.author.name}</p>
+          <div className="d-flex align-items-center mb-3">
+            <span className="ms-2 text-primary">
+              {reviews.length} Review(s)
+            </span>
           </div>
-
-          {/* Resource Details */}
-          <div className="col-md-8">
-            <h2 className="fw-bold">{resource.name}</h2>
-            <p className="text-muted">By Author ID: {resource.author_id}</p>
-            <div className="d-flex align-items-center mb-3">
-              <span className="badge bg-success">5.0 / 5.0</span>
-              <span className="ms-2 text-primary">
-                {reviews.length} Review(s)
-              </span>
-            </div>
-            <p className="w-50 text-justify">{resource.Description}</p>
-            <p className="fw-bold">Publish Date: {resource.publish_date}</p>
-            {/* Download Button */}
-            <div
-              onClick={() => {
-                navigate(`/library/ReadResource/${id}`);
-                incrementViewCount(id);
-              }}
-              className="btn btn-dark mt-3"
-            >
-              Read Resource
-            </div>
+          <p className="w-75 text-justify">{resource.Description}</p>
+          <p className="fw-bold">Publish Date: {resource.publish_date}</p>
+          <div
+            onClick={() => {
+              navigate(`/library/ReadResource/${id}`);
+              incrementViewCount(id);
+            }}
+            className="btn btn-dark mt-3"
+          >
+            Read Resource
           </div>
         </div>
       </div>
 
       <hr />
 
-      {/* Reviews Section */}
-      <div className="container">
+      <div>
         <h3>User Reviews</h3>
+
         {reviews.length > 0 ? (
-          reviews.map((review, index) => (
-            <div key={index} className="p-3 border rounded mb-2 d-flex">
-              <div>
-                <img
-                  src={
-                    review.profile_pic
-                      ? `http://127.0.0.1:8000/storage/${review.profile_pic}`
-                      : "/Customer/pic.jpg"
-                  }
-                  alt={review.user_name}
-                  className="rounded-circle"
-                  style={{
-                    width: "50px",
-                    height: "50px",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+          reviews.map((review) => (
+            <div key={review.id} className="p-3 border rounded mb-2 d-flex">
+              {" "}
+              {/* avoid key=index :contentReference[oaicite:8]{index=8} */}
+              <img
+                src={
+                  review.profile_pic
+                    ? `${baseUrl}storage/${review.profile_pic}`
+                    : "/Customer/pic.jpg"
+                }
+                alt={review.user_name}
+                className="rounded-circle"
+                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+              />
               <div className="ms-3 flex-grow-1">
                 <div className="d-flex align-items-center">
                   <p className="fw-bold mb-0">{review.user_name}</p>
-                  {/* If the review was uploaded by the logged-in user and the user is not a manager or librarian, show both edit and delete */}
                   {review.user_id === userid &&
                     role !== "manager" &&
                     role !== "librarian" && (
@@ -270,14 +239,11 @@ function ResourceDetail() {
                         />
                       </div>
                     )}
-                  {/* If the logged-in user is a manager or librarian, show only the delete icon */}
                   {(role === "manager" || role === "librarian") && (
-                    <div className="ms-auto d-flex">
-                      <FaTrash
-                        className="cursor-pointer"
-                        onClick={() => handleDeleteReview(review.id)}
-                      />
-                    </div>
+                    <FaTrash
+                      className="cursor-pointer ms-auto"
+                      onClick={() => handleDeleteReview(review.id)}
+                    />
                   )}
                 </div>
                 <div className="d-flex">
@@ -303,26 +269,25 @@ function ResourceDetail() {
           <p>No reviews yet. Be the first to review this resource!</p>
         )}
 
-        {/* Submit Review Form */}
         {ability.can("add", "review") && (
           <div className="mt-4">
             <h4>{editingReviewId ? "Edit Your Review" : "Leave a Review"}</h4>
             <form onSubmit={handleSubmit}>
               <div className="d-flex">
                 {[...Array(5)].map((_, i) => {
-                  const starValue = i + 1;
+                  const val = i + 1;
                   return (
                     <FaStar
                       key={i}
                       className={`cursor-pointer ${
-                        starValue <= (hoverStar || newReview.ReviewStar)
+                        val <= (hoverStar || newReview.ReviewStar)
                           ? "text-warning"
                           : "text-secondary"
                       }`}
                       onClick={() =>
-                        setNewReview({ ...newReview, ReviewStar: starValue })
+                        setNewReview({ ...newReview, ReviewStar: val })
                       }
-                      onMouseEnter={() => setHoverStar(starValue)}
+                      onMouseEnter={() => setHoverStar(val)}
                       onMouseLeave={() => setHoverStar(null)}
                     />
                   );
@@ -336,8 +301,7 @@ function ResourceDetail() {
                 onChange={(e) =>
                   setNewReview({ ...newReview, ReviewMessage: e.target.value })
                 }
-              ></textarea>
-              {/* Inline error sentence with red text for review message */}
+              />
               {errorMessage && (
                 <p className="text-danger mt-2">{errorMessage}</p>
               )}
@@ -360,7 +324,6 @@ function ResourceDetail() {
         )}
       </div>
 
-      {/* Modal for Success/Error Messages */}
       {showModal && (
         <div
           className="modal fade show d-block"
@@ -380,9 +343,8 @@ function ResourceDetail() {
                 <button
                   type="button"
                   className="btn-close"
-                  aria-label="Close"
                   onClick={closeModal}
-                ></button>
+                />
               </div>
               <div className="modal-body">
                 <p>{modalMessage}</p>

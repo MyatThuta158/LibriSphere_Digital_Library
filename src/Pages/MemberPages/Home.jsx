@@ -30,8 +30,8 @@ function Home() {
               READ. LEARN. ACCESS.
             </h2>
             <p data-aos="fade-up" data-aos-delay="200">
-              LibriSphere gives you access to Audiobooks, eBooks, Music, Movies
-              and Comics.
+              LibriSphere gives you access to eBooks, historical books, old and
+              rare videos and source of legendary videos.
             </p>
             <div
               className="d-flex mt-4"

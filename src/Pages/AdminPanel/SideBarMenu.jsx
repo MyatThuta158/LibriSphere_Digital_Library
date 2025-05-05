@@ -33,8 +33,18 @@ function SideBarMenu() {
     setUser(user);
   }, []);
 
+  const handleDashboardClick = (e) => {
+    e.preventDefault(); // prevent the default link navigation :contentReference[oaicite:0]{index=0}
+    if (user?.role === "manager") {
+      navigate("/Admin/ManagerDashboard"); // programmatic navigation :contentReference[oaicite:1]{index=1}
+    } else if (user?.role === "librarian") {
+      navigate("/Admin/LibrarianDashboard"); // programmatic navigation :contentReference[oaicite:2]{index=2}
+    } else {
+      navigate("/"); // fallback
+    }
+  };
   //console.log(userPic);
-  console.log("User role", user);
+  // console.log("User role", user);
 
   return (
     <>
@@ -128,7 +138,7 @@ function SideBarMenu() {
           <div className="sidebar-heading">Dashboard</div>
           {/* Dashboard */}
           <li className="nav-item active">
-            <a className="nav-link" href="index.html">
+            <a className="nav-link" onClick={handleDashboardClick}>
               <i className="fas fa-fw fa-tachometer-alt"></i>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -941,7 +951,7 @@ function SideBarMenu() {
                         >
                           <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6" />
                         </svg>
-                        Subscriber Table report
+                        Subscriber Table
                       </button>
                     </li>
 
@@ -1012,7 +1022,7 @@ function SideBarMenu() {
                           <path d="M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1z" />
                           <path d="M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567" />
                         </svg>
-                        Subscription Revenue Prediction
+                        Revenue Prediction
                       </button>
                     </li>
                   </ul>
@@ -1319,7 +1329,7 @@ function SideBarMenu() {
                       <a
                         className="dropdown-item"
                         style={{ color: "black" }}
-                        onClick={() => navigate("/library/Home1")}
+                        onClick={() => navigate("/library/home")}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"

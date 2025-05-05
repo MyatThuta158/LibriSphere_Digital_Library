@@ -44,6 +44,7 @@ function RequestResources() {
   // Fetch requests when component mounts
   useEffect(() => {
     fetchRequestResources();
+    // console.log(requestResource[0].Admin_Comment);
   }, [memberId]);
 
   const onSubmit = async (data) => {
@@ -184,12 +185,12 @@ function RequestResources() {
                     >
                       <div className="ms-3 w-100 d-flex justify-content-between">
                         <div>
-                          {request.AdminComment && (
+                          {request.Admin_Comment && (
                             <button
                               onClick={() => {
                                 changeStatus(request.id);
                                 navigate(
-                                  `/Admin/DetailResourceRequest/${request.id}`
+                                  `/library/resource/request/${request.id}`
                                 );
                               }}
                               className="btn px-5 btn-warning"

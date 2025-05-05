@@ -84,7 +84,7 @@ function MemberRegister() {
           }
         `}
       </style>
-      <div className="container mt-md-5 mb-5">
+      <div className="container mt-5 mt-md-5 mb-5">
         <div className="row justify-content-center align-items-center">
           <div className="col-lg-10">
             <div className="card shadow-lg border-0 rounded-3 overflow-hidden">

@@ -1,42 +1,27 @@
-// EpubViewer.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { ReactReader } from "react-reader";
-import { detail, fetchFile } from "../../../../api/resourceApi";
+import { fetchFile } from "../../../../api/resourceApi";
 
 const EpubViewer = ({ fileId }) => {
   const [epubData, setEpubData] = useState(null);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState(null); // ← null initial
   const [zoom, setZoom] = useState(1);
   const viewerRef = useRef(null);
 
   useEffect(() => {
     const fetchEpub = async () => {
       try {
-        // const fileDetail = await detail(fileId);
-
-        // console.log(fileDetail);
         const data = await fetchFile(fileId);
-        // const blob = new Blob([data], { type: "application/epub+zip" });
-        // const url = URL.createObjectURL(blob);
         setEpubData(data);
-      } catch (error) {
-        console.error("Error fetching the EPUB:", error);
+      } catch (err) {
+        console.error("Error fetching EPUB:", err);
       }
     };
-
     fetchEpub();
-
-    return () => {
-      if (epubData) URL.revokeObjectURL(epubData);
-    };
   }, [fileId]);
 
-  const handleLocationChange = (loc) => {
-    setLocation(loc);
-  };
-
-  const zoomIn = () => setZoom((prev) => Math.min(prev + 0.2, 2));
-  const zoomOut = () => setZoom((prev) => Math.max(prev - 0.2, 0.5));
+  const zoomIn = () => setZoom((z) => Math.min(z + 0.2, 2));
+  const zoomOut = () => setZoom((z) => Math.max(z - 0.2, 0.5));
 
   return (
     <div
@@ -45,17 +30,17 @@ const EpubViewer = ({ fileId }) => {
         display: "flex",
         justifyContent: "center",
         background: "#f5f5f5",
-        padding: "10px",
+        padding: 10,
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "800px",
+          maxWidth: 800,
           height: "100%",
           background: "#fff",
-          boxShadow: "0px 2px 8px rgba(0,0,0,0.1)",
-          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+          borderRadius: 8,
           display: "flex",
           flexDirection: "column",
         }}
@@ -67,25 +52,24 @@ const EpubViewer = ({ fileId }) => {
             borderBottom: "1px solid #ddd",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
             backgroundColor: "#fafafa",
           }}
         >
           <div>
             <button
               onClick={() => viewerRef.current?.prevPage()}
-              style={{ marginRight: "10px" }}
+              style={{ marginRight: 10 }}
             >
               Previous
             </button>
             <button onClick={() => viewerRef.current?.nextPage()}>Next</button>
           </div>
           <div>
-            <button onClick={zoomOut} style={{ marginRight: "10px" }}>
+            <button onClick={zoomOut} style={{ marginRight: 10 }}>
               -
             </button>
             <span>{Math.round(zoom * 100)}%</span>
-            <button onClick={zoomIn} style={{ marginLeft: "10px" }}>
+            <button onClick={zoomIn} style={{ marginLeft: 10 }}>
               +
             </button>
           </div>
@@ -108,8 +92,20 @@ const EpubViewer = ({ fileId }) => {
               ref={viewerRef}
               url={epubData}
               location={location}
-              locationChanged={handleLocationChange}
+              locationChanged={setLocation}
               showToc={false}
+              getRendition={(rendition) => {
+                const spine_get = rendition.book.spine.get.bind(
+                  rendition.book.spine
+                );
+                rendition.book.spine.get = function (target) {
+                  let sec = spine_get(target);
+                  if (!sec) {
+                    sec = spine_get(undefined);
+                  }
+                  return sec;
+                };
+              }}
               styles={{
                 container: {
                   width: "100%",
@@ -121,7 +117,7 @@ const EpubViewer = ({ fileId }) => {
           ) : (
             <div
               style={{
-                padding: "20px",
+                padding: 20,
                 textAlign: "center",
                 position: "absolute",
                 width: "100%",

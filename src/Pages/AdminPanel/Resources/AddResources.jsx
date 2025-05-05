@@ -3,116 +3,103 @@ import Resumable from "resumablejs";
 import { getAuthors } from "../../../api/authorsApi";
 import { getGenres } from "../../../api/genresAPI";
 import { getType } from "../../../api/resourcetypeApi";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { createResource } from "../../../api/resourceApi";
 
 function AddResources() {
-  // States for authors, genres, resource types, etc.
+  // State declarations
   const [author, setAuthor] = useState([]);
   const [genre, setGenre] = useState([]);
   const [resourceTypes, setResourceTypes] = useState([]);
   const [selectedType, setSelectedType] = useState("");
-
-  // States for dropdowns and selection
   const [searchAuthor, setSearchAuthor] = useState("");
   const [filterAuthor, setFilterAuthor] = useState([]);
   const [status, setStatus] = useState(false);
   const [selectValue, setSelectValue] = useState({});
   const [flag, setFlag] = useState(false);
   const [authorname, setAuthorname] = useState("");
-
   const [genreSelectvalue, setGenreSelectvalue] = useState([]);
   const [input, setInput] = useState("");
   const [genreFlag, setGenreflag] = useState(false);
   const [available, setAvailable] = useState(false);
   const [genreValue, setGenrevalue] = useState([]);
-
-  // States for cover photo and chunked file upload
   const [img, setImg] = useState();
   const [uploadedFilePath, setUploadedFilePath] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [chunkedFileName, setChunkedFileName] = useState("");
-
-  // State to control the modal display
   const [showModal, setShowModal] = useState(false);
-
-  // Refs for file inputs
   const fileInput = useRef(null);
   const fileChunkRef = useRef(null);
-
   const token = localStorage.getItem("token");
 
-  // Initialize Resumable for chunked file upload
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    getValues,
+    formState: { errors },
+    reset,
+    resetField,
+    setError,
+    clearErrors,
+  } = useForm();
+
+  // Resumable.js setup
   useEffect(() => {
     const r = new Resumable({
       target: "http://127.0.0.1:8000/upload-chunk",
-      chunkSize: 1 * 1024 * 1024, // 1MB chunks
+      chunkSize: 1 * 1024 * 1024,
       simultaneousUploads: 3,
       query: { token },
       headers: { Authorization: `Bearer ${token}` },
       testChunks: false,
       throttleProgressCallbacks: 1,
     });
-
     fileChunkRef.current = r;
     const fileElem = document.getElementById("resumable-file-input");
-    if (fileElem) {
-      r.assignBrowse(fileElem);
-    }
+    if (fileElem) r.assignBrowse(fileElem);
+
     r.on("fileAdded", (file) => {
-      console.log("File added:", file);
+      // <-- grab the filename here
+      setChunkedFileName(file.fileName);
       r.upload();
     });
-    r.on("fileProgress", (file) => {
-      setUploadProgress(Math.floor(file.progress() * 100));
-    });
+
+    r.on("fileProgress", (file) =>
+      setUploadProgress(Math.floor(file.progress() * 100))
+    );
     r.on("fileSuccess", (file, message) => {
       try {
         const res = JSON.parse(message);
         setUploadedFilePath(res.filePath);
-        console.log("Chunked upload complete. File path:", res.filePath);
+        clearErrors("file");
       } catch (err) {
-        console.error("Error parsing response:", err);
+        console.error(err);
       }
     });
   }, [token]);
 
-  // Fetch authors, genres, and resource types on mount
+  // Fetch initial data
   useEffect(() => {
-    const fetchAuthors = async () => {
-      const authorData = await getAuthors();
-      setAuthor(authorData.data);
-    };
-
-    const fetchGenres = async () => {
-      const genreData = await getGenres();
-      setGenre(genreData.data);
-    };
-
-    const fetchResourceTypes = async () => {
-      const typeData = await getType();
-      console.log(typeData);
-      setResourceTypes(typeData.data);
-    };
-
-    fetchAuthors();
-    fetchGenres();
-    fetchResourceTypes();
+    (async () => {
+      setAuthor((await getAuthors()).data);
+      setGenre((await getGenres()).data);
+      setResourceTypes((await getType()).data);
+    })();
   }, []);
 
-  // Author search effect for dropdown design
+  // Author search effect
   useEffect(() => {
     if (searchAuthor) {
-      const filteredData = author.filter((data) =>
-        data.name.toLowerCase().includes(searchAuthor.toLowerCase())
+      const filteredData = author.filter((a) =>
+        a.name.toLowerCase().includes(searchAuthor.toLowerCase())
       );
       if (filteredData.length > 0) {
         setFilterAuthor(filteredData);
         setStatus(true);
         setFlag(false);
-      } else {
-        setFlag(true);
-      }
+      } else setFlag(true);
     } else {
       setFilterAuthor([]);
       setStatus(false);
@@ -120,44 +107,41 @@ function AddResources() {
     }
   }, [searchAuthor, author]);
 
-  const handleSelectAuthor = (author) => {
-    setSelectValue(author);
-    setAuthorname(author.name);
+  // Add this effect to sync uploadedFilePath with form's "file" field
+  useEffect(() => {
+    setValue("file", uploadedFilePath);
+    if (uploadedFilePath) clearErrors("file");
+  }, [uploadedFilePath, setValue, clearErrors]);
+  // Author selection handler
+  const handleSelectAuthor = (a) => {
+    setSelectValue(a);
+    setAuthorname(a.name);
     setStatus(false);
+    clearErrors("author");
   };
 
-  // Genre filtering and selection with dropdown design
-  const handleSelectGenre = (genreItem) => {
-    setGenreSelectvalue((value) => {
-      if (!value.includes(genreItem)) {
-        setInput("");
-        setGenreflag(false);
-        return [...value, genreItem];
-      }
-      return value;
-    });
+  // Genre selection handler
+  const handleSelectGenre = (g) => {
+    setGenreSelectvalue((prev) => (prev.includes(g) ? prev : [...prev, g]));
+    setInput("");
+    setGenreflag(false);
+    setGenrevalue([]);
+    clearErrors("genre");
   };
 
-  const filterGenre = (searchGenre) => {
-    if (searchGenre) {
-      try {
-        const filteredData = genre.filter((data) =>
-          data.name.toLowerCase().includes(searchGenre.toLowerCase())
-        );
-        if (filteredData.length > 0) {
-          setGenrevalue(filteredData);
-          setGenreflag(true);
-          setAvailable(false);
-        } else {
-          setGenreflag(false);
-          setGenrevalue([]);
-          setAvailable(true);
-        }
-      } catch (e) {
-        console.log(e);
-        setGenreflag(false);
-        setGenrevalue([]);
+  // Genre filtering
+  const filterGenre = (q) => {
+    if (q) {
+      const fd = genre.filter((g) =>
+        g.name.toLowerCase().includes(q.toLowerCase())
+      );
+      if (fd.length > 0) {
+        setGenrevalue(fd);
+        setGenreflag(true);
         setAvailable(false);
+      } else {
+        setGenreflag(false);
+        setAvailable(true);
       }
     } else {
       setGenrevalue([]);
@@ -166,36 +150,59 @@ function AddResources() {
     }
   };
 
-  const elimateGenre = (genreItem) => () => {
-    setGenreSelectvalue((value) => value.filter((g) => g !== genreItem));
+  // Remove genre
+  const elimateGenre = (g) => () => {
+    setGenreSelectvalue((prev) => prev.filter((x) => x !== g));
+    if (genreSelectvalue.length === 1) {
+      setError("genre", {
+        type: "manual",
+        message: "Please select at least one genre",
+      });
+    }
   };
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm();
-
-  // Function to reset all fields and states when closing the modal
-  const handleCloseModal = () => {
-    setShowModal(false);
-    reset();
-    setUploadProgress(0);
-    setAuthorname("");
-    setGenreSelectvalue([]);
-    setSelectValue({});
-    setImg("");
-    setUploadedFilePath("");
-    setSelectedType("");
-  };
-
-  // Handle form submission
+  // Form submission
   const onSubmit = async (data) => {
+    // console.log("gernvalue", genreSelectvalue.length);
+    let isValid = true;
+    if (uploadProgress > 0) {
+      clearErrors("file");
+    }
+
+    if (!data.file) {
+      setError("file", {
+        type: "manual",
+        message: "File upload is required",
+      });
+      return;
+    }
+    // Validate author
+    if (!selectValue.id) {
+      setError("author", {
+        type: "manual",
+        message: "Please select an author",
+      });
+      isValid = false;
+    }
+
+    console.log("gernvalue", genreSelectvalue.length);
+
+    // Validate genre
+    if (genreSelectvalue.length < 0) {
+      setError("genre", {
+        type: "manual",
+        message: "Please select at least one genre",
+      });
+      isValid = false;
+    }
+
+    if (!isValid) return;
+
     if (!uploadedFilePath) {
       alert("Please wait until the file upload completes.");
       return;
     }
+
     const formData = new FormData();
     formData.append("code", data.code);
     formData.append("name", data.name);
@@ -206,91 +213,145 @@ function AddResources() {
     formData.append("Photo", data.Photo[0]);
     formData.append("file", uploadedFilePath);
     formData.append("ISBN", data.ISBN ?? "");
-    // Append the selected resource type
     formData.append("resourceType", selectedType);
 
     try {
       const result = await createResource(formData);
-      console.log(result);
-      if (result.status === 200) {
-        // Show modal on successful submission
-        setShowModal(true);
-      } else {
-        console.log("Cannot submit");
-      }
+      if (result.status === 200) setShowModal(true);
     } catch (e) {
       console.log(e);
     }
   };
 
+  // Modal close handler
+  const handleCloseModal = () => {
+    setShowModal(false);
+    reset();
+    setUploadProgress(0);
+    setAuthorname("");
+    setGenreSelectvalue([]);
+    setSelectValue({});
+    setImg("");
+    setChunkedFileName("");
+    setUploadedFilePath("");
+    setSelectedType("");
+    clearErrors();
+  };
   return (
     <div>
       <div className="container-fluid">
         <h1 className="text-center">Add Resources</h1>
         <div className="row">
-          <form className="col-md-12" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="col-md-12"
+            noValidate
+            onSubmit={handleSubmit(onSubmit)}
+          >
             {/* Code & Name */}
             <div className="d-flex justify-content-center">
               <div className="form-group col-md-6">
-                <label htmlFor="code">Code</label>
+                <label>Code</label>
                 <input
                   type="text"
                   {...register("code", { required: "Code is required" })}
-                  className="form-control"
-                  id="code"
+                  className={`form-control ${errors.code ? "is-invalid" : ""}`}
                 />
+                {errors.code && (
+                  <div className="invalid-feedback">{errors.code.message}</div>
+                )}
               </div>
               <div className="form-group col-md-6">
-                <label htmlFor="name">Name</label>
+                <label>Name</label>
                 <input
                   type="text"
-                  className="form-control"
                   {...register("name", { required: "Name is required" })}
-                  id="name"
+                  className={`form-control ${errors.name ? "is-invalid" : ""}`}
                 />
+                {errors.name && (
+                  <div className="invalid-feedback">{errors.name.message}</div>
+                )}
               </div>
             </div>
 
-            {/* Publish Date, Resource Type & Chunked File Upload */}
+            {/* Publish Date, Resource Type & File Upload */}
             <div className="d-flex justify-content-center">
               <div className="form-group col-md-4">
-                <label htmlFor="date">Publish Date</label>
+                <label>Publish Date</label>
                 <input
                   type="date"
                   {...register("date", {
                     required: "Publish date is required",
                   })}
-                  className="form-control"
-                  id="date"
+                  className={`form-control ${errors.date ? "is-invalid" : ""}`}
+                />
+                {errors.date && (
+                  <div className="invalid-feedback">{errors.date.message}</div>
+                )}
+              </div>
+              <div className="form-group col-md-4">
+                <label>Resource Type</label>
+                <Controller
+                  name="resourceType"
+                  control={control}
+                  rules={{ required: "Resource type is required" }}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <select
+                        {...field}
+                        className={`form-control ${
+                          fieldState.error ? "is-invalid" : ""
+                        }`}
+                        value={field.value || ""} // keep it controlled
+                        onChange={(e) => {
+                          field.onChange(e); // tell RHF
+                          setSelectedType(e.target.value); // optional local state
+                        }}
+                      >
+                        <option value="">Select Resource Type</option>
+                        {resourceTypes.map((type) => (
+                          <option key={type.id} value={type.id}>
+                            {type.TypeName}
+                          </option>
+                        ))}
+                      </select>
+                      {fieldState.error && (
+                        <div className="invalid-feedback">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </>
+                  )}
                 />
               </div>
-              {/* Resource Type selection */}
+              <Controller
+                name="file"
+                control={control}
+                rules={{
+                  required: "Please upload a file before submitting",
+                  validate: (value) =>
+                    value !== "" ||
+                    "Please wait for the upload to finish before submitting",
+                }}
+                render={({ fieldState }) => (
+                  <>
+                    {fieldState.error && (
+                      <div className="invalid-feedback d-block">
+                        {fieldState.error.message}
+                      </div>
+                    )}
+                  </>
+                )}
+              />
+
+              {/* File Upload Section - Updated */}
               <div className="form-group col-md-4">
-                <label htmlFor="resourceType">Resource Type</label>
-                <select
-                  id="resourceType"
-                  className="form-control"
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  required
-                >
-                  <option value="">Select Resource Type</option>
-                  {resourceTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.TypeName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Chunked File input for resource file */}
-              <div className="form-group col-md-4">
-                <label htmlFor="resumable-file-input">
-                  File (Chunked Upload)
-                </label>
+                <label>File (Chunked Upload)</label>
                 <div className="input-group">
                   <input
                     type="text"
-                    className="form-control"
+                    className={`form-control ${
+                      errors.file ? "is-invalid" : ""
+                    }`}
                     placeholder="Select file..."
                     value={chunkedFileName}
                     readOnly
@@ -307,79 +368,78 @@ function AddResources() {
                   <input
                     type="file"
                     id="resumable-file-input"
-                    className="form-control"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const file = e.target.value;
-                      if (file) setChunkedFileName(e.target.files[0].name);
-                      console.log("file name", file);
-                    }}
+                    className="d-none"
                   />
                 </div>
+
+                {/* Progress and Error Display */}
                 {uploadProgress > 0 && (
-                  <div>Upload Progress: {uploadProgress}%</div>
+                  <div className="mt-2">Upload Progress: {uploadProgress}%</div>
                 )}
+                {/* {errors.file && (
+                  <div className="text-danger small mt-1">
+                    {errors.file.message}
+                  </div>
+                )} */}
               </div>
             </div>
 
             {/* Author & Genre Selection */}
             <div className="d-flex justify-content-center">
-              {/* Author Selection Dropdown */}
               <div
                 className="form-group col-md-6"
                 style={{ position: "relative" }}
               >
-                <label htmlFor="author">Author</label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    {...register("author", {
-                      required: "Author name is required!",
-                    })}
-                    value={authorname}
-                    onChange={(e) => {
-                      setSearchAuthor(e.target.value);
-                      setSelectValue(e.target.value);
-                      setAuthorname(e.target.value);
-                    }}
-                  />
-                  {selectValue && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        right: "10px",
-                        transform: "translateY(-50%)",
-                        cursor: "pointer",
-                        fontSize: "16px",
-                      }}
-                      onClick={() => {
-                        setSearchAuthor("");
-                        setSelectValue({});
-                        setAuthorname("");
-                        setFlag(false);
-                      }}
-                    >
-                      &#x2715;
-                    </span>
+                <label htmlFor="authorInput">Author</label>
+                <Controller
+                  name="author"
+                  control={control}
+                  rules={{ required: "Please select an author" }}
+                  render={({ field, fieldState }) => (
+                    <>
+                      <input
+                        {...field}
+                        id="authorInput"
+                        className={`form-control ${
+                          fieldState.error ? "is-invalid" : ""
+                        }`}
+                        value={authorname}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setSearchAuthor(e.target.value);
+                          setAuthorname(e.target.value);
+                          if (!e.target.value) clearErrors("author");
+                        }}
+                      />
+                      {fieldState.error && (
+                        <div className="invalid-feedback d-block">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </>
                   )}
-                </div>
-                {status && filterAuthor.length > 0 && (
-                  <ul
-                    className="dropdown-menu show"
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "0",
-                      width: "100%",
-                      zIndex: 1000,
+                />
+
+                {authorname && (
+                  <span
+                    className="position-absolute end-0 top-50 translate-middle-y me-2"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setSearchAuthor("");
+                      setSelectValue({});
+                      setAuthorname("");
+                      clearErrors("author");
                     }}
                   >
-                    {filterAuthor.map((author, index) => (
+                    ×
+                  </span>
+                )}
+                {status && filterAuthor.length > 0 && (
+                  <ul className="list-group position-absolute w-100 z-3">
+                    {filterAuthor.map((author) => (
                       <li
-                        key={index}
-                        className="dropdown-item text-black"
+                        key={author.id}
+                        className="list-group-item list-group-item-action"
                         onClick={() => handleSelectAuthor(author)}
                         style={{ cursor: "pointer" }}
                       >
@@ -388,198 +448,173 @@ function AddResources() {
                     ))}
                   </ul>
                 )}
-                {flag && filterAuthor.length <= 0 && (
-                  <ul
-                    className="dropdown-menu show"
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: "0",
-                      width: "100%",
-                      zIndex: 1000,
-                    }}
-                  >
-                    <li className="dropdown-item" style={{ cursor: "pointer" }}>
-                      No author available
-                    </li>
-                  </ul>
-                )}
               </div>
 
-              {/* Genre Selection Dropdown */}
+              <input
+                type="hidden"
+                {...register("genre", {
+                  validate: () =>
+                    genreSelectvalue.length > 0 ||
+                    "Please select at least one genre",
+                })}
+              />
+
               <div
                 className="form-group col-md-6"
                 style={{ position: "relative" }}
               >
-                <label htmlFor="genre">Genre</label>
-                <div style={{ position: "relative" }}>
+                <label htmlFor="genreInput">Genre</label>
+                <div className="input-group flex-wrap has-validation">
                   <input
                     type="text"
-                    className="form-control"
+                    id="genreInput"
+                    className={`form-control ${
+                      errors.genre ? "is-invalid" : ""
+                    }`}
                     value={input}
                     onChange={(e) => {
                       filterGenre(e.target.value);
                       setInput(e.target.value);
+                      clearErrors("genre"); // clear any previous error as soon as they type
                     }}
+                    onBlur={() => setTimeout(() => setGenreflag(false), 200)}
                   />
+                  {errors.genre && (
+                    <div className="invalid-feedback d-block">
+                      {errors.genre.message}
+                    </div>
+                  )}
                 </div>
+
                 {genreFlag && genreValue.length > 0 && (
-                  <ul
-                    className="dropdown-menu show"
-                    style={{
-                      position: "absolute",
-                      top: "70%",
-                      left: "0",
-                      width: "100%",
-                      height: "130%",
-                      overflowY: "auto",
-                      zIndex: 1000,
-                    }}
-                  >
-                    {genreValue.map((genreItem, index) => (
+                  <ul className="list-group position-absolute w-100 z-3">
+                    {genreValue.map((genreItem) => (
                       <li
-                        key={index}
-                        className="dropdown-item text-black"
+                        key={genreItem.id}
+                        className="list-group-item list-group-item-action d-flex justify-content-between"
                         onClick={() => handleSelectGenre(genreItem)}
                         style={{ cursor: "pointer" }}
                       >
                         {genreItem.name}
-                        <button
-                          className="px-4 text-white rounded bg-primary border-0 float-end"
-                          onClick={() => handleSelectGenre(genreItem)}
-                        >
-                          Add
-                        </button>
+                        <button className="btn btn-sm btn-primary">Add</button>
                       </li>
                     ))}
                   </ul>
                 )}
-                {available && genreValue.length <= 0 && (
-                  <ul
-                    className="dropdown-menu show"
-                    style={{
-                      position: "absolute",
-                      top: "70%",
-                      left: "0",
-                      width: "100%",
-                      zIndex: 1000,
-                    }}
-                  >
-                    <li className="dropdown-item" style={{ cursor: "pointer" }}>
-                      No genre available
-                    </li>
-                  </ul>
-                )}
-                {genreSelectvalue.length > 0 && (
-                  <div className="d-flex" style={{ height: "30%" }}>
-                    {genreSelectvalue.map((genreItem, index) => (
-                      <div
-                        key={index}
-                        className="rounded px-2 m-1 text-white d-flex bg-primary border-0"
+
+                <div className="d-flex flex-wrap gap-1 mt-2">
+                  {genreSelectvalue.map((genreItem) => (
+                    <span
+                      key={genreItem.id}
+                      className="badge bg-primary d-flex align-items-center gap-1"
+                    >
+                      {genreItem.name}
+                      <button
+                        type="button"
+                        className="btn btn-sm p-0 text-white"
+                        onClick={() => {
+                          setGenreSelectvalue((prev) =>
+                            prev.filter((x) => x !== genreItem)
+                          );
+                        }}
                       >
-                        {genreItem.name}
-                        <div
-                          onClick={elimateGenre(genreItem)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            fill="currentColor"
-                            className="bi bi-x-lg text-white"
-                            viewBox="0 0 16 16"
-                          >
-                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146-5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
-                          </svg>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Cover Photo & ISBN */}
             <div className="d-flex justify-content-center">
+              {/* Cover Photo Input */}
               <div className="form-group col-md-6">
-                <label htmlFor="coverPhoto">Cover Photo</label>
-                <input
-                  type="file"
-                  className="form-control"
-                  ref={fileInput}
-                  {...register("Photo", {
-                    required: "Cover photo is required",
-                  })}
-                  onChange={(e) => {
-                    setImg(URL.createObjectURL(e.target.files[0]));
-                  }}
+                <label>Cover Photo</label>
+                <Controller
+                  name="Photo"
+                  control={control}
+                  rules={{ required: "Cover photo is required" }}
+                  render={({ field, fieldState }) => (
+                    <div>
+                      <input
+                        type="file"
+                        className={`form-control ${
+                          fieldState.error ? "is-invalid" : ""
+                        }`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          field.onChange(e.target.files);
+                          setImg(file ? URL.createObjectURL(file) : null);
+                          clearErrors("Photo");
+                        }}
+                      />
+                      {fieldState.error && (
+                        <div className="invalid-feedback">
+                          {fieldState.error.message}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 />
                 {img && (
                   <>
-                    <span
-                      className="d-block text-right col-md-3"
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm mt-2"
                       onClick={() => {
                         setImg(null);
-                        fileInput.current.value = null;
+                        resetField("Photo"); // Reset the form field
                       }}
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        fill="currentColor"
-                        className="bi bi-x text-danger"
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646-2.647a.5.5 0 0 1-.708-.708L7.293 8z" />
-                      </svg>
-                    </span>
+                      Remove Image
+                    </button>
                     <img
                       src={img}
-                      style={{ height: "25vh" }}
-                      className="w-25 mt-2 img-fluid"
+                      className="img-thumbnail mt-2"
+                      style={{ height: "200px" }}
                     />
                   </>
                 )}
               </div>
               <div className="form-group col-md-6">
-                <label htmlFor="isbn">ISBN</label>
+                <label>ISBN</label>
                 <input
                   type="text"
-                  {...register("ISBN")}
-                  className="form-control"
-                  id="isbn"
+                  {...register("ISBN", { required: "ISBN is required" })}
+                  className={`form-control ${errors.ISBN ? "is-invalid" : ""}`}
                 />
+                {errors.ISBN && (
+                  <div className="invalid-feedback">{errors.ISBN.message}</div>
+                )}
               </div>
             </div>
 
             {/* Description */}
-            <div className="form-group col-md-12">
-              <label className="d-block" htmlFor="desc">
-                Description
-              </label>
+            <div className="form-group">
+              <label>Description</label>
               <textarea
-                {...register("desc", { required: "Description is required!" })}
-                className="w-100"
+                {...register("desc", { required: "Description is required" })}
+                className={`form-control ${errors.desc ? "is-invalid" : ""}`}
                 style={{ height: "30vh" }}
-                id="desc"
-              ></textarea>
+              />
+              {errors.desc && (
+                <div className="invalid-feedback">{errors.desc.message}</div>
+              )}
             </div>
 
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary w-100 mt-3">
               Submit
             </button>
           </form>
         </div>
       </div>
 
-      {/* Bootstrap Modal for Success Message */}
+      {/* Success Modal */}
       {showModal && (
         <div
           className="modal fade show"
           style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
-          tabIndex="-1"
         >
           <div className="modal-dialog">
             <div className="modal-content">
@@ -587,11 +622,9 @@ function AddResources() {
                 <h5 className="modal-title">Submission Successful</h5>
                 <button
                   type="button"
-                  className="close"
+                  className="btn-close"
                   onClick={handleCloseModal}
-                >
-                  <span>&times;</span>
-                </button>
+                ></button>
               </div>
               <div className="modal-body">
                 <p>Your resource has been submitted successfully.</p>

@@ -43,7 +43,7 @@ function Notification() {
     const fetchNotifications = async () => {
       try {
         const data = await getNoti();
-        console.log(data);
+        //   console.log(data);
         setNotifications(data);
       } catch (err) {
         setError(err);
@@ -56,12 +56,12 @@ function Notification() {
 
   const handleDiscussionClick = (forumPostId) => {
     // Navigate to the related forum post page.
-    navigate(`/forum/${forumPostId}`);
+    navigate(`/community/postdetail/${forumPostId}`);
   };
 
   const handleRetryPayment = (subscriptionId) => {
     // Handle the payment retry action.
-    console.log("Retry payment for subscription:", subscriptionId);
+    //  console.log("Retry payment for subscription:", subscriptionId);
     navigate(`/Community/PaymentResubmit/${subscriptionId}`);
   };
 
