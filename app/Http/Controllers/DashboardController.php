@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
 use App\Models\ForumPost;
 use App\Models\MembershipPlan;
 use App\Models\Request_Resources;
@@ -49,7 +50,7 @@ class DashboardController extends Controller
 
     public function managerDashboard()
     {
-        $librarianCount       = User::role('librarian')->count();
+        $librarianCount       = Admin::role('librarian')->count();
         $totalMembers         = User::count();
         $totalCommunityMember = User::where('role', 'community_member')->count();
 

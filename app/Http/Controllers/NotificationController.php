@@ -38,10 +38,12 @@ class NotificationController extends Controller
         // Get all forum post IDs submitted by the authenticated user.
         $forumPostIds = $user->forumPosts()->pluck('ForumPostId');
 
+        //   dd($forumPostIds);
+
         // Fetch discussion notifications with NotiStatus 'unwatched'
         // where the ForumPostId is among the user's forum posts.
         $discussionNotifications = Discussion::with('user')
-            ->where('NotiStatus', 'unwatched')
+        // ->where('NotiStatus', 'unwatched')
             ->whereIn('ForumPostId', $forumPostIds)
             ->orderBy('created_at', 'desc')
             ->get();

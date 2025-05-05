@@ -15,9 +15,9 @@ return [
     |
     */
 
+      //'paths' => ['*', 'sanctum/csrf-cookie'],v
     // 'paths' => ['*'],
     'paths'                    => ['api/*', 'sanctum/csrf-cookie', '*', 'file/*', 'streamVideo/*'],
-    //'paths' => ['*', 'sanctum/csrf-cookie'],
     'allowed_methods'          => ['*'],
     'allowed_origins'          => ['http://localhost:5173'],
     'allowed_origins_patterns' => [],

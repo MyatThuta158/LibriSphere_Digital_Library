@@ -166,9 +166,10 @@ class SubscriptionController extends Controller
      */
     public function show($id)
     {
-        $subscription = Subscription::with(['user', 'paymentType']) // Fetch all user & paymentType data
+        $subscription = Subscription::with(['user', 'paymentType', 'membershipPlan']) // Fetch all user & paymentType data
             ->find($id);
 
+        // dd($subscription);
         if (! $subscription) {
             return response()->json([
                 'status'  => 404,
@@ -187,7 +188,7 @@ class SubscriptionController extends Controller
                     'phone_number' => $subscription->user->phone_number ?? null,
                     'profile_pic'  => $subscription->user->ProfilePic ?? null,
                 ],
-                'membership_plan_id' => $subscription->membership_plans_id,
+                'membership_plan_id' => $subscription->membershipPlan->PlanName,
                 'payment'            => [
                     'payment_type'           => $subscription->paymentType->PaymentTypeName ?? null,
                     'payment_screenshot'     => $subscription->PaymentScreenShot,
@@ -717,6 +718,4 @@ class SubscriptionController extends Controller
         ]);
     }
 
-
-    
 }

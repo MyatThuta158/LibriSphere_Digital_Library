@@ -104,6 +104,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriber/prediction/store', [App\Http\Controllers\SubscriberPredictionController::class, 'storePredictions']);
     Route::get('/subscriber/prediction/get', [App\Http\Controllers\SubscriberPredictionController::class, 'getLatestPredictions']);
 
+    Route::post('/revenue/prediction/store', [App\Http\Controllers\RevenuePredictionController::class, 'storeRevenuePredictions']);
+    Route::get('/revenue/prediction/get', [App\Http\Controllers\RevenuePredictionController::class, 'getLatestRevenuePredictions']);
+
     Route::get('/subscriptiondate/{id}', [App\Http\Controllers\SubscriptionController::class, 'getUserSubscriptionInfo']);
 
     Route::get('/admindashboard', [App\Http\Controllers\DashboardController::class, 'adminDashboard']);
@@ -116,7 +119,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/manager/dashboard', [App\Http\Controllers\DashboardController::class, 'managerDashboard']);
 
+    Route::get('/announcement/get', [App\Http\Controllers\AnnouncementController::class, 'index']);
+
+    Route::get('/announcement/show/{id}', [App\Http\Controllers\AnnouncementController::class, 'show']);
+
+    Route::post('/announcement/update/{id}', [App\Http\Controllers\AnnouncementController::class, 'update']);
+
+    Route::delete('/announcement/delete/{id}', [App\Http\Controllers\AnnouncementController::class, 'destroy']);
+
     Route::delete('/forum/posts/delete/{id}', [App\Http\Controllers\ForumPostController::class, 'destroy']);
+
+    Route::delete('/resource/delete/{id}', [App\Http\Controllers\ResourcesController::class, 'destroy']);
 });
 
 Route::match(['get', 'post'], '/upload-chunk', [\App\Http\Controllers\UploadController::class, 'uploadChunk']);

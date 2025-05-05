@@ -258,18 +258,46 @@ class ResourcesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Resources $resources)
+    public function destroy($id)
     {
         $user = Auth::user();
 
-        // Check if the authenticated user is a manager or librarian.
-        if (! $user || ! $user->hasRole(['manager', 'librarian']) || ! $user->can('manage resources')) {
-            return response()->json(['error' => 'Only managers can register new admins.'], 403);
+        // Only managers or librarians with 'manage resources' permission may delete.
+        if (! $user
+            || ! $user->hasRole(['manager', 'librarian'])
+            || ! $user->can('manage resources')
+        ) {
+            return response()->json([
+                'error' => 'Only managers or librarians can delete resources.',
+            ], 403);
         }
 
-        // Delete logic for resource (if needed) would be added here.
-    }
+        // Retrieve the resource or fail with 404
+        $resource = Resources::findOrFail($id);
 
+        // Detach all genres (many-to-many)
+        $resource->Genre()->detach();
+
+        // Delete all reviews (one-to-many)
+        $resource->reviews()->delete();
+
+        // Delete uploaded files from storage (if they exist)
+        if ($resource->cover_photo) {
+            Storage::disk('public')->delete($resource->cover_photo);
+        }
+        if ($resource->file) {
+            Storage::disk('public')->delete($resource->file);
+        }
+
+        // Finally delete the resource itself
+        $resource->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Resource and its files deleted successfully.',
+        ], 200);
+    }
+    
     public function search(Request $request)
     {
         $request->validate([

@@ -36,4 +36,10 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(Announcement::class, 'admin_id');
     }
+
+    public function revenuePredictions()
+    {
+        return $this->hasMany(RevenuePrediction::class, 'AdminId', 'id');
+    }
+
 }
