@@ -78,7 +78,7 @@ export default function ManagerDashboard() {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      title: { display: true, text: "Plan Revenues" },
+      title: { display: true, text: "Subscription Plan Revenues" },
       legend: { position: "top" },
     },
   };
@@ -127,7 +127,8 @@ export default function ManagerDashboard() {
     plugins: {
       title: {
         display: true,
-        text: `Latest Predictions: ${latestDate.toLocaleDateString()}`,
+
+        text: `Subscription Plan Revenues prediction. Latest Predictions: ${latestDate.toLocaleDateString()}`,
       },
       legend: { position: "top" },
     },

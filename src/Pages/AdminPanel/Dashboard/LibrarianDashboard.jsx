@@ -91,10 +91,10 @@ function LibrarianDashboard() {
   const handleAction = (sub) => {
     const base = "/Admin";
     const routes = {
-      Rejected: `${base}/RejectDetailSubscriptions/${sub.id}`,
-      Approved: `${base}/AcceptDetailSubscriptions/${sub.id}`,
-      Resubmit: `${base}/Subscription/Resubmit/${sub.id}`,
-      default: `${base}/DetailSubscriptions/${sub.id}`,
+      Rejected: `/Admin/DetailPayments/${sub.id}`,
+      Approved: `/Admin/DetailPayments/${sub.id}`,
+      Resubmit: `/Admin/DetailPayments/${sub.id}`,
+      default: `/Admin/DetailPayments/${sub.id}`,
     };
     navigate(routes[sub.PaymentStatus] || routes.default);
   };
